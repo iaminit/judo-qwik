@@ -37,6 +37,20 @@ lerna-debug.log*
 *.sln
 *.sw?
 
-# Yarn
-.yarn/*
-!.yarn/releases
+# PocketBase
+/pocketbase
+/pb_data/
+*.db-shm
+*.db-wal
+
+# Temporary
+/tmp/
+
+# Tools
+*-nami.mjs
+debug-db.*
+delete-tech*
+find-id.mjs
+
+# MacOS
+.DS_Store
