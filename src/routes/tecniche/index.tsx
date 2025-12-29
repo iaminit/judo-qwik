@@ -404,7 +404,7 @@ export default component$(() => {
 
               {/* Modal Info Area */}
               <div class="w-full md:w-1/2 p-6 md:p-10 overflow-y-visible md:overflow-y-auto">
-                <div class="flex items-center gap-3 mb-6 md:mb-8">
+                <div class="flex items-center justify-center md:justify-start gap-3 mb-6 md:mb-8">
                   <span class="px-3 py-1 bg-red-500/10 text-red-500 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest">
                     {modalTechnique.value.tipo}
                   </span>
@@ -413,7 +413,7 @@ export default component$(() => {
                   </span>
                 </div>
 
-                <h2 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-6 tracking-tight leading-none uppercase">
+                <h2 class="text-xl md:text-4xl font-black text-gray-900 dark:text-white mb-6 tracking-tight leading-none uppercase text-center md:text-left">
                   {modalTechnique.value.nome}
                 </h2>
 
