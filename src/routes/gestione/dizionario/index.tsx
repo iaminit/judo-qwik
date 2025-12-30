@@ -106,7 +106,7 @@ export default component$(() => {
                                     <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Kanji</th>
                                     <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Pronuncia</th>
                                     <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Audio</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Azioni</th>
+                                    <th class="px-3 md:px-6 py-4 text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest text-right">Azioni</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
@@ -135,21 +135,23 @@ export default component$(() => {
                                                     <span class="text-xl opacity-20" title="Senza audio">🔇</span>
                                                 )}
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-right space-x-2">
-                                                <a
-                                                    href={`/gestione/dizionario/${t.id}`}
-                                                    class="inline-block p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-lg transition-colors"
-                                                    title="Modifica"
-                                                >
-                                                    ✏️
-                                                </a>
-                                                <button
-                                                    onClick$={() => handleDelete(t.id, t.term)}
-                                                    class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
-                                                    title="Elimina"
-                                                >
-                                                    🗑️
-                                                </button>
+                                            <td class="px-3 md:px-6 py-4 whitespace-nowrap text-right">
+                                                <div class="flex justify-end gap-1 md:gap-2">
+                                                    <a
+                                                        href={`/gestione/dizionario/${t.id}`}
+                                                        class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-xl transition-colors"
+                                                        title="Modifica"
+                                                    >
+                                                        <span class="text-lg md:text-xl">✏️</span>
+                                                    </a>
+                                                    <button
+                                                        onClick$={() => handleDelete(t.id, t.term)}
+                                                        class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors"
+                                                        title="Elimina"
+                                                    >
+                                                        <span class="text-lg md:text-xl">🗑️</span>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
