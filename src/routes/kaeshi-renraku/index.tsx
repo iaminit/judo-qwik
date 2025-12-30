@@ -95,7 +95,7 @@ export default component$(() => {
   const getYouTubeVideoId = (url?: string): string | undefined => {
     if (!url) return undefined;
     const match = url.match(
-      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
+      /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/
     );
     return match ? match[1] : undefined;
   };
@@ -208,21 +208,19 @@ export default component$(() => {
           <div class="flex gap-2 flex-wrap">
             <button
               onClick$={() => handleFilterClick('type', 'kaeshi')}
-              class={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
-                activeFilters.type === 'kaeshi'
+              class={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${activeFilters.type === 'kaeshi'
                   ? 'bg-orange-600 text-white border-orange-600 shadow-md transform scale-105'
                   : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
+                }`}
             >
               🔄 Kaeshi (Contrattacchi)
             </button>
             <button
               onClick$={() => handleFilterClick('type', 'renraku')}
-              class={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
-                activeFilters.type === 'renraku'
+              class={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${activeFilters.type === 'renraku'
                   ? 'bg-orange-600 text-white border-orange-600 shadow-md transform scale-105'
                   : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
+                }`}
             >
               🔗 Renraku (Combinazioni)
             </button>
@@ -240,11 +238,10 @@ export default component$(() => {
                 <button
                   key={cat}
                   onClick$={() => handleFilterClick('category', cat)}
-                  class={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
-                    activeFilters.category === cat
+                  class={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${activeFilters.category === cat
                       ? 'bg-orange-600 text-white border-orange-600 shadow-md transform scale-105'
                       : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
+                    }`}
                 >
                   {cat}
                 </button>
@@ -263,11 +260,10 @@ export default component$(() => {
               <button
                 key={diff}
                 onClick$={() => handleFilterClick('difficulty', diff)}
-                class={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
-                  activeFilters.difficulty === diff
+                class={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${activeFilters.difficulty === diff
                     ? 'bg-orange-600 text-white border-orange-600 shadow-md transform scale-105'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
+                  }`}
               >
                 {diff === 'easy' ? 'Facile' : diff === 'medium' ? 'Medio' : 'Difficile'}
               </button>
@@ -283,9 +279,8 @@ export default component$(() => {
             <div
               key={item.id}
               onClick$={() => openModal(item)}
-              class={`bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:scale-105 transition-all cursor-pointer group ${
-                item.id === targetId.value ? 'animate-pulse border-orange-500' : ''
-              }`}
+              class={`bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:scale-105 transition-all cursor-pointer group ${item.id === targetId.value ? 'animate-pulse border-orange-500' : ''
+                }`}
             >
               <div class="flex items-start gap-3">
                 <div class="w-12 h-12 rounded-lg bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center text-2xl shrink-0">
@@ -401,45 +396,44 @@ export default component$(() => {
               {/* Techniques Flow */}
               {(modalState.selectedItem.from_technique ||
                 modalState.selectedItem.to_technique) && (
-                <div class="mb-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
-                  <div class="flex items-center justify-center gap-4">
-                    {modalState.selectedItem.from_technique && (
-                      <div class="text-center">
-                        <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Da</div>
-                        <div class="font-bold text-lg text-gray-900 dark:text-white">
-                          {modalState.selectedItem.from_technique}
+                  <div class="mb-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
+                    <div class="flex items-center justify-center gap-4">
+                      {modalState.selectedItem.from_technique && (
+                        <div class="text-center">
+                          <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Da</div>
+                          <div class="font-bold text-lg text-gray-900 dark:text-white">
+                            {modalState.selectedItem.from_technique}
+                          </div>
                         </div>
-                      </div>
-                    )}
-
-                    {modalState.selectedItem.from_technique &&
-                      modalState.selectedItem.to_technique && (
-                        <div class="text-3xl text-orange-600">→</div>
                       )}
 
-                    {modalState.selectedItem.to_technique && (
-                      <div class="text-center">
-                        <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">A</div>
-                        <div class="font-bold text-lg text-gray-900 dark:text-white">
-                          {modalState.selectedItem.to_technique}
+                      {modalState.selectedItem.from_technique &&
+                        modalState.selectedItem.to_technique && (
+                          <div class="text-3xl text-orange-600">→</div>
+                        )}
+
+                      {modalState.selectedItem.to_technique && (
+                        <div class="text-center">
+                          <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">A</div>
+                          <div class="font-bold text-lg text-gray-900 dark:text-white">
+                            {modalState.selectedItem.to_technique}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Difficulty Badge */}
               {modalState.selectedItem.difficulty && (
                 <div class="mb-6">
                   <span
-                    class={`inline-block px-4 py-2 rounded-full text-sm font-bold ${
-                      modalState.selectedItem.difficulty === 'easy'
+                    class={`inline-block px-4 py-2 rounded-full text-sm font-bold ${modalState.selectedItem.difficulty === 'easy'
                         ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
                         : modalState.selectedItem.difficulty === 'medium'
                           ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
                           : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
-                    }`}
+                      }`}
                   >
                     Difficoltà:{' '}
                     {modalState.selectedItem.difficulty === 'easy'

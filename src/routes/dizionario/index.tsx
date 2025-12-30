@@ -1,4 +1,4 @@
-import { component$, useSignal, useVisibleTask$, $, useComputed$, useContext } from '@builder.io/qwik';
+import { component$, useSignal, useVisibleTask$, $, useComputed$, useContext, useStyles$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { pb } from '~/lib/pocketbase';
@@ -56,6 +56,7 @@ export const useDictionaryData = routeLoader$(async () => {
 });
 
 export default component$(() => {
+  useQuillStyles();
   const loc = useLocation();
   const data = useDictionaryData();
 
@@ -340,10 +341,12 @@ export default component$(() => {
 
               {/* Content */}
               {modalTerm.value.descrizione && (
-                <div
-                  class="text-gray-700 dark:text-gray-300 prose dark:prose-invert max-w-none"
-                  dangerouslySetInnerHTML={modalTerm.value.descrizione}
-                />
+                <div class="ql-container ql-snow" style={{ border: 'none' }}>
+                  <div
+                    class="ql-editor !p-0 !text-inherit"
+                    dangerouslySetInnerHTML={modalTerm.value.descrizione}
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -352,6 +355,28 @@ export default component$(() => {
     </div>
   );
 });
+
+// Add global styles for Quill support
+const useQuillStyles = () => {
+  useStyles$(`
+    @import 'https://cdn.quilljs.com/1.3.6/quill.snow.css';
+    .ql-editor { 
+      padding: 0 !important; 
+      color: inherit !important;
+      font-size: 1.125rem !important;
+      line-height: 1.75 !important;
+    }
+    .ql-editor * { color: inherit; }
+    .dark .ql-editor { color: #f3f4f6 !important; }
+    .ql-container.ql-snow { border: none !important; font-family: inherit !important; }
+    
+    .ql-color-red { color: #ef4444 !important; }
+    .ql-color-green { color: #22c55e !important; }
+    .ql-color-blue { color: #3b82f6 !important; }
+    .ql-color-orange { color: #f97316 !important; }
+  `);
+};
+
 
 export const head: DocumentHead = {
   title: '辞書 Dizionario - JudoOK',

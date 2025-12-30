@@ -24,13 +24,7 @@ export const useKataDetail = routeLoader$<KataDetailData>(async ({ params }) => 
   try {
     console.log('[KataDetail] Fetching kata with slug:', slug);
 
-    // Convert slug back to potential name formats
-    // nage-no-kata -> Nage-no Kata, Nage-no kata, nage-no kata
-    const nameFromSlug = slug
-      .split('-')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join('-');
-    const nameFromSlugLower = slug.replace(/-/g, '-');
+
 
     // Try to fetch from PocketBase by searching in the name field
     const kataRecords = await pb.collection('kata').getFullList({
@@ -90,8 +84,6 @@ export default component$(() => {
   }
 
   const kata = data.value.kata;
-  const title = kata.name;
-  const kanjiTitle = kata.japanese_name || '';
 
   return (
     <div class="max-w-5xl mx-auto px-4 py-8">

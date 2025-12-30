@@ -1,4 +1,4 @@
-import { component$, type QRL } from '@builder.io/qwik';
+import { component$, type QRL, useStyles$ } from '@builder.io/qwik';
 import type { Post } from '../blog-card';
 
 interface BlogModalProps {
@@ -8,6 +8,47 @@ interface BlogModalProps {
 }
 
 export default component$<BlogModalProps>(({ post, isOpen, onClose }) => {
+  useStyles$(`
+    @import 'https://cdn.quilljs.com/1.3.6/quill.snow.css';
+    
+    .ql-editor { 
+      padding: 0 !important; 
+      color: inherit !important;
+      font-size: 1.125rem !important;
+      line-height: 1.75 !important;
+    }
+    
+    .ql-editor * {
+      color: inherit; 
+    }
+
+    .dark .ql-editor { 
+      color: #f3f4f6 !important; 
+    }
+
+    .ql-container.ql-snow { 
+      border: none !important; 
+      font-family: inherit !important; 
+    }
+    
+    /* Ensure inline styles for colors always win over Tailwind prose */
+    .ql-editor span[style] {
+      color: attr(style);
+    }
+    
+    /* Fallback for Quill classes if inline styles fail */
+    .ql-color-red { color: #ef4444 !important; }
+    .ql-color-green { color: #22c55e !important; }
+    .ql-color-blue { color: #3b82f6 !important; }
+    .ql-color-orange { color: #f97316 !important; }
+    .ql-color-yellow { color: #eab308 !important; }
+    .ql-color-purple { color: #a855f7 !important; }
+    .ql-bg-red { background-color: #fee2e2 !important; }
+    .ql-bg-green { background-color: #dcfce7 !important; }
+    .ql-bg-blue { background-color: #dbeafe !important; }
+    .ql-bg-yellow { background-color: #fef9c3 !important; }
+  `);
+
   if (!isOpen || !post) return null;
 
   // Formatta la data
@@ -116,10 +157,14 @@ export default component$<BlogModalProps>(({ post, isOpen, onClose }) => {
           </div>
 
           {/* Full Content */}
-          <div
-            class="prose dark:prose-invert max-w-none mb-6 text-gray-700 dark:text-gray-300"
-            dangerouslySetInnerHTML={post.content}
-          />
+          <div class="mb-6 max-w-none">
+            <div class="ql-container ql-snow" style={{ border: 'none' }}>
+              <div
+                class="ql-editor"
+                dangerouslySetInnerHTML={post.content}
+              />
+            </div>
+          </div>
 
           {/* Video YouTube */}
           {youtubeId && (
@@ -142,7 +187,7 @@ export default component$<BlogModalProps>(({ post, isOpen, onClose }) => {
                   title={post.title}
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
+                  allowFullscreen
                 ></iframe>
               </div>
             </div>

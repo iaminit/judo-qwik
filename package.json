@@ -26,6 +26,7 @@
     "@builder.io/qwik": "^1.18.0",
     "@builder.io/qwik-city": "^1.18.0",
     "@eslint/js": "latest",
+    "@qwikdev/pwa": "^0.0.4",
     "@types/node": "20.19.0",
     "@types/sql.js": "^1.4.9",
     "autoprefixer": "^10.4.23",
@@ -44,6 +45,7 @@
   },
   "dependencies": {
     "pocketbase": "^0.26.5",
+    "quill": "^2.0.3",
     "sql.js": "^1.13.0"
   }
 }

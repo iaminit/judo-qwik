@@ -1,4 +1,4 @@
-import { component$, type QRL } from '@builder.io/qwik';
+import { component$, type QRL, useStyles$ } from '@builder.io/qwik';
 
 export interface Post {
   id: string;
@@ -20,12 +20,16 @@ interface BlogCardProps {
 }
 
 export default component$<BlogCardProps>(({ post, onClick, viewMode = 'grid' }) => {
-  // Tronca il contenuto a 30 parole
-  const truncateContent = (text: string, wordLimit = 30): string => {
-    const words = text.split(' ');
-    if (words.length <= wordLimit) return text;
-    return words.slice(0, wordLimit).join(' ') + '...';
-  };
+  useStyles$(`
+    @import 'https://cdn.quilljs.com/1.3.6/quill.snow.css';
+    .ql-container.ql-snow { border: none !important; font-family: inherit !important; }
+    .ql-editor { padding: 0 !important; overflow: hidden; color: inherit !important; }
+    .ql-editor * { color: inherit; }
+    .ql-color-red { color: #ef4444 !important; }
+    .ql-color-green { color: #22c55e !important; }
+    .ql-color-blue { color: #3b82f6 !important; }
+    .ql-color-orange { color: #f97316 !important; }
+  `);
 
   // Formatta la data
   const formatDate = (dateString: string): string => {
@@ -132,11 +136,15 @@ export default component$<BlogCardProps>(({ post, onClick, viewMode = 'grid' }) 
           {post.title}
         </h3>
 
-        {/* Contenuto troncato */}
-        <div
-          class="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3 prose prose-sm dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={truncateContent(post.content, 30)}
-        />
+        {/* Contenuto troncato (visivamente via CSS) */}
+        <div class="mb-4 line-clamp-3 overflow-hidden">
+          <div class="ql-container ql-snow" style={{ border: 'none' }}>
+            <div
+              class="ql-editor"
+              dangerouslySetInnerHTML={post.content}
+            />
+          </div>
+        </div>
 
         {/* Pulsante "Leggi di più" */}
         <div class="flex items-center justify-between">

@@ -133,7 +133,14 @@ export default component$(() => {
               <span class="tracking-tighter font-black">JudoOK</span>
             </Link>
 
-            {appState.sectionTitle && (
+            {loc.url.pathname.startsWith('/gestione') ? (
+              <div class="flex items-center gap-2 border-l border-gray-200 dark:border-white/10 ml-4 pl-4">
+                <span class="text-xl">🛠️</span>
+                <span class="text-base font-black text-red-600 dark:text-red-500 uppercase tracking-widest text-[13px]">
+                  Gestione
+                </span>
+              </div>
+            ) : appState.sectionTitle && (
               <div class="flex items-center gap-2 border-l border-gray-200 dark:border-white/10 ml-4 pl-4 animate-in fade-in slide-in-from-left duration-500">
                 <span class="text-xl filter drop-shadow-sm">{appState.sectionIcon}</span>
                 <span class="text-base font-black text-gray-600 dark:text-ice-gray hidden sm:inline uppercase tracking-widest text-[10px]">
@@ -264,40 +271,42 @@ export default component$(() => {
       </div>
 
       {/* Main Content */}
-      <main class="container mx-auto px-4 py-6 pb-24 flex-grow">
+      <main class={loc.url.pathname.startsWith('/gestione') ? "flex-grow flex flex-col" : "container mx-auto px-4 py-6 pb-24 flex-grow"}>
         <Slot />
       </main>
 
       {/* Bottom Navigation (Mobile) */}
-      <nav class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 pb-safe z-30 md:hidden">
-        <div class="flex justify-around items-center h-16">
-          <Link href="/" class="flex flex-col items-center justify-center w-full h-full text-red-600 dark:text-red-500">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            <span class="text-xs font-medium mt-1">Home</span>
-          </Link>
-
-          <button
-            onClick$={openSearch}
-            class="flex flex-col items-center justify-center w-full h-full text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-          >
-            <div class="bg-red-600 text-white rounded-full p-3 -mt-6 shadow-lg border-4 border-white dark:border-gray-800">
+      {!loc.url.pathname.startsWith('/gestione') && (
+        <nav class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 pb-safe z-30 md:hidden">
+          <div class="flex justify-around items-center h-16">
+            <Link href="/" class="flex flex-col items-center justify-center w-full h-full text-red-600 dark:text-red-500">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
-            </div>
-            <span class="text-xs font-medium mt-1">Cerca</span>
-          </button>
+              <span class="text-xs font-medium mt-1">Home</span>
+            </Link>
 
-          <Link href="/tecniche" class="flex flex-col items-center justify-center w-full h-full text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-            <span class="text-xs font-medium mt-1">Tecniche</span>
-          </Link>
-        </div>
-      </nav>
+            <button
+              onClick$={openSearch}
+              class="flex flex-col items-center justify-center w-full h-full text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+            >
+              <div class="bg-red-600 text-white rounded-full p-3 -mt-6 shadow-lg border-4 border-white dark:border-gray-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <span class="text-xs font-medium mt-1">Cerca</span>
+            </button>
+
+            <Link href="/tecniche" class="flex flex-col items-center justify-center w-full h-full text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <span class="text-xs font-medium mt-1">Tecniche</span>
+            </Link>
+          </div>
+        </nav>
+      )}
 
       {/* Search Modal */}
       <SearchModal isOpen={appState.isSearchOpen} onClose={closeSearch} />

@@ -290,11 +290,11 @@
 - [ ] Filtering by year/topic
 
 ### 5.3 PWA (Progressive Web App)
-- [ ] Aggiornare `public/manifest.json`
-- [ ] Service Worker per offline caching
-- [ ] Install prompt
+- [x] Aggiornare `public/manifest.json`
+- [x] Service Worker per offline caching
+- [x] Install prompt
 - [ ] Push notifications (opzionale)
-- [ ] Icone maskable (già presenti)
+- [x] Icone maskable (già presenti)
 
 ### 5.4 Dark Mode Persistente
 - [ ] Implementare context globale

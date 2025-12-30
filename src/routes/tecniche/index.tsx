@@ -1,4 +1,4 @@
-import { component$, useSignal, useStore, useComputed$, useVisibleTask$, $, useContext } from '@builder.io/qwik';
+import { component$, useSignal, useStore, useComputed$, useVisibleTask$, $, useContext, useStyles$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { pb } from '~/lib/pocketbase';
@@ -100,6 +100,7 @@ export const useTechniquesData = routeLoader$(async () => {
 });
 
 export default component$(() => {
+  useQuillStyles();
   const loc = useLocation();
   const data = useTechniquesData();
 
@@ -209,7 +210,7 @@ export default component$(() => {
 
   const getYouTubeVideoId = (url: string): string | null => {
     if (!url) return null;
-    const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    const match = url.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/);
     return match ? match[1] : null;
   };
 
@@ -417,10 +418,12 @@ export default component$(() => {
                   {modalTechnique.value.nome}
                 </h2>
 
-                <div
-                  class="text-gray-600 dark:text-slate-300 leading-relaxed prose prose-neutral dark:prose-invert max-w-none text-sm md:text-base"
-                  dangerouslySetInnerHTML={modalTechnique.value.descrizione}
-                />
+                <div class="ql-container ql-snow" style={{ border: 'none' }}>
+                  <div
+                    class="ql-editor !p-0 !text-inherit !text-sm md:!text-base"
+                    dangerouslySetInnerHTML={modalTechnique.value.descrizione}
+                  />
+                </div>
 
                 <div class="mt-8 md:mt-12 space-y-6 md:space-y-4">
                   {/* Audio Pronunciation */}
@@ -498,6 +501,26 @@ export default component$(() => {
     </div>
   );
 });
+
+// Add global styles for Quill support
+const useQuillStyles = () => {
+  useStyles$(`
+    @import 'https://cdn.quilljs.com/1.3.6/quill.snow.css';
+    .ql-editor { 
+      padding: 0 !important; 
+      color: inherit !important;
+      line-height: 1.75 !important;
+    }
+    .ql-editor * { color: inherit; }
+    .dark .ql-editor { color: #f3f4f6 !important; }
+    .ql-container.ql-snow { border: none !important; font-family: inherit !important; }
+    
+    .ql-color-red { color: #ef4444 !important; }
+    .ql-color-green { color: #22c55e !important; }
+    .ql-color-blue { color: #3b82f6 !important; }
+    .ql-color-orange { color: #f97316 !important; }
+  `);
+};
 
 export const head: DocumentHead = {
   title: '技 Tecniche - JudoOK Premium',

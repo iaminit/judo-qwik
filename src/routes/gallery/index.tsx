@@ -89,7 +89,7 @@ export default component$(() => {
   const getYouTubeVideoId = (url?: string): string | undefined => {
     if (!url) return undefined;
     const match = url.match(
-      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
+      /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/
     );
     return match ? match[1] : undefined;
   };
@@ -168,9 +168,8 @@ export default component$(() => {
           {filteredItems.value.map((item) => (
             <div
               key={item.id}
-              class={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-all group flex flex-col h-full ${
-                item.id === targetId.value ? 'animate-pulse border-pink-500' : ''
-              }`}
+              class={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-all group flex flex-col h-full ${item.id === targetId.value ? 'animate-pulse border-pink-500' : ''
+                }`}
             >
               {/* Media Preview */}
               <div class="relative aspect-square bg-gray-100 dark:bg-gray-700 overflow-hidden">
@@ -178,7 +177,7 @@ export default component$(() => {
                   <img
                     src={getImageUrl(item)}
                     alt={item.title}
-                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    class="w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
                   />
                 ) : item.type === 'video' && item.video_url ? (
@@ -325,7 +324,7 @@ export default component$(() => {
                 <img
                   src={getImageUrl(modalState.selectedItem)}
                   alt={modalState.selectedItem.title}
-                  class="max-w-full max-h-[60vh] object-contain"
+                  class="max-w-full max-h-[80vh] object-contain shadow-2xl"
                 />
               )}
               {modalState.selectedItem.type === 'video' &&

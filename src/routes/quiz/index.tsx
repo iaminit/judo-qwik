@@ -133,31 +133,6 @@ export default component$(() => {
     }
   });
 
-  const calculateGrade = $(() => {
-    if (isHansokuMake.value) {
-      return {
-        text: 'HANSOKU-MAKE',
-        score: 'Squalifica',
-        color: 'text-red-600',
-        msg: 'Preparazione insufficiente!',
-      };
-    }
-
-    const percentage = Math.round((score.value / questions.value.length) * 100);
-    if (percentage === 100) {
-      return { text: 'IPPON', color: 'text-yellow-500', msg: 'Prestazione perfetta!' };
-    }
-    if (percentage >= 70) {
-      return { text: 'WAZA-ARI', color: 'text-blue-600', msg: 'Buona prestazione!' };
-    }
-    if (percentage >= 50) {
-      return { text: 'YUKO', color: 'text-green-600', msg: 'Prestazione sufficiente' };
-    }
-    if (percentage >= 30) {
-      return { text: 'SHIDO', color: 'text-orange-500', msg: 'Devi studiare di più' };
-    }
-    return { text: 'HANSOKU-MAKE', color: 'text-red-600', msg: 'Preparazione insufficiente!' };
-  });
 
   const gradeResult = useComputed$(() => {
     if (isHansokuMake.value) {
@@ -342,14 +317,14 @@ export default component$(() => {
                     key={idx}
                     onClick$={() => handleAnswer(idx)}
                     class={`w-full p-4 md:p-5 text-left rounded-xl border-2 transition-all duration-200 flex items-start gap-4 group ${isSelected
-                        ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 shadow-md transform scale-[1.01]'
-                        : 'border-transparent bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750'
+                      ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 shadow-md transform scale-[1.01]'
+                      : 'border-transparent bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750'
                       }`}
                   >
                     <div
                       class={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 transition-colors ${isSelected
-                          ? 'bg-red-500 text-white'
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-500 group-hover:bg-gray-300'
+                        ? 'bg-red-500 text-white'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-500 group-hover:bg-gray-300'
                         }`}
                     >
                       {['A', 'B', 'C', 'D'][idx]}
@@ -367,8 +342,8 @@ export default component$(() => {
               onClick$={nextQuestion}
               disabled={!answers[currentIndex.value]}
               class={`px-8 py-4 rounded-xl font-bold text-lg shadow-lg flex items-center gap-2 transition-all duration-300 ${answers[currentIndex.value]
-                  ? 'bg-gray-900 dark:bg-white text-white dark:text-black hover:scale-105 hover:shadow-xl'
-                  : 'bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+                ? 'bg-gray-900 dark:bg-white text-white dark:text-black hover:scale-105 hover:shadow-xl'
+                : 'bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
                 }`}
             >
               {currentIndex.value === questions.value.length - 1 ? 'Termina' : 'Prossima'}
