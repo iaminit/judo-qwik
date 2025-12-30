@@ -66,6 +66,15 @@ export default component$(() => {
   const targetTermId = useSignal<string | null>(null);
   const appState = useContext(AppContext);
 
+  useVisibleTask$(({ track }) => {
+    track(() => modalTerm.value);
+    if (modalTerm.value) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  });
+
   useVisibleTask$(() => {
     appState.sectionTitle = 'Dizionario';
     appState.sectionIcon = '📚';
@@ -280,78 +289,95 @@ export default component$(() => {
         </div>
       )}
 
-      {/* Modal */}
-      {modalTerm.value && (
+      {/* Modal - Fullscreen */}
+      <div
+        class={`fixed inset-0 z-[100] transition-all duration-500 ${modalTerm.value ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+      >
+        <div onClick$={closeModal} class="absolute inset-0 bg-slate-950/90 backdrop-blur-2xl" />
+
         <div
-          class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 md:p-4"
-          onClick$={closeModal}
+          class={`relative w-full h-full bg-white dark:bg-gray-900 overflow-hidden transition-all duration-500 transform ${modalTerm.value ? 'scale-100 translate-y-0' : 'scale-95 translate-y-8'}`}
+          onClick$={(e) => e.stopPropagation()}
         >
-          <div
-            class="bg-white dark:bg-gray-800 md:rounded-2xl max-w-2xl w-full h-full md:h-auto md:max-h-[90vh] overflow-y-auto shadow-2xl"
-            onClick$={(e) => e.stopPropagation()}
-          >
-            <div class="p-4 md:p-8">
-              {/* Close button */}
+          {modalTerm.value && (
+            <div class="flex flex-col h-full">
+              {/* Floating Close Button */}
               <button
                 onClick$={closeModal}
-                class="float-right p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                class="absolute top-8 left-8 w-12 h-12 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-red-500/20 rounded-full text-red-600 flex items-center justify-center shadow-xl z-20 active:scale-90 transition-transform"
                 title="Chiudi"
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
               </button>
 
-              {/* Header */}
-              <div class="mb-6">
-                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  {modalTerm.value.termine}
-                </h2>
-                {modalTerm.value.kanji ? (
-                  <p class="text-xl text-gray-600 dark:text-gray-400">
-                    {modalTerm.value.kanji}
-                  </p>
-                ) : (
-                  <p class="text-xl italic text-gray-500 dark:text-gray-400">
-                    {modalTerm.value.termine.toLowerCase().replace(/ /g, '-')}
-                  </p>
-                )}
-              </div>
+              <div class="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-20 pt-24 md:pt-32">
+                <div class="max-w-4xl mx-auto">
+                  {/* Header */}
+                  <div class="mb-12 text-center md:text-left">
+                    <h2 class="text-4xl md:text-7xl font-black text-gray-900 dark:text-white mb-4 tracking-tighter uppercase">
+                      {modalTerm.value.termine}
+                    </h2>
+                    {modalTerm.value.kanji ? (
+                      <p class="text-2xl md:text-4xl text-red-600 font-medium">
+                        {modalTerm.value.kanji}
+                      </p>
+                    ) : (
+                      <p class="text-xl italic text-gray-400">
+                        {modalTerm.value.termine.toLowerCase().replace(/ /g, '-')}
+                      </p>
+                    )}
+                  </div>
 
-              {/* Audio button in modal */}
-              {modalTerm.value.has_audio && modalTerm.value.audio_file && (
-                <button
-                  onClick$={() => {
-                    const audioUrl = modalTerm.value!.audio_file!.startsWith('http')
-                      ? modalTerm.value!.audio_file!
-                      : `/media/audio/${modalTerm.value!.audio_file}`;
-                    const audio = new Audio(audioUrl);
-                    audio.volume = 1.0;
-                    audio.play().catch(err => console.error('Audio error:', err));
-                  }}
-                  class="mb-6 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
-                  </svg>
-                  Ascolta pronuncia
-                </button>
-              )}
+                  <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                    {/* Actions / Side */}
+                    <div class="lg:col-span-1 space-y-6">
+                      {modalTerm.value.has_audio && modalTerm.value.audio_file && (
+                        <button
+                          onClick$={() => {
+                            const audioUrl = modalTerm.value!.audio_file!.startsWith('http')
+                              ? modalTerm.value!.audio_file!
+                              : `/media/audio/${modalTerm.value!.audio_file}`;
+                            const audio = new Audio(audioUrl);
+                            audio.volume = 1.0;
+                            audio.play().catch(err => console.error('Audio error:', err));
+                          }}
+                          class="w-full py-6 bg-red-600 text-white rounded-3xl hover:bg-red-700 transition-all shadow-xl shadow-red-500/20 flex flex-col items-center gap-2 group overflow-hidden relative"
+                        >
+                          <div class="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                          <span class="text-2xl relative z-10">🔊</span>
+                          <span class="text-xs font-black uppercase tracking-widest relative z-10">Ascolta pronuncia</span>
+                        </button>
+                      )}
 
-              {/* Content */}
-              {modalTerm.value.descrizione && (
-                <div class="ql-container ql-snow" style={{ border: 'none' }}>
-                  <div
-                    class="ql-editor !p-0 !text-inherit"
-                    dangerouslySetInnerHTML={modalTerm.value.descrizione}
-                  />
+                      <div class="p-6 rounded-3xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
+                        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 block mb-2">Categoria</span>
+                        <p class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+                          {modalTerm.value.pronuncia || 'Termine Generale'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div class="lg:col-span-2">
+                      {modalTerm.value.descrizione && (
+                        <div class="ql-container ql-snow" style={{ border: 'none' }}>
+                          <div
+                            class="ql-editor !p-0 !text-inherit !text-lg md:!text-xl !leading-relaxed"
+                            dangerouslySetInnerHTML={modalTerm.value.descrizione}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 });
@@ -363,12 +389,22 @@ const useQuillStyles = () => {
     .ql-editor { 
       padding: 0 !important; 
       color: inherit !important;
-      font-size: 1.125rem !important;
-      line-height: 1.75 !important;
+      line-height: 1.8 !important;
     }
-    .ql-editor * { color: inherit; }
+    .ql-editor * { color: inherit !important; }
     .dark .ql-editor { color: #f3f4f6 !important; }
-    .ql-container.ql-snow { border: none !important; font-family: inherit !important; }
+    .ql-container.ql-snow { border: none !important; font-family: inherit !important; height: auto !important; }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.2);
+      border-radius: 10px;
+    }
     
     .ql-color-red { color: #ef4444 !important; }
     .ql-color-green { color: #22c55e !important; }

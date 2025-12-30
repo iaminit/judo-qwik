@@ -4,6 +4,8 @@ import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { pb } from '~/lib/pocketbase';
 import { AppContext } from '~/context/app-context';
 import TechniqueCard, { type Technique } from '~/components/technique-card';
+import fs from 'node:fs';
+import path from 'node:path';
 
 export const useTechniquesData = routeLoader$(async () => {
   try {
@@ -15,12 +17,24 @@ export const useTechniquesData = routeLoader$(async () => {
     console.log('[Techniques] Fetched', records.length, 'techniques');
 
     // Load technique_images to check which techniques have images
-    const techniqueImages = await pb.collection('technique_images').getFullList({
-      requestKey: null,
-    }).catch(e => {
-      console.warn('[Techniques] technique_images collection might be missing or inaccessible:', e.message);
-      return [];
-    });
+    const [techniqueImages, mediaFiles] = await Promise.all([
+      pb.collection('technique_images').getFullList({
+        requestKey: null,
+      }).catch(() => []),
+      new Promise<string[]>((resolve) => {
+        const mediaPath = path.join(process.cwd(), 'public', 'media');
+        fs.readdir(mediaPath, (err, files) => {
+          if (err) {
+            console.error('[Techniques] Error reading media directory:', err);
+            resolve([]);
+          } else {
+            resolve(files);
+          }
+        });
+      })
+    ]);
+
+    const mediaFileSet = new Set(mediaFiles);
 
     // Create a Map of technique ID → actual image filename from DB
     const techniqueImageMap = new Map<string, string>(
@@ -56,11 +70,34 @@ export const useTechniquesData = routeLoader$(async () => {
       slugBase = slugBase.replace(/o-?soto/g, 'o-soto');
       slugBase = slugBase.replace(/ko-?soto/g, 'ko-soto');
 
-      const slugImage = slugBase
+      const slugBaseClean = slugBase
         .replace(/[^-a-z0-9]/g, '')
         .replace(/--+/g, '-')
-        .replace(/^-+|-+$/g, '')
-        + '.webp';
+        .replace(/^-+|-+$/g, '');
+
+      // Try to find the image in media folder with priority extensions
+      // We also handle common variations in naming (shio/shiho, hishigi/hisiji)
+      const extensions = ['.webp', '.svg', '.jpg', '.jpeg', '.png', '.gif'];
+      const variations = [
+        slugBaseClean,
+        slugBaseClean.replace(/shio/g, 'shiho'),
+        slugBaseClean.replace(/shiho/g, 'shio'),
+        slugBaseClean.replace(/hishigi/g, 'hisiji'),
+        slugBaseClean.replace(/hisiji/g, 'hishigi'),
+        slugBaseClean.replace(/-/g, '_'), // Try underscore instead of hyphen
+        slugBaseClean.replace(/-/g, ''),  // Try no separators
+      ];
+
+      let foundImage = '';
+
+      search_loop: for (const variant of variations) {
+        for (const ext of extensions) {
+          if (mediaFileSet.has(variant + ext)) {
+            foundImage = variant + ext;
+            break search_loop;
+          }
+        }
+      }
 
       // 2. Audio normalization (mostly no hyphens)
       const normalizedName = t.name.toLowerCase()
@@ -76,7 +113,12 @@ export const useTechniquesData = routeLoader$(async () => {
 
       // 3. Resolve Image: DB first, then slug fallback, then general placeholder
       const dbImage = techniqueImageMap.get(t.id);
-      const imageName = (dbImage && dbImage !== '') ? dbImage : slugImage;
+      let imageName = (dbImage && dbImage !== '') ? dbImage : foundImage;
+
+      // Final fallback if still no image
+      if (!imageName) {
+        imageName = 'kano_non_sa.webp';
+      }
 
       return {
         id: t.id,
@@ -108,6 +150,15 @@ export default component$(() => {
   const modalTechnique = useSignal<Technique | null>(null);
   const targetId = useSignal<string | null>(null);
   const appState = useContext(AppContext);
+
+  useVisibleTask$(({ track }) => {
+    track(() => modalTechnique.value);
+    if (modalTechnique.value) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  });
 
   useVisibleTask$(() => {
     appState.sectionTitle = 'Tecniche';
@@ -339,26 +390,26 @@ export default component$(() => {
 
       {/* MODAL SYSTEM - Upgraded to Premium Style */}
       <div
-        class={`fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-8 transition-all duration-500 ${modalTechnique.value ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+        class={`fixed inset-0 z-[100] transition-all duration-500 ${modalTechnique.value ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
       >
         <div onClick$={closeModal} class="absolute inset-0 bg-slate-950/80 backdrop-blur-2xl" />
 
-        {/* Navigation Arrows - Premium High Contrast */}
+        {/* Navigation Arrows - Integrated into sides */}
         {modalTechnique.value && filteredTechniques.value.length > 1 && (
-          <div class="absolute inset-x-2 md:inset-x-10 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none z-[120]">
+          <div class="fixed inset-y-0 inset-x-4 md:inset-x-10 flex justify-between items-center pointer-events-none z-[120]">
             <button
               onClick$={prevTechnique}
-              class="w-14 h-14 md:w-20 md:h-20 rounded-full bg-white dark:bg-slate-900 border-2 border-red-500/20 text-red-600 dark:text-red-500 flex items-center justify-center hover:bg-red-600 hover:text-white transition-all pointer-events-auto shadow-2xl group active:scale-90"
+              class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all pointer-events-auto shadow-2xl active:scale-90"
             >
-              <svg class="w-8 h-8 md:w-12 md:h-12 group-hover:-translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <svg class="w-6 h-6 md:w-8 md:h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m15 18-6-6 6-6" />
               </svg>
             </button>
             <button
               onClick$={nextTechnique}
-              class="w-14 h-14 md:w-20 md:h-20 rounded-full bg-white dark:bg-slate-900 border-2 border-red-500/20 text-red-600 dark:text-red-500 flex items-center justify-center hover:bg-red-600 hover:text-white transition-all pointer-events-auto shadow-2xl group active:scale-95"
+              class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all pointer-events-auto shadow-2xl active:scale-95"
             >
-              <svg class="w-8 h-8 md:w-12 md:h-12 group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <svg class="w-6 h-6 md:w-8 md:h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m9 18 6-6-6-6" />
               </svg>
             </button>
@@ -368,12 +419,12 @@ export default component$(() => {
         <div
           onTouchStart$={handleTouchStart}
           onTouchEnd$={handleTouchEnd}
-          class={`relative w-full h-full md:h-auto md:max-w-4xl bg-white dark:bg-slate-900 rounded-none md:rounded-[3rem] overflow-hidden shadow-2xl border-none md:border md:border-white/10 transition-all duration-500 transform ${modalTechnique.value ? 'scale-100 translate-y-0' : 'scale-90 translate-y-12'}`}
+          class={`relative w-full h-full bg-white dark:bg-slate-900 overflow-hidden transition-all duration-500 transform ${modalTechnique.value ? 'scale-100 translate-y-0' : 'scale-95 translate-y-8'}`}
         >
           {modalTechnique.value && (
-            <div class="flex flex-col md:flex-row h-full overflow-y-auto md:overflow-hidden md:max-h-[90vh]">
-              {/* Modal Visual Area / Image - Sticky on Top for Mobile */}
-              <div class="w-full md:w-1/2 bg-white p-4 md:p-6 flex flex-col items-center justify-center relative min-h-[40vh] md:min-h-0 border-b md:border-b-0 md:border-r border-gray-100 dark:border-white/5">
+            <div class="flex flex-col md:flex-row h-full">
+              {/* Modal Visual Area / Image */}
+              <div class="w-full md:w-1/2 bg-white flex flex-col items-center justify-center relative min-h-[40vh] md:h-full border-b md:border-b-0 md:border-r border-gray-100 dark:border-white/5 overflow-hidden">
                 <div class="relative w-full h-full flex flex-col items-center justify-center">
                   <img
                     src={`/media/${modalTechnique.value.image}`}
@@ -391,109 +442,110 @@ export default component$(() => {
                   <div class="w-2/3 h-4 bg-black/10 blur-xl rounded-[100%] mt-4 animate-pulse" />
                 </div>
 
-                {/* Mobile Back Button - Circled X Icon */}
+                {/* Custom Close Button - Floating */}
                 <button
                   onClick$={closeModal}
-                  class="absolute top-6 left-6 w-12 h-12 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-2 border-red-500/20 rounded-full text-red-600 flex items-center justify-center shadow-2xl md:hidden z-20 active:scale-90 transition-transform"
+                  class="absolute top-8 left-8 w-12 h-12 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-red-500/20 rounded-full text-red-600 flex items-center justify-center shadow-xl z-20 active:scale-90 transition-transform"
                 >
-                  <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="m15 9-6 6M9 9l6 6"></path>
+                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12"></path>
                   </svg>
                 </button>
               </div>
 
               {/* Modal Info Area */}
-              <div class="w-full md:w-1/2 p-6 md:p-10 overflow-y-visible md:overflow-y-auto">
-                <div class="flex items-center justify-center md:justify-start gap-3 mb-6 md:mb-8">
-                  <span class="px-3 py-1 bg-red-500/10 text-red-500 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest">
-                    {modalTechnique.value.tipo}
-                  </span>
-                  <span class="px-3 py-1 bg-gray-500/10 text-gray-500 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest">
-                    {modalTechnique.value.gruppo}
-                  </span>
+              <div class="w-full md:w-1/2 flex flex-col h-full overflow-hidden">
+                <div class="flex-1 p-6 md:p-16 overflow-y-auto custom-scrollbar">
+                  <div class="flex items-center justify-center md:justify-start gap-3 mb-6 md:mb-8">
+                    <span class="px-3 py-1 bg-red-500/10 text-red-500 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest">
+                      {modalTechnique.value.tipo}
+                    </span>
+                    <span class="px-3 py-1 bg-gray-500/10 text-gray-500 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest">
+                      {modalTechnique.value.gruppo}
+                    </span>
+                  </div>
+
+                  <h2 class="text-xl md:text-4xl font-black text-gray-900 dark:text-white mb-6 tracking-tight leading-none uppercase text-center md:text-left">
+                    {modalTechnique.value.nome}
+                  </h2>
+
+                  <div class="ql-container ql-snow" style={{ border: 'none' }}>
+                    <div
+                      class="ql-editor !p-0 !text-inherit !text-sm md:!text-base"
+                      dangerouslySetInnerHTML={modalTechnique.value.descrizione}
+                    />
+                  </div>
+
+                  <div class="mt-8 md:mt-12 space-y-6 md:space-y-4">
+                    {/* Audio Pronunciation */}
+                    {modalTechnique.value.has_audio && (
+                      <button
+                        onClick$={() => {
+                          const audioUrl = modalTechnique.value!.audio_file!.startsWith('http')
+                            ? modalTechnique.value!.audio_file!
+                            : `/media/audio/${modalTechnique.value!.audio_file}`;
+                          new Audio(audioUrl).play();
+                        }}
+                        class="w-full py-4 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl font-black text-xs md:text-sm uppercase tracking-widest hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors flex items-center justify-center gap-3"
+                      >
+                        🔊 Ascolta Pronuncia
+                      </button>
+                    )}
+
+                    {/* YouTube Video - Premium Embed */}
+                    {modalTechnique.value.video_youtube && getYouTubeVideoId(modalTechnique.value.video_youtube) && (
+                      <div class="animate-in fade-in slide-in-from-top-4 duration-700">
+                        <div class="flex items-center gap-2 mb-4">
+                          <span class="w-1 h-3 bg-red-600 rounded-full"></span>
+                          <span class="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">Dimostrazione Video</span>
+                        </div>
+                        <div class="aspect-video rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-2xl border border-white/5 bg-slate-950 relative group">
+                          <iframe
+                            width="100%"
+                            height="100%"
+                            src={`https://www.youtube.com/embed/${getYouTubeVideoId(modalTechnique.value.video_youtube)}`}
+                            title={modalTechnique.value.nome}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullscreen
+                            class="w-full h-full"
+                          ></iframe>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* YouTube Redirect - Premium Button */}
+                    {modalTechnique.value.video_youtube && (
+                      <button
+                        onClick$={() => {
+                          const term = modalTechnique.value?.nome || '';
+                          const cleanDesc = (modalTechnique.value?.descrizione || '').replace(/<[^>]*>?/gm, ' ').substring(0, 50);
+                          const query = encodeURIComponent(`Judo ${term} ${cleanDesc}`);
+                          window.open(`https://www.google.com/search?q=${query}`, '_blank');
+                        }}
+                        class="w-full py-5 bg-gradient-to-r from-red-600 to-red-500 text-white font-black rounded-[1.5rem] md:rounded-2xl hover:scale-[1.02] transition-transform shadow-xl shadow-red-500/20 flex flex-col items-center justify-center leading-none group"
+                      >
+                        <span class="text-[8px] md:text-[9px] uppercase tracking-[0.2em] mb-2 opacity-70 group-hover:opacity-100 transition-opacity whitespace-nowrap">Ricerca Approfondita</span>
+                        <div class="flex items-center gap-2">
+                          <span class="text-sm md:text-base uppercase tracking-wider">Approfondisci su Google</span>
+                          <span class="text-xl">✨</span>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Spacing for mobile to avoid content cut-off by the close button if it was sticky */}
+                  <div class="h-10 md:hidden" />
                 </div>
 
-                <h2 class="text-xl md:text-4xl font-black text-gray-900 dark:text-white mb-6 tracking-tight leading-none uppercase text-center md:text-left">
-                  {modalTechnique.value.nome}
-                </h2>
-
-                <div class="ql-container ql-snow" style={{ border: 'none' }}>
-                  <div
-                    class="ql-editor !p-0 !text-inherit !text-sm md:!text-base"
-                    dangerouslySetInnerHTML={modalTechnique.value.descrizione}
-                  />
-                </div>
-
-                <div class="mt-8 md:mt-12 space-y-6 md:space-y-4">
-                  {/* Audio Pronunciation */}
-                  {modalTechnique.value.has_audio && (
-                    <button
-                      onClick$={() => {
-                        const audioUrl = modalTechnique.value!.audio_file!.startsWith('http')
-                          ? modalTechnique.value!.audio_file!
-                          : `/media/audio/${modalTechnique.value!.audio_file}`;
-                        new Audio(audioUrl).play();
-                      }}
-                      class="w-full py-4 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl font-black text-xs md:text-sm uppercase tracking-widest hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors flex items-center justify-center gap-3"
-                    >
-                      🔊 Ascolta Pronuncia
-                    </button>
-                  )}
-
-                  {/* YouTube Video - Premium Embed */}
-                  {modalTechnique.value.video_youtube && getYouTubeVideoId(modalTechnique.value.video_youtube) && (
-                    <div class="animate-in fade-in slide-in-from-top-4 duration-700">
-                      <div class="flex items-center gap-2 mb-4">
-                        <span class="w-1 h-3 bg-red-600 rounded-full"></span>
-                        <span class="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">Dimostrazione Video</span>
-                      </div>
-                      <div class="aspect-video rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-2xl border border-white/5 bg-slate-950 relative group">
-                        <iframe
-                          width="100%"
-                          height="100%"
-                          src={`https://www.youtube.com/embed/${getYouTubeVideoId(modalTechnique.value.video_youtube)}`}
-                          title={modalTechnique.value.nome}
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullscreen
-                          class="w-full h-full"
-                        ></iframe>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* YouTube Redirect - Premium Button */}
-                  {modalTechnique.value.video_youtube && (
-                    <button
-                      onClick$={() => {
-                        const term = modalTechnique.value?.nome || '';
-                        const cleanDesc = (modalTechnique.value?.descrizione || '').replace(/<[^>]*>?/gm, ' ').substring(0, 50);
-                        const query = encodeURIComponent(`Judo ${term} ${cleanDesc}`);
-                        window.open(`https://www.google.com/search?q=${query}`, '_blank');
-                      }}
-                      class="w-full py-5 bg-gradient-to-r from-red-600 to-red-500 text-white font-black rounded-[1.5rem] md:rounded-2xl hover:scale-[1.02] transition-transform shadow-xl shadow-red-500/20 flex flex-col items-center justify-center leading-none group"
-                    >
-                      <span class="text-[8px] md:text-[9px] uppercase tracking-[0.2em] mb-2 opacity-70 group-hover:opacity-100 transition-opacity whitespace-nowrap">Ricerca Approfondita</span>
-                      <div class="flex items-center gap-2">
-                        <span class="text-sm md:text-base uppercase tracking-wider">Approfondisci su Google</span>
-                        <span class="text-xl">✨</span>
-                      </div>
-                    </button>
-                  )}
-                </div>
-
-                {/* Spacing for mobile to avoid content cut-off by the close button if it was sticky */}
-                <div class="h-10 md:hidden" />
+                {/* Desktop Close Button */}
+                <button
+                  onClick$={closeModal}
+                  class="absolute top-6 right-6 w-12 h-12 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full text-white hidden md:flex items-center justify-center text-2xl transition-all"
+                >
+                  ×
+                </button>
               </div>
-
-              {/* Desktop Close Button */}
-              <button
-                onClick$={closeModal}
-                class="absolute top-6 right-6 w-12 h-12 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full text-white hidden md:flex items-center justify-center text-2xl transition-all"
-              >
-                ×
-              </button>
             </div>
           )}
         </div>
@@ -509,11 +561,26 @@ const useQuillStyles = () => {
     .ql-editor { 
       padding: 0 !important; 
       color: inherit !important;
-      line-height: 1.75 !important;
+      line-height: 1.8 !important;
+      font-size: 1.1rem !important;
     }
-    .ql-editor * { color: inherit; }
+    .ql-editor * { color: inherit !important; }
     .dark .ql-editor { color: #f3f4f6 !important; }
-    .ql-container.ql-snow { border: none !important; font-family: inherit !important; }
+    .ql-container.ql-snow { border: none !important; font-family: inherit !important; height: auto !important; }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.2);
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.4);
+    }
     
     .ql-color-red { color: #ef4444 !important; }
     .ql-color-green { color: #22c55e !important; }

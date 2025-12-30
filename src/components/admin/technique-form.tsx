@@ -16,6 +16,14 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
     const previewAudio = useSignal<string | null>(null);
     const isFallback = useSignal(false);
     const audioInputRef = useSignal<HTMLInputElement>();
+    const youtubeValue = useSignal(technique?.video_youtube || '');
+
+    const extractYoutubeId = (url: string) => {
+        if (!url) return '';
+        if (url.length === 11) return url; // Already an ID
+        const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:v\/|u\/\w\/|embed\/|watch\?v=))([^#&?]*)/);
+        return (match && match[1].length === 11) ? match[1] : '';
+    };
 
     useVisibleTask$(({ track }) => {
         track(() => technique);
@@ -193,66 +201,65 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
                         <p class="text-[10px] text-gray-400 font-medium px-2 italic">Formati consigliati: .webp, .jpg. Dimensione max: 5MB.</p>
 
                         {/* Audio Upload Section */}
-                        <div class="space-y-2 pt-4 border-t border-gray-100 dark:border-gray-800">
+                        <div class="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Audio Pronuncia (MP3)</label>
-                            <div class="relative group">
-                                <div class="min-h-[180px] rounded-3xl bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center relative shadow-inner">
-                                    {previewAudio.value ? (
-                                        <div class="text-center p-4">
-                                            <span class="text-3xl block mb-2">🎵</span>
-                                            <span class={`text-[10px] font-black uppercase tracking-widest block mb-1 ${technique?.audio ? 'text-red-600' : 'text-gray-400'}`}>
-                                                {technique?.audio ? 'File Caricato' : 'File di Sistema'}
-                                            </span>
-                                            <p class="text-[9px] text-gray-400 font-mono truncate max-w-[150px] mb-2">
-                                                {technique?.audio || (previewAudio.value ? previewAudio.value.replace('/media/audio/', '') : '')}
-                                            </p>
 
-                                            {/* Advanced Player */}
-                                            <div class="flex items-center gap-2">
-                                                <audio
-                                                    key={previewAudio.value}
-                                                    src={previewAudio.value}
-                                                    controls
-                                                    class="h-10 w-full opacity-80 hover:opacity-100 transition-opacity"
-                                                    onPlay$={() => console.log('[TechniqueForm] Playing:', previewAudio.value)}
-                                                    onError$={(e) => {
-                                                        const target = e.target as HTMLAudioElement;
-                                                        console.error('[TechniqueForm] Audio Error:', target.error?.message, 'URL:', previewAudio.value);
-                                                    }}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick$={() => {
-                                                        const audio = new Audio(previewAudio.value!);
-                                                        audio.play().catch(err => alert('Errore riproduzione: ' + err.message));
-                                                    }}
-                                                    class="p-2 bg-white dark:bg-gray-700 rounded-full shadow-sm hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                                    title="Play diretto"
-                                                >
-                                                    ▶️
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div class="text-center">
-                                            <span class="text-2xl block mb-1">🎙️</span>
-                                            <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Seleziona MP3</span>
-                                        </div>
-                                    )}
+                            {/* Drop Zone */}
+                            <div class="relative group">
+                                <div class="h-[100px] rounded-3xl bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center relative shadow-inner transition-colors group-hover:bg-gray-100 dark:group-hover:bg-gray-800">
+                                    <div class="text-center">
+                                        <span class="text-2xl block mb-1">�️</span>
+                                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                            {previewAudio.value ? 'Sostituisci MP3' : 'Carica MP3'}
+                                        </span>
+                                    </div>
                                     <input
                                         type="file"
                                         name="audio"
                                         accept="audio/mpeg, audio/mp3"
                                         onChange$={handleAudioChange}
-                                        class="absolute inset-0 opacity-0 cursor-pointer"
+                                        class="absolute inset-0 opacity-0 cursor-pointer z-10"
                                     />
                                 </div>
-                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-3xl pointer-events-none">
-                                    <span class="text-white font-black uppercase tracking-widest text-[10px]">
-                                        {previewAudio.value ? 'Sostituisci Audio' : 'Carica Audio'}
-                                    </span>
-                                </div>
                             </div>
+
+                            {/* Player Zone (Outside Drop Zone) */}
+                            {previewAudio.value && (
+                                <div class="p-4 rounded-3xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <span class="text-2xl">🎵</span>
+                                        <div class="flex-1 min-w-0">
+                                            <span class={`text-[9px] font-black uppercase tracking-widest block ${technique?.audio ? 'text-red-600' : 'text-gray-400'}`}>
+                                                {technique?.audio ? 'File Caricato' : 'File di Sistema'}
+                                            </span>
+                                            <p class="text-[10px] text-gray-400 font-mono truncate">
+                                                {technique?.audio || (previewAudio.value.startsWith('blob:') ? 'Nuovo File' : previewAudio.value.replace('/media/audio/', ''))}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+                                        <audio
+                                            key={previewAudio.value}
+                                            src={previewAudio.value}
+                                            controls
+                                            class="h-10 flex-1 opacity-90"
+                                            onPlay$={() => console.log('[TechniqueForm] Playing:', previewAudio.value)}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick$={() => {
+                                                const audio = new Audio(previewAudio.value!);
+                                                audio.play().catch(err => alert('Errore: ' + err.message));
+                                            }}
+                                            class="p-3 bg-red-600 text-white rounded-2xl shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all"
+                                            title="Play diretto"
+                                        >
+                                            ▶️
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -327,11 +334,26 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">YouTube ID</label>
+                                {extractYoutubeId(youtubeValue.value) && (
+                                    <div class="mb-4 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-black/20 aspect-video relative group/yt">
+                                        <iframe
+                                            class="w-full h-full"
+                                            src={`https://www.youtube.com/embed/${extractYoutubeId(youtubeValue.value)}`}
+                                            title="YouTube Preview"
+                                            frameBorder="0"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowFullscreen
+                                        ></iframe>
+                                    </div>
+                                )}
                                 <input
                                     type="text"
                                     name="video_youtube"
-                                    value={technique?.video_youtube}
-                                    placeholder="ID video (es. dQw4w9WgXcQ)"
+                                    value={youtubeValue.value}
+                                    onInput$={(e) => {
+                                        youtubeValue.value = (e.target as HTMLInputElement).value;
+                                    }}
+                                    placeholder="ID o Link YouTube"
                                     class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all dark:text-white font-bold"
                                 />
                             </div>

@@ -1,4 +1,4 @@
-import { component$, type QRL, useStyles$ } from '@builder.io/qwik';
+import { component$, type QRL, useStyles$, useVisibleTask$ } from '@builder.io/qwik';
 import type { Post } from '../blog-card';
 
 interface BlogModalProps {
@@ -8,6 +8,15 @@ interface BlogModalProps {
 }
 
 export default component$<BlogModalProps>(({ post, isOpen, onClose }) => {
+  useVisibleTask$(({ track }) => {
+    track(() => isOpen);
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  });
+
   useStyles$(`
     @import 'https://cdn.quilljs.com/1.3.6/quill.snow.css';
     
@@ -29,6 +38,7 @@ export default component$<BlogModalProps>(({ post, isOpen, onClose }) => {
     .ql-container.ql-snow { 
       border: none !important; 
       font-family: inherit !important; 
+      height: auto !important;
     }
     
     /* Ensure inline styles for colors always win over Tailwind prose */
@@ -47,6 +57,17 @@ export default component$<BlogModalProps>(({ post, isOpen, onClose }) => {
     .ql-bg-green { background-color: #dcfce7 !important; }
     .ql-bg-blue { background-color: #dbeafe !important; }
     .ql-bg-yellow { background-color: #fef9c3 !important; }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.2);
+      border-radius: 10px;
+    }
   `);
 
   if (!isOpen || !post) return null;
@@ -91,155 +112,109 @@ export default component$<BlogModalProps>(({ post, isOpen, onClose }) => {
     <div class="fixed inset-0 z-50 bg-black/90" onClick$={onClose}>
       {/* Modal Content */}
       <div
-        class="bg-white dark:bg-gray-900 w-full h-full overflow-y-auto"
+        class="bg-white dark:bg-gray-900 w-full h-full overflow-hidden"
         onClick$={(e) => e.stopPropagation()}
       >
-        {/* Close Button */}
-        <div class="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white line-clamp-1">
-            {post.title}
-          </h2>
-          <button
-            onClick$={onClose}
-            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
-            aria-label="Chiudi"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
-        {/* Image */}
-        <div
-          class="relative h-64 md:h-80 overflow-hidden"
-          style={{ backgroundColor: getActivityBackgroundColor(post.activity) }}
+        {/* Floating Close Button */}
+        <button
+          onClick$={onClose}
+          class="fixed top-8 left-8 w-12 h-12 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-blue-500/20 rounded-full text-blue-600 flex items-center justify-center shadow-xl z-50 active:scale-90 transition-transform"
+          aria-label="Chiudi"
         >
-          <img src={getImageUrl(post)} alt={post.title} class="w-full h-full object-contain" />
-        </div>
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
 
-        {/* Content */}
-        <div class="p-6 md:p-8">
-          {/* Date */}
-          <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width={2}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-            <span>{formatDate(post.date)}</span>
-            {post.expiration_date && (
-              <>
-                <span>•</span>
-                <span>Scade il: {formatDate(post.expiration_date)}</span>
-              </>
-            )}
-          </div>
-
-          {/* Full Content */}
-          <div class="mb-6 max-w-none">
-            <div class="ql-container ql-snow" style={{ border: 'none' }}>
-              <div
-                class="ql-editor"
-                dangerouslySetInnerHTML={post.content}
-              />
-            </div>
-          </div>
-
-          {/* Video YouTube */}
-          {youtubeId && (
-            <div class="mb-6">
-              <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-6 w-6 text-red-600"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
-                </svg>
-                Video
-              </h3>
-              <div class="aspect-w-16 aspect-h-9">
-                <iframe
-                  class="w-full aspect-video"
-                  src={`https://www.youtube.com/embed/${youtubeId}`}
-                  title={post.title}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullscreen
-                ></iframe>
+        <div class="h-full overflow-y-auto custom-scrollbar">
+          {/* Hero Section */}
+          <div class="relative h-[40vh] md:h-[60vh] overflow-hidden bg-gray-100 dark:bg-gray-800">
+            <img src={getImageUrl(post)} alt={post.title} class="w-full h-full object-contain" />
+            <div class="absolute inset-x-0 bottom-0 p-8 md:p-16 bg-gradient-to-t from-white dark:from-gray-900 to-transparent">
+              <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl md:text-6xl font-black text-gray-900 dark:text-white leading-tight uppercase tracking-tighter">
+                  {post.title}
+                </h2>
               </div>
             </div>
-          )}
+          </div>
 
-          {/* Video MP4 */}
-          {post.video_link && !youtubeId && post.video_link.endsWith('.mp4') && (
-            <div class="mb-6">
-              <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-6 w-6 text-red-600"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
-                </svg>
-                Video
-              </h3>
-              <video class="w-full" controls src={post.video_link}>
-                Il tuo browser non supporta il tag video.
-              </video>
-            </div>
-          )}
-
-          {/* External Link */}
-          {post.external_link && (
-            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <a
-                href={post.external_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors"
+          {/* Content Area */}
+          <div class="max-w-4xl mx-auto p-8 md:p-16">
+            {/* Date */}
+            <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6 font-bold uppercase tracking-widest">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width={2}
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
-                Visita Link Esterno
-              </a>
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width={2}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <span>{formatDate(post.date)}</span>
+              {post.expiration_date && (
+                <>
+                  <span class="mx-2">•</span>
+                  <span>Scade il: {formatDate(post.expiration_date)}</span>
+                </>
+              )}
             </div>
-          )}
+
+            {/* Full Content */}
+            <div class="mb-12 max-w-none">
+              <div class="ql-container ql-snow" style={{ border: 'none' }}>
+                <div
+                  class="ql-editor !text-lg md:!text-xl !leading-relaxed"
+                  dangerouslySetInnerHTML={post.content}
+                />
+              </div>
+            </div>
+
+            {/* Video YouTube */}
+            {youtubeId && (
+              <div class="mb-12">
+                <div class="flex items-center gap-2 mb-6">
+                  <span class="w-2 h-6 bg-red-600 rounded-full"></span>
+                  <h3 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-widest">Video</h3>
+                </div>
+                <div class="rounded-3xl overflow-hidden shadow-2xl border border-white/5 bg-slate-950">
+                  <iframe
+                    class="w-full aspect-video"
+                    src={`https://www.youtube.com/embed/${youtubeId}`}
+                    title={post.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullscreen
+                  ></iframe>
+                </div>
+              </div>
+            )}
+
+            {/* External Link */}
+            {post.external_link && (
+              <div class="mt-12 pt-12 border-t border-gray-100 dark:border-gray-800">
+                <a
+                  href={post.external_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-4 px-10 py-5 bg-blue-600 text-white font-black rounded-2xl hover:scale-105 transition-transform shadow-xl shadow-blue-500/20 uppercase tracking-widest"
+                >
+                  <span>Visita Link Esterno</span>
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -101,57 +101,58 @@ export default component$<DictionaryFormProps>(({ term, isNew }) => {
                     {/* Audio Upload */}
                     <div class="space-y-6">
                         <div class="space-y-2">
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">File Audio (MP3)</label>
+                            {/* Drop Zone */}
                             <div class="relative group">
-                                <div class="aspect-[4/1] md:aspect-[4/2] rounded-3xl bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center relative shadow-inner overflow-hidden">
-                                    {previewAudio.value ? (
-                                        <div class="text-center p-4">
-                                            <span class="text-3xl block mb-2">🎵</span>
-                                            <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-1">Preview Audio</span>
-
-                                            {/* Advanced Player */}
-                                            <div class="flex items-center gap-2">
-                                                <audio
-                                                    key={previewAudio.value}
-                                                    src={previewAudio.value}
-                                                    controls
-                                                    class="h-8 w-full opacity-60 hover:opacity-100 transition-opacity"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick$={() => {
-                                                        if (previewAudio.value) {
-                                                            const audio = new Audio(previewAudio.value);
-                                                            audio.play().catch(e => alert('Errore riproduzione: ' + e.message));
-                                                        }
-                                                    }}
-                                                    class="p-1 bg-white dark:bg-gray-700 rounded-full shadow-sm hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
-                                                >
-                                                    ▶️
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div class="text-center">
-                                            <span class="text-3xl block mb-2">🎙️</span>
-                                            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Seleziona MP3</span>
-                                        </div>
-                                    )}
+                                <div class="h-[100px] rounded-3xl bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center relative shadow-inner transition-colors group-hover:bg-gray-100 dark:group-hover:bg-gray-800 focus-within:ring-2 focus-within:ring-emerald-500">
+                                    <div class="text-center">
+                                        <span class="text-2xl block mb-1">🎙️</span>
+                                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                            {previewAudio.value ? 'Sostituisci Audio' : 'Carica MP3'}
+                                        </span>
+                                    </div>
                                     <input
                                         type="file"
                                         name="audio"
                                         accept="audio/mpeg, audio/mp3"
                                         onChange$={handleAudioChange}
-                                        class="absolute inset-0 opacity-0 cursor-pointer"
+                                        class="absolute inset-0 opacity-0 cursor-pointer z-10"
                                     />
                                 </div>
-                                {term?.audio && (
-                                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-3xl pointer-events-none">
-                                        <span class="text-white font-black uppercase tracking-widest text-xs">Sostituisci Audio</span>
-                                    </div>
-                                )}
                             </div>
-                            <p class="text-[10px] text-gray-400 font-medium px-2 italic">Trascina un file MP3 per la pronuncia corretta.</p>
+
+                            {/* Player Zone (Outside Drop Zone) */}
+                            {previewAudio.value && (
+                                <div class="p-4 mt-4 rounded-3xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <span class="text-2xl">🎵</span>
+                                        <div class="flex-1 min-w-0">
+                                            <span class="text-[9px] font-black text-emerald-600 uppercase tracking-widest block">Preview Pronuncia</span>
+                                            <p class="text-[10px] text-gray-400 font-mono truncate">
+                                                {term?.audio || (previewAudio.value.startsWith('blob:') ? 'Nuovo File' : 'File di Sistema')}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+                                        <audio
+                                            key={previewAudio.value}
+                                            src={previewAudio.value}
+                                            controls
+                                            class="h-10 flex-1 opacity-90"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick$={() => {
+                                                const audio = new Audio(previewAudio.value!);
+                                                audio.play().catch(e => alert('Errore: ' + e.message));
+                                            }}
+                                            class="p-3 bg-emerald-600 text-white rounded-2xl shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all"
+                                        >
+                                            ▶️
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
