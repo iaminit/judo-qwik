@@ -1,6 +1,7 @@
 import { component$, $, useSignal } from '@builder.io/qwik';
 import { useNavigate } from '@builder.io/qwik-city';
 import { pbAdmin } from '~/lib/pocketbase-admin';
+import { parsePbError } from '~/lib/error-parser';
 import RichTextEditor from './rich-text-editor';
 
 interface KataFormProps {
@@ -30,8 +31,8 @@ export default component$<KataFormProps>(({ kata, isNew }) => {
             }
             nav('/gestione/kata');
         } catch (err: any) {
-            console.error('Kata Form Error:', err);
-            error.value = err.message || 'Errore durante il salvataggio';
+            error.value = parsePbError(err);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } finally {
             loading.value = false;
         }

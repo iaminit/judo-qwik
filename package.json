@@ -44,6 +44,8 @@
     "vite-tsconfig-paths": "^4.2.1"
   },
   "dependencies": {
+    "form-data": "^4.0.5",
+    "mailgun.js": "^12.4.1",
     "pocketbase": "^0.26.5",
     "quill": "^2.0.3",
     "sql.js": "^1.13.0"

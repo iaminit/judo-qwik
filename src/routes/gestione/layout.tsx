@@ -50,12 +50,19 @@ export default component$(() => {
         { label: 'Tecniche', icon: '🥋', href: '/gestione/tecniche' },
         { label: 'Dizionario', icon: '📚', href: '/gestione/dizionario' },
         { label: 'Galleria', icon: '🖼️', href: '/gestione/gallery' },
+        { label: 'Media Center', icon: '📂', href: '/gestione/media' },
         { label: 'Bacheca & Archivio', icon: '📰', href: '/gestione/bacheca' },
         { label: 'Kata', icon: '📜', href: '/gestione/kata' },
         { label: 'Storia', icon: '📖', href: '/gestione/storia' },
-        { label: 'Community', icon: '👥', href: '/gestione/community' },
-        { label: 'Programmi', icon: '📝', href: '/gestione/programma' },
-        { label: 'FIJLKAM', icon: '🏛️', href: '/gestione/fijlkam' },
+        {
+            label: 'FIJLKAM',
+            icon: '🏛️',
+            href: '/gestione/fijlkam',
+            subItems: [
+                { label: 'Dashboard FIJLKAM', href: '/gestione/fijlkam' },
+                { label: 'Gestione Programmi', href: '/gestione/programma' },
+            ]
+        },
         { label: 'Impostazioni', icon: '⚙️', href: '/gestione/settings' },
     ];
 
@@ -78,8 +85,7 @@ export default component$(() => {
         <div class="flex-1 bg-gray-100 dark:bg-black flex font-sans overflow-hidden">
             {/* Sidebar */}
             <aside
-                class={`flex-shrink-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-white/5 transition-all duration-300 z-50 flex flex-col ${isExpanded.value ? 'w-72' : 'w-20'
-                    }`}
+                class={`flex-shrink-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-white/5 transition-all duration-300 z-50 flex flex-col ${isExpanded.value ? 'w-72' : 'w-20'}`}
             >
                 <div class="h-full flex flex-col">
                     {/* Toggle Button */}
@@ -87,7 +93,7 @@ export default component$(() => {
                         <button
                             onClick$={toggleSidebar}
                             class="p-2 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-red-600 transition-colors"
-                            title={isExpanded.value ? 'Contraì' : 'Espandi'}
+                            title={isExpanded.value ? 'Contrai' : 'Espandi'}
                         >
                             <span class={`block transition-transform duration-300 ${isExpanded.value ? 'rotate-180' : ''}`}>
                                 ➔
@@ -98,22 +104,42 @@ export default component$(() => {
                     {/* Navigation */}
                     <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
                         {menuItems.map((item) => {
+                            const isGroup = !!item.subItems;
                             const isActive = loc.url.pathname === item.href || (item.href !== '/gestione' && loc.url.pathname.startsWith(item.href));
+
                             return (
-                                <a
-                                    key={item.href}
-                                    href={item.href}
-                                    class={`flex items-center gap-4 px-4 py-3 rounded-xl font-bold transition-all group overflow-hidden whitespace-nowrap ${isActive
-                                        ? 'bg-red-600 text-white shadow-lg shadow-red-500/20'
-                                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
-                                        }`}
-                                    title={!isExpanded.value ? item.label : undefined}
-                                >
-                                    <span class="text-xl flex-shrink-0 group-hover:scale-110 transition-transform">{item.icon}</span>
-                                    <span class={`text-sm transition-all duration-300 ${isExpanded.value ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}>
-                                        {item.label}
-                                    </span>
-                                </a>
+                                <div key={item.label} class="space-y-1">
+                                    <a
+                                        href={item.href}
+                                        class={`flex items-center gap-4 px-4 py-3 rounded-xl font-bold transition-all group overflow-hidden whitespace-nowrap ${isActive
+                                            ? 'bg-red-600 text-white shadow-lg shadow-red-500/20'
+                                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+                                            }`}
+                                        title={!isExpanded.value ? item.label : undefined}
+                                    >
+                                        <span class="text-xl flex-shrink-0 group-hover:scale-110 transition-transform">{item.icon}</span>
+                                        <span class={`text-sm transition-all duration-300 ${isExpanded.value ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}>
+                                            {item.label}
+                                        </span>
+                                    </a>
+
+                                    {isGroup && isExpanded.value && isActive && (
+                                        <div class="ml-4 pl-4 border-l-2 border-red-100 dark:border-gray-800 space-y-1 py-1 animate-in slide-in-from-top-2 duration-300">
+                                            {item.subItems?.map(sub => (
+                                                <a
+                                                    key={sub.href}
+                                                    href={sub.href}
+                                                    class={`block px-4 py-2 text-xs font-bold rounded-lg transition-all ${loc.url.pathname === sub.href
+                                                        ? 'text-red-600 bg-red-50 dark:bg-red-900/10'
+                                                        : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+                                                        }`}
+                                                >
+                                                    {sub.label}
+                                                </a>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             );
                         })}
                     </nav>

@@ -1,6 +1,7 @@
 import { component$, $, useSignal } from '@builder.io/qwik';
 import { useNavigate } from '@builder.io/qwik-city';
 import { pbAdmin } from '~/lib/pocketbase-admin';
+import { parsePbError } from '~/lib/error-parser';
 import RichTextEditor from './rich-text-editor';
 
 interface ProgramFormProps {
@@ -37,8 +38,8 @@ export default component$<ProgramFormProps>(({ program, isNew }) => {
             }
             nav('/gestione/programma');
         } catch (err: any) {
-            console.error('Program Form Error:', err);
-            error.value = err.message || 'Errore durante il salvataggio';
+            error.value = parsePbError(err);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } finally {
             loading.value = false;
         }

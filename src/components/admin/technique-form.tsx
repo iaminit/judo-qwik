@@ -1,6 +1,7 @@
 import { component$, $, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import { useNavigate } from '@builder.io/qwik-city';
 import { pbAdmin } from '~/lib/pocketbase-admin';
+import { parsePbError } from '~/lib/error-parser';
 import RichTextEditor from './rich-text-editor';
 
 interface TechniqueFormProps {
@@ -110,11 +111,23 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
     const handleFileChange = $((e: Event) => {
         const input = e.target as HTMLInputElement;
         if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const maxSize = 5 * 1024 * 1024; // 5MB
+
+            if (file.size > maxSize) {
+                error.value = 'L\'immagine è troppo grande. Il limite è 5MB.';
+                input.value = '';
+                previewImage.value = null;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            error.value = null;
             const reader = new FileReader();
             reader.onload = (event) => {
                 previewImage.value = event.target?.result as string;
             };
-            reader.readAsDataURL(input.files[0]);
+            reader.readAsDataURL(file);
         }
     });
 
@@ -143,8 +156,8 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
             }
             nav('/gestione/tecniche');
         } catch (err: any) {
-            console.error('Form Error:', err);
-            error.value = err.message || 'Errore durante il salvataggio';
+            error.value = parsePbError(err);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } finally {
             loading.value = false;
         }

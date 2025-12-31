@@ -1,7 +1,7 @@
 import PocketBase from 'pocketbase';
 
-// Use hardcoded URL for SSR compatibility
-const url = 'http://127.0.0.1:8090';
+// Use environment variable if available, fallback to local
+const url = import.meta.env.VITE_PB_URL || 'http://127.0.0.1:8090';
 export const pb = new PocketBase(url);
 
 // Log for debugging

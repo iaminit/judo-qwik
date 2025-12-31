@@ -1,35 +1,76 @@
-import { component$, useResource$, Resource } from '@builder.io/qwik';
+import { component$, useSignal, $, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { pbAdmin } from '~/lib/pocketbase-admin';
+import { AdminTaskList } from '~/components/admin/admin-task-list';
+import { TaskModal } from '~/components/admin/task-modal';
 
 interface DashboardStats {
   techniques: number;
   dictionary: number;
   gallery: number;
   posts: number;
+  categories: { name: string, count: number }[];
 }
 
 export default component$(() => {
-  const stats = useResource$<DashboardStats>(async () => {
-    // In a real scenario, we'd fetch these counts from PB
+  const dashboardData = useSignal<DashboardStats>({
+    techniques: 0,
+    dictionary: 0,
+    gallery: 0,
+    posts: 0,
+    categories: []
+  });
+  const isLoading = useSignal(true);
+  const isModalOpen = useSignal(false);
+
+  const fetchStats = $(async () => {
+    isLoading.value = true;
     try {
-      const [techs, dict, gallery, posts] = await Promise.all([
-        pbAdmin.collection('techniques').getList(1, 1, { requestKey: null }),
+      // Fetch collections individually to avoid one failing breaking all
+      const [techsResult, dictResult, galleryResult, postsResult] = await Promise.allSettled([
+        pbAdmin.collection('techniques').getFullList({ requestKey: null }),
         pbAdmin.collection('dictionary').getList(1, 1, { requestKey: null }),
         pbAdmin.collection('gallery').getList(1, 1, { requestKey: null }),
         pbAdmin.collection('post').getList(1, 1, { requestKey: null }),
       ]);
 
-      return {
-        techniques: techs.totalItems,
+      const techs = techsResult.status === 'fulfilled' ? techsResult.value : [];
+      const dict = dictResult.status === 'fulfilled' ? dictResult.value : { totalItems: 0 };
+      const gallery = galleryResult.status === 'fulfilled' ? galleryResult.value : { totalItems: 0 };
+      const posts = postsResult.status === 'fulfilled' ? postsResult.value : { totalItems: 0 };
+
+      const catMap: Record<string, number> = {};
+      techs.forEach(t => {
+        const cat = t.category || 'Altro';
+        catMap[cat] = (catMap[cat] || 0) + 1;
+      });
+
+      const categories = Object.entries(catMap).map(([name, count]) => ({ name, count }));
+
+      dashboardData.value = {
+        techniques: techs.length,
         dictionary: dict.totalItems,
         gallery: gallery.totalItems,
         posts: posts.totalItems,
+        categories: categories.sort((a, b) => b.count - a.count)
       };
     } catch (e) {
-      console.error('Error fetching dashboard stats:', e);
-      return { techniques: 0, dictionary: 0, gallery: 0, posts: 0 };
+      console.error('[Dashboard] Error fetching stats:', e);
+    } finally {
+      isLoading.value = false;
     }
+  });
+
+  useVisibleTask$(() => {
+    fetchStats();
+  });
+
+  const handleOpenModal = $(() => {
+    isModalOpen.value = true;
+  });
+
+  const handleCloseModal = $(() => {
+    isModalOpen.value = false;
   });
 
   return (
@@ -45,38 +86,52 @@ export default component$(() => {
       </header>
 
       {/* Stats Grid */}
-      <Resource
-        value={stats}
-        onPending={() => (
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} class="h-32 bg-white dark:bg-gray-900 rounded-3xl animate-pulse"></div>
-            ))}
-          </div>
-        )}
-        onResolved={(res) => (
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard label="Tecniche" value={res.techniques} icon="🥋" color="red" />
-            <StatCard label="Termini" value={res.dictionary} icon="📚" color="blue" />
-            <StatCard label="Media" value={res.gallery} icon="🖼️" color="green" />
-            <StatCard label="News" value={res.posts} icon="📰" color="yellow" />
-          </div>
-        )}
-      />
+      {isLoading.value ? (
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} class="h-32 bg-white dark:bg-gray-900 rounded-3xl animate-pulse"></div>
+          ))}
+        </div>
+      ) : (
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard label="Tecniche" value={dashboardData.value.techniques} icon="🥋" color="red" />
+          <StatCard label="Termini" value={dashboardData.value.dictionary} icon="📚" color="blue" />
+          <StatCard label="Media" value={dashboardData.value.gallery} icon="🖼️" color="green" />
+          <StatCard label="News" value={dashboardData.value.posts} icon="📰" color="yellow" />
+        </div>
+      )}
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent Activity */}
+        {/* Admin Tasks Panel */}
         <div class="lg:col-span-2 bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-8 shadow-sm">
           <div class="flex items-center justify-between mb-8">
-            <h3 class="text-xl font-black text-gray-900 dark:text-white tracking-tight">Attività Recente</h3>
-            <button class="text-sm font-bold text-red-600 hover:scale-105 transition-transform">Verifica tutto &rarr;</button>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                <span class="text-xl">✓</span>
+              </div>
+              <div>
+                <h3 class="text-xl font-black text-gray-900 dark:text-white tracking-tight">Task Amministrativi</h3>
+                <p class="text-xs text-gray-400 font-medium">Gestisci le attività del Dojo</p>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button
+                onClick$={fetchStats}
+                class="px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                title="Ricarica task"
+              >
+                🔄
+              </button>
+              <button
+                onClick$={handleOpenModal}
+                class="px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition-colors"
+              >
+                ➕ Nuovo Task
+              </button>
+            </div>
           </div>
 
-          <div class="space-y-6">
-            <ActivityItem title="Nuova tecnica aggiunta" time="2 ore fa" user="Admin" icon="🆕" />
-            <ActivityItem title="Termine dizionario modificato" time="5 ore fa" user="Roberto" icon="✍️" />
-            <ActivityItem title="Galleria aggiornata" time="Ieri" user="Admin" icon="📸" />
-          </div>
+          <AdminTaskList onRefresh={fetchStats} />
         </div>
 
         {/* Quick Actions */}
@@ -90,6 +145,13 @@ export default component$(() => {
           </div>
         </div>
       </div>
+
+      {/* Task Creation Modal */}
+      <TaskModal
+        isOpen={isModalOpen.value}
+        onClose={handleCloseModal}
+        onTaskCreated={fetchStats}
+      />
     </div>
   );
 });

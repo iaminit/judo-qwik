@@ -1,6 +1,7 @@
 import { component$, $, useSignal } from '@builder.io/qwik';
 import { useNavigate } from '@builder.io/qwik-city';
 import { pbAdmin } from '~/lib/pocketbase-admin';
+import { parsePbError } from '~/lib/error-parser';
 import RichTextEditor from './rich-text-editor';
 
 interface PostFormProps {
@@ -88,26 +89,17 @@ export default component$<PostFormProps>(({ post, isNew }) => {
 
         try {
             console.log('[Admin] Final data check:', Object.fromEntries(finalData as any));
-            alert('Comunicazione con il server in corso...');
 
             if (isNew) {
                 await pbAdmin.collection('post').create(finalData);
-                alert('✅ News creata con successo!');
             } else {
                 await pbAdmin.collection('post').update(post.id, finalData);
-                alert('✅ Modifiche salvate con successo!');
             }
 
             window.location.href = '/gestione/bacheca';
         } catch (err: any) {
-            console.error('[Admin] PocketBase error:', err);
-            let message = 'Errore sconosciuto during save.';
-            if (err.response?.data) {
-                message = 'Dati non validi:\n' + JSON.stringify(err.response.data, null, 2);
-            } else if (err.message) {
-                message = err.message;
-            }
-            alert('❌ OPS! ' + message);
+            error.value = parsePbError(err);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } finally {
             loading.value = false;
         }
@@ -116,11 +108,23 @@ export default component$<PostFormProps>(({ post, isNew }) => {
     const handleImageChange = $((e: Event) => {
         const input = e.target as HTMLInputElement;
         if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const maxSize = 5 * 1024 * 1024; // 5MB
+
+            if (file.size > maxSize) {
+                error.value = 'L\'immagine è troppo grande. Il limite è 5MB.';
+                input.value = '';
+                imagePreview.value = null;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            error.value = null;
             const reader = new FileReader();
             reader.onload = (event) => {
                 imagePreview.value = event.target?.result as string;
             };
-            reader.readAsDataURL(input.files[0]);
+            reader.readAsDataURL(file);
         }
     });
 

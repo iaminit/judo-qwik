@@ -1,6 +1,7 @@
 import { component$, $, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import { useNavigate } from '@builder.io/qwik-city';
 import { pbAdmin } from '~/lib/pocketbase-admin';
+import { parsePbError } from '~/lib/error-parser';
 import RichTextEditor from './rich-text-editor';
 
 interface GalleryFormProps {
@@ -48,8 +49,8 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
             }
             nav('/gestione/gallery');
         } catch (err: any) {
-            console.error('Gallery Form Error:', err);
-            error.value = err.message || 'Errore durante il salvataggio';
+            error.value = parsePbError(err);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } finally {
             loading.value = false;
         }
