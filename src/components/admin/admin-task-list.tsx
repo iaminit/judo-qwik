@@ -43,7 +43,6 @@ export const AdminTaskList = component$<AdminTaskListProps>(({ onRefresh }) => {
             const results = await pbAdmin.collection('task_admin').getFullList({
                 requestKey: null,
                 expand: 'assegnato_a_id', // Espandi relazione utente
-                sort: '-in_evidenza,-created' // Pin in evidenza, poi più recenti
             });
 
             console.log('[AdminTaskList] ✅ Fetched tasks:', results.length);
@@ -182,8 +181,7 @@ export const AdminTaskList = component$<AdminTaskListProps>(({ onRefresh }) => {
             {tasks.value.map(task => (
                 <div
                     key={task.id}
-                    class={`group flex items-start gap-4 p-4 rounded-xl border transition-all ${
-                        task.completato
+                    class={`group flex items-start gap-4 p-4 rounded-xl border transition-all ${task.completato
                             ? 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 opacity-60'
                             : task.in_evidenza
                                 ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800 shadow-sm'
@@ -198,8 +196,7 @@ export const AdminTaskList = component$<AdminTaskListProps>(({ onRefresh }) => {
                     {/* Checkbox */}
                     <button
                         onClick$={() => toggleComplete(task.id, task.completato)}
-                        class={`flex-shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
-                            task.completato
+                        class={`flex-shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${task.completato
                                 ? 'bg-emerald-500 border-emerald-500'
                                 : 'border-gray-300 dark:border-gray-600 hover:border-emerald-400'
                             }`}

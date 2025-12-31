@@ -26,17 +26,21 @@ export const TaskModal = component$<TaskModalProps>(({ isOpen, onClose, onTaskCr
         error.value = '';
 
         const taskData = {
-            title: title.value.trim(),
-            description: description.value.trim(),
-            priority: priority.value,
-            completed: false
+            titolo: title.value.trim(),
+            contenuto: description.value.trim(),
+            priorita: priority.value === 'low' ? 'bassa' :
+                priority.value === 'medium' ? 'media' :
+                    priority.value === 'high' ? 'alta' : 'urgente',
+            completato: false,
+            stato: 'aperto',
+            pubblicato: true
         };
 
-        console.log('[TaskModal] Creating task with data:', taskData);
+        console.log('[TaskModal] Creating task in task_admin with data:', taskData);
 
         try {
-            const result = await pbAdmin.collection('admin_tasks').create(taskData);
-            console.log('[TaskModal] ✅ Task created successfully:', result);
+            const result = await pbAdmin.collection('task_admin').create(taskData);
+            console.log('[TaskModal] ✅ Task created successfully in task_admin:', result);
 
             // Reset form
             title.value = '';
