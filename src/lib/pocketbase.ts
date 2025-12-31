@@ -1,7 +1,8 @@
 import PocketBase from 'pocketbase';
 
-// Use hardcoded URL for SSR compatibility
-const url = 'http://127.0.0.1:8090';
+// Use environment variable for URL, fallback to localhost
+// PUBLIC_PB_URL is used for client-side access
+const url = import.meta.env.PUBLIC_PB_URL || 'http://127.0.0.1:8090';
 export const pb = new PocketBase(url);
 
 // Log for debugging
