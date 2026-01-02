@@ -42,6 +42,32 @@ export const TaskModal = component$<TaskModalProps>(({ isOpen, onClose, onTaskCr
             const result = await pbAdmin.collection('task_admin').create(taskData);
             console.log('[TaskModal] ✅ Task created successfully in task_admin:', result);
 
+            // Invia notifica email all'admin
+            try {
+                const emailResponse = await fetch('/api/email/task-notification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        title: taskData.titolo,
+                        description: taskData.contenuto || 'Nessuna descrizione',
+                        priority: taskData.priorita,
+                        createdBy: 'Admin Dashboard'
+                    }),
+                });
+
+                const emailResult = await emailResponse.json();
+                if (emailResult.success) {
+                    console.log('[TaskModal] ✉️ Email notification sent successfully');
+                } else {
+                    console.warn('[TaskModal] ⚠️ Email notification failed:', emailResult.error);
+                }
+            } catch (emailError) {
+                console.error('[TaskModal] ⚠️ Error sending email notification:', emailError);
+                // Non bloccare il flusso se l'email fallisce
+            }
+
             // Reset form
             title.value = '';
             description.value = '';

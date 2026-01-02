@@ -47,18 +47,18 @@ export default component$(() => {
 
       // Dan Level Filter
       if (settings.danLevel !== 'musashi' && settings.danLevel !== 'mifune' && settings.danLevel !== 'kano') {
-        filters.push(`dan_level="${settings.danLevel}"`);
+        filters.push(`livello_dan="${settings.danLevel}"`);
       }
 
       // Category Filter
       if (settings.category !== 'mista' && settings.category !== 'generale') {
-        filters.push(`category="${settings.category}"`);
+        filters.push(`categoria="${settings.category}"`);
       }
 
       const filterString = filters.join(' && ');
 
-      // Fetch questions from PocketBase
-      const records = await pb.collection('quiz_questions').getFullList({
+      // Fetch questions from PocketBase (new unified collection)
+      const records = await pb.collection('domande_quiz').getFullList({
         filter: filterString,
         sort: '@random',
         requestKey: null,
@@ -74,13 +74,13 @@ export default component$(() => {
       const count = Math.min(parseInt(settings.questionCount), shuffled.length);
       const selectedQuestions = shuffled.slice(0, count).map((q: any) => ({
         id: q.id,
-        question: q.question,
-        options: [q.option_a, q.option_b, q.option_c, q.option_d],
-        correctAnswer: q.correct_answer,
-        explanation: q.explanation,
-        image_path: q.image_path,
-        category: q.category,
-        dan_level: q.dan_level,
+        question: q.domanda,
+        options: [q.opzione_a, q.opzione_b, q.opzione_c, q.opzione_d],
+        correctAnswer: q.risposta_corretta,
+        explanation: q.spiegazione,
+        image_path: q.immagine,
+        category: q.categoria,
+        dan_level: q.livello_dan,
       }));
 
       questions.value = selectedQuestions;

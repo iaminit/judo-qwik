@@ -7,15 +7,23 @@ import TermCard, { type Term } from '~/components/term-card';
 
 export const useDictionaryData = routeLoader$(async () => {
   try {
-    console.log('[Dictionary] Fetching from PocketBase...');
-    const records = await pb.collection('dictionary').getFullList({
-      sort: 'term',
+    console.log('[Dictionary] Fetching from collection "dizionario"...');
+
+    const records = await pb.collection('dizionario').getFullList({
+      sort: 'titolo',
       requestKey: null,
     });
+
     console.log('[Dictionary] Fetched', records.length, 'records');
 
     const terms: Term[] = records.map((record: any) => {
-      const normalizedName = record.term.toLowerCase()
+      // Use new Italian field structure
+      const termName = record.titolo || '';
+      const termKanji = record.titolo_secondario || '';
+      const termDesc = record.contenuto || '';
+      const termPronunciation = record.categoria_secondaria || '';
+
+      const normalizedName = termName.toLowerCase()
         .replace(/ /g, '')
         .replace(/-/g, '')
         .replace(/ō/g, 'o')
@@ -29,10 +37,10 @@ export const useDictionaryData = routeLoader$(async () => {
 
       return {
         id: record.id,
-        termine: record.term,
-        pronuncia: record.pronunciation,
-        descrizione: record.description,
-        kanji: record.kanji,
+        termine: termName,
+        pronuncia: termPronunciation,
+        descrizione: termDesc,
+        kanji: termKanji,
         audio_file: pbAudio || fallbackAudio,
         has_audio: !!pbAudio || true,
       };

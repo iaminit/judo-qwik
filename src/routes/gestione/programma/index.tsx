@@ -12,20 +12,22 @@ export default component$(() => {
     const fetchProgram = $(async () => {
         isLoading.value = true;
         try {
-            const filter = activeDan.value ? `dan_level = ${activeDan.value}` : '';
+            const filter = activeDan.value
+                ? `livello = ${activeDan.value} && tags ~ "esame_dan"`
+                : 'tags ~ "esame_dan"';
 
-            const records = await pbAdmin.collection('exam_program').getFullList({
-                sort: 'dan_level,order',
+            const records = await pbAdmin.collection('programmi_fijlkam').getFullList({
+                sort: 'livello,ordine',
                 filter: filter,
                 requestKey: null,
             });
 
             programList.value = records.map(r => ({
                 id: r.id,
-                title: r.title,
-                dan_level: r.dan_level,
-                section_type: r.section_type,
-                order: r.order
+                titolo: r.titolo,
+                livello: r.livello,
+                categoria_secondaria: r.categoria_secondaria,
+                ordine: r.ordine
             }));
         } catch (e) {
             console.error('[Admin Program] Error:', e);
@@ -43,7 +45,7 @@ export default component$(() => {
     const handleDelete = $(async (id: string) => {
         if (!confirm('Sei sicuro di voler eliminare questa sezione del programma?')) return;
         try {
-            await pbAdmin.collection('exam_program').delete(id);
+            await pbAdmin.collection('programmi_fijlkam').delete(id);
             programList.value = programList.value.filter(item => item.id !== id);
             selectedIds.value = selectedIds.value.filter(sid => sid !== id);
         } catch (e) {
@@ -57,7 +59,7 @@ export default component$(() => {
         isDeleting.value = true;
         try {
             for (const id of selectedIds.value) {
-                await pbAdmin.collection('exam_program').delete(id);
+                await pbAdmin.collection('programmi_fijlkam').delete(id);
             }
             programList.value = programList.value.filter(item => !selectedIds.value.includes(item.id));
             selectedIds.value = [];
@@ -175,18 +177,18 @@ export default component$(() => {
                                                 />
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <span class="font-black text-indigo-600 dark:text-indigo-400">{prog.dan_level}° DAN</span>
+                                                <span class="font-black text-indigo-600 dark:text-indigo-400">{prog.livello}° DAN</span>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-widest">
-                                                    {prog.section_type || '-'}
+                                                    {prog.categoria_secondaria || '-'}
                                                 </span>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap font-bold text-gray-900 dark:text-white">
-                                                {prog.title}
+                                                {prog.titolo}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-400">
-                                                #{prog.order}
+                                                #{prog.ordine}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-right">
                                                 <div class="flex justify-end gap-2 opacity-20 group-hover:opacity-100 transition-opacity">

@@ -57,6 +57,17 @@ export default component$<BlogCardProps>(({ post, onClick, viewMode = 'grid' }) 
     return colors[activity || ''] || '#fff';
   };
 
+  // Funzione per generare un estratto di testo puro limitato a 25 parole
+  const getExcerpt = (html: string, limit: number = 25) => {
+    if (!html) return '';
+    const plainText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    const words = plainText.split(' ');
+    if (words.length <= limit) return plainText;
+    return words.slice(0, limit).join(' ') + '...';
+  };
+
+  const excerpt = getExcerpt(post.content);
+
   // Modalità lista: solo data e titolo
   if (viewMode === 'list') {
     return (
@@ -136,15 +147,10 @@ export default component$<BlogCardProps>(({ post, onClick, viewMode = 'grid' }) 
           {post.title}
         </h3>
 
-        {/* Contenuto troncato (visivamente via CSS) */}
-        <div class="mb-4 line-clamp-3 overflow-hidden">
-          <div class="ql-container ql-snow" style={{ border: 'none' }}>
-            <div
-              class="ql-editor"
-              dangerouslySetInnerHTML={post.content}
-            />
-          </div>
-        </div>
+        {/* Contenuto troncato (25 parole) */}
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6 line-clamp-3 leading-relaxed">
+          {excerpt}
+        </p>
 
         {/* Pulsante "Leggi di più" */}
         <div class="flex items-center justify-between">

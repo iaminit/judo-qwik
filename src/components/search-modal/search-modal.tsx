@@ -25,16 +25,14 @@ interface Collection {
 }
 
 const collections: Collection[] = [
-  { name: 'dictionary', label: 'Dizionario', icon: '📖', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300', fields: ['term', 'kanji', 'description'] },
-  { name: 'techniques', label: 'Tecniche', icon: '🥋', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', fields: ['name', 'description', 'group', 'category'] },
-  { name: 'quiz_questions', label: 'Quiz', icon: '❓', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300', fields: ['question', 'correct_answer'] },
-  { name: 'kata', label: 'Kata', icon: '形', color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600', fields: ['name', 'japanese_name', 'description'] },
-  { name: 'history', label: 'Storia', icon: '📜', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', fields: ['title', 'subtitle', 'content'] },
-  { name: 'fijlkam', label: 'FIJLKAM', icon: '🇮🇹', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', fields: ['title', 'content'] },
-  { name: 'regulations', label: 'Arbitraggio', icon: '⚖️', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300', fields: ['title', 'subtitle', 'content'] },
-  { name: 'post', label: 'Bacheca', icon: '📌', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300', fields: ['title', 'content'] },
-  // { name: 'gallery', label: 'Galleria', icon: '📸', color: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300', fields: ['title', 'description'] },
-  // { name: 'kaeshi_renraku', label: 'Kaeshi & Renraku', icon: '🔄', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300', fields: ['name', 'description', 'from_technique', 'to_technique'] },
+  { name: 'dizionario', label: 'Dizionario', icon: '📖', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300', fields: ['titolo', 'contenuto'] },
+  { name: 'tecniche', label: 'Tecniche', icon: '🥋', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', fields: ['titolo', 'contenuto', 'categoria_secondaria'] },
+  { name: 'domande_quiz', label: 'Quiz', icon: '❓', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300', fields: ['domanda', 'spiegazione'] },
+  { name: 'kata', label: 'Kata', icon: '形', color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600', fields: ['titolo', 'contenuto', 'titolo_secondario'] },
+  { name: 'storia', label: 'Storia', icon: '📜', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', fields: ['titolo', 'contenuto'] },
+  { name: 'programmi_fijlkam', label: 'FIJLKAM', icon: '🇮🇹', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', fields: ['titolo', 'contenuto'] },
+  { name: 'bacheca', label: 'Bacheca', icon: '📌', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300', fields: ['titolo', 'contenuto'] },
+  { name: 'galleria', label: 'Galleria', icon: '📸', color: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300', fields: ['titolo', 'contenuto'] },
 ];
 
 const generateVariations = (term: string): string[] => {
@@ -171,25 +169,21 @@ export default component$<SearchModalProps>(({ isOpen, onClose }) => {
   });
 
   const getResultTitle = $((result: SearchResult) => {
-    if (result.term) return result.term;
-    if (result.name) return result.name;
-    if (result.title) return result.title;
-    if (result.question) return result.question.substring(0, 60) + '...';
+    if (result.domanda) return result.domanda.substring(0, 60) + '...';
+    if (result.titolo) return result.titolo;
     return 'Risultato';
   });
 
   const handleNavigate = $((result: SearchResult) => {
     const routes: Record<string, string> = {
-      dictionary: `/dizionario?search=${encodeURIComponent(result.term || '')}&id=${result.id}`,
-      techniques: `/tecniche?search=${encodeURIComponent(result.name || '')}&id=${result.id}`,
-      quiz_questions: '/quiz',
-      history: `/storia?search=${encodeURIComponent(result.title || '')}&id=${result.id}`,
-      kata: `/kata?search=${encodeURIComponent(result.name || '')}&id=${result.id}`,
-      fijlkam: `/fijlkam?id=${result.id}`,
-      regulations: `/fijlkam?id=${result.id}`,
-      post: `/bacheca?search=${encodeURIComponent(result.title || '')}&id=${result.id}`,
-      gallery: `/gallery?search=${encodeURIComponent(result.title || '')}&id=${result.id}`,
-      kaeshi_renraku: `/kaeshi-renraku?id=${result.id}`,
+      dizionario: `/dizionario?search=${encodeURIComponent(result.titolo || '')}&id=${result.id}`,
+      tecniche: `/tecniche?search=${encodeURIComponent(result.titolo || '')}&id=${result.id}`,
+      domande_quiz: '/quiz',
+      storia: `/storia?search=${encodeURIComponent(result.titolo || '')}&id=${result.id}`,
+      kata: `/kata?search=${encodeURIComponent(result.titolo || '')}&id=${result.id}`,
+      programmi_fijlkam: `/fijlkam?id=${result.id}`,
+      bacheca: `/bacheca?search=${encodeURIComponent(result.titolo || '')}&id=${result.id}`,
+      galleria: `/gallery?search=${encodeURIComponent(result.titolo || '')}&id=${result.id}`,
     };
     const route = routes[result._collection] || '/';
     onClose();
@@ -363,10 +357,10 @@ export default component$<SearchModalProps>(({ isOpen, onClose }) => {
                       <h3 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-tight group-hover:text-red-600 transition-colors">
                         {getResultTitle(result)}
                       </h3>
-                      {result.description && (
+                      {result.contenuto && (
                         <div
                           class="mt-4 text-sm text-gray-500 dark:text-ice-gray line-clamp-2 leading-relaxed"
-                          dangerouslySetInnerHTML={result.description.replace(/<[^>]*>?/gm, ' ')}
+                          dangerouslySetInnerHTML={result.contenuto.replace(/<[^>]*>?/gm, ' ')}
                         />
                       )}
                     </div>

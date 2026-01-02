@@ -3,6 +3,7 @@ import { useNavigate } from '@builder.io/qwik-city';
 import { pbAdmin } from '~/lib/pocketbase-admin';
 import { parsePbError } from '~/lib/error-parser';
 import RichTextEditor from './rich-text-editor';
+import { MediaBrowserModal } from './media-browser-modal';
 
 interface PostFormProps {
     post?: any;
@@ -14,6 +15,8 @@ export default component$<PostFormProps>(({ post, isNew }) => {
     const loading = useSignal(false);
     const error = useSignal<string | null>(null);
     const imagePreview = useSignal<string | null>(null);
+    const isMediaModalOpen = useSignal(false);
+    const selectedMediaName = useSignal<string | null>(null);
 
     const handleSubmit = $(async () => {
         console.log('[Admin] Form SUBMIT triggered');
@@ -31,25 +34,41 @@ export default component$<PostFormProps>(({ post, isNew }) => {
         const finalData = new FormData();
 
         // Title (Required)
-        const title = (rawFormData.get('title') as string)?.trim();
+        const title = (rawFormData.get('titolo') as string)?.trim();
         if (!title) {
             alert('Il campo TITOLO è obbligatorio.');
             loading.value = false;
             return;
         }
-        finalData.append('title', title);
+        finalData.append('titolo', title);
+
+        // Generate slug
+        const generateSlug = (text: string) => {
+            return (text || 'untitled')
+                .toLowerCase()
+                .replace(/[àáâãäå]/g, 'a')
+                .replace(/[èéêë]/g, 'e')
+                .replace(/[ìíîï]/g, 'i')
+                .replace(/[òóôõö]/g, 'o')
+                .replace(/[ùúûü]/g, 'u')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .substring(0, 100);
+        };
+        finalData.append('slug', generateSlug(title));
 
         // Content
-        const content = rawFormData.get('content') as string;
+        const content = rawFormData.get('contenuto') as string;
         console.log('[Admin] Sending content:', content);
-        finalData.append('content', content || '');
+        finalData.append('contenuto', content || '');
 
-        // Activity
-        const activity = rawFormData.get('activity') as string;
-        finalData.append('activity', activity || 'GENERALE');
+        // Tags (Activity)
+        const activity = rawFormData.get('tags') as string;
+        finalData.append('tags', activity || 'GENERALE');
 
         // Date (Required)
-        let dateVal = rawFormData.get('date') as string;
+        let dateVal = rawFormData.get('data_riferimento') as string;
         if (dateVal && dateVal.includes('T')) {
             dateVal = dateVal.replace('T', ' ') + ':00';
         }
@@ -58,27 +77,37 @@ export default component$<PostFormProps>(({ post, isNew }) => {
             loading.value = false;
             return;
         }
-        finalData.append('date', dateVal);
+        finalData.append('data_riferimento', dateVal);
 
         // Video & External Links
         const video = rawFormData.get('video_link') as string;
         if (video) finalData.append('video_link', video);
 
-        const external = rawFormData.get('external_link') as string;
-        if (external) finalData.append('external_link', external);
+        const external = rawFormData.get('link_esterno') as string;
+        if (external) finalData.append('link_esterno', external);
 
-        // Expiration Date
-        let expDate = rawFormData.get('expiration_date') as string;
+        // Expiration Date (data_fine)
+        let expDate = rawFormData.get('data_fine') as string;
         if (expDate && expDate.includes('T')) {
             expDate = expDate.replace('T', ' ') + ':00';
-            finalData.append('expiration_date', expDate);
+            finalData.append('data_fine', expDate);
         }
 
         // Image handling
-        const coverInput = form.querySelector('input[name="cover_image"]') as HTMLInputElement;
+        const coverInput = form.querySelector('input[name="immagine_principale"]') as HTMLInputElement;
         if (coverInput?.files?.[0]) {
             console.log('[Admin] Adding new cover image:', coverInput.files[0].name);
-            finalData.append('cover_image', coverInput.files[0]);
+            finalData.append('immagine_principale', coverInput.files[0]);
+        } else if (selectedMediaName.value) {
+            console.log('[Admin] Attaching existing media:', selectedMediaName.value);
+            try {
+                const response = await fetch(`/media/${selectedMediaName.value}`);
+                const blob = await response.blob();
+                const file = new File([blob], selectedMediaName.value, { type: blob.type });
+                finalData.append('immagine_principale', file);
+            } catch (e) {
+                console.error('[Admin] Error attaching media file:', e);
+            }
         }
 
         if (!pbAdmin.authStore.isValid) {
@@ -88,12 +117,40 @@ export default component$<PostFormProps>(({ post, isNew }) => {
         }
 
         try {
-            console.log('[Admin] Final data check:', Object.fromEntries(finalData as any));
-
             if (isNew) {
-                await pbAdmin.collection('post').create(finalData);
+                await pbAdmin.collection('bacheca').create(finalData);
+
+                // Invia notifica email per nuovo post
+                try {
+                    const plainContent = content?.replace(/<[^>]*>/g, '') || '';
+                    const excerpt = plainContent.length > 150
+                        ? plainContent.substring(0, 150) + '...'
+                        : plainContent;
+
+                    const emailResponse = await fetch('/api/email/post-notification', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            title: title,
+                            author: 'Admin',
+                            excerpt: excerpt || 'Nessun contenuto disponibile'
+                        }),
+                    });
+
+                    const emailResult = await emailResponse.json();
+                    if (emailResult.success) {
+                        console.log('[PostForm] ✉️ Email notification sent successfully');
+                    } else {
+                        console.warn('[PostForm] ⚠️ Email notification failed:', emailResult.error);
+                    }
+                } catch (emailError) {
+                    console.error('[PostForm] ⚠️ Error sending email notification:', emailError);
+                    // Non bloccare il flusso se l'email fallisce
+                }
             } else {
-                await pbAdmin.collection('post').update(post.id, finalData);
+                await pbAdmin.collection('bacheca').update(post.id, finalData);
             }
 
             window.location.href = '/gestione/bacheca';
@@ -120,12 +177,22 @@ export default component$<PostFormProps>(({ post, isNew }) => {
             }
 
             error.value = null;
+            selectedMediaName.value = null; // Reset selection if new manual upload
             const reader = new FileReader();
             reader.onload = (event) => {
                 imagePreview.value = event.target?.result as string;
             };
             reader.readAsDataURL(file);
         }
+    });
+
+    const handleMediaSelect = $((filename: string) => {
+        selectedMediaName.value = filename;
+        imagePreview.value = `/media/${filename}`;
+        isMediaModalOpen.value = false;
+        // Reset file input if something was selected
+        const coverInput = document.querySelector('input[name="immagine_principale"]') as HTMLInputElement;
+        if (coverInput) coverInput.value = '';
     });
 
     return (
@@ -150,9 +217,9 @@ export default component$<PostFormProps>(({ post, isNew }) => {
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Titolo della News</label>
                             <input
                                 type="text"
-                                name="title"
+                                name="titolo"
                                 required
-                                value={post?.title}
+                                value={post?.titolo}
                                 placeholder="es. Stage Tecnico di Primavera"
                                 class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all dark:text-white font-black uppercase tracking-tight"
                             />
@@ -162,23 +229,23 @@ export default component$<PostFormProps>(({ post, isNew }) => {
                             <div class="space-y-2">
                                 <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Attività</label>
                                 <select
-                                    name="activity"
+                                    name="tags"
                                     class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all dark:text-white font-bold"
                                 >
-                                    <option value="" selected={!post?.activity}>Generale</option>
-                                    <option value="JUDO" selected={post?.activity === 'JUDO'}>Judo</option>
-                                    <option value="BJJ" selected={post?.activity === 'BJJ'}>BJJ</option>
-                                    <option value="JJ" selected={post?.activity === 'JJ'}>JJ</option>
-                                    <option value="KRAV MAGA" selected={post?.activity === 'KRAV MAGA'}>Krav Maga</option>
+                                    <option value="" selected={!post?.tags}>Generale</option>
+                                    <option value="JUDO" selected={post?.tags === 'JUDO'}>Judo</option>
+                                    <option value="BJJ" selected={post?.tags === 'BJJ'}>BJJ</option>
+                                    <option value="JJ" selected={post?.tags === 'JJ'}>JJ</option>
+                                    <option value="KRAV MAGA" selected={post?.tags === 'KRAV MAGA'}>Krav Maga</option>
                                 </select>
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Data Pubblicazione</label>
                                 <input
                                     type="datetime-local"
-                                    name="date"
+                                    name="data_riferimento"
                                     required
-                                    value={typeof post?.date === 'string' ? post.date.substring(0, 16).replace(' ', 'T') : new Date().toISOString().substring(0, 16)}
+                                    value={typeof post?.data_riferimento === 'string' ? post.data_riferimento.substring(0, 16).replace(' ', 'T') : new Date().toISOString().substring(0, 16)}
                                     class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all dark:text-white font-bold"
                                 />
                             </div>
@@ -187,9 +254,9 @@ export default component$<PostFormProps>(({ post, isNew }) => {
                         <div class="space-y-2">
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Contenuto</label>
                             <RichTextEditor
-                                name="content"
-                                id="content"
-                                value={post?.content}
+                                name="contenuto"
+                                id="contenuto"
+                                value={post?.contenuto}
                                 placeholder="Scrivi qui la news..."
                             />
                         </div>
@@ -198,12 +265,21 @@ export default component$<PostFormProps>(({ post, isNew }) => {
                     {/* Right Column: Media/Links */}
                     <div class="space-y-6">
                         {/* Cover Image */}
-                        <div class="space-y-2">
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Immagine di Copertina</label>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between px-1">
+                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest">Immagine di Copertina</label>
+                                <button
+                                    type="button"
+                                    onClick$={() => isMediaModalOpen.value = true}
+                                    class="text-[10px] font-black text-orange-600 uppercase tracking-widest hover:underline"
+                                >
+                                    Sfoglia Libreria
+                                </button>
+                            </div>
                             <div class="relative group aspect-video rounded-3xl overflow-hidden bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700">
-                                {(imagePreview.value || (post?.cover_image && !isNew)) ? (
+                                {(imagePreview.value || (post?.immagine_principale && !isNew)) ? (
                                     <img
-                                        src={imagePreview.value || (post?.cover_image?.startsWith('media/') ? '/' + post.cover_image : `${pbAdmin.baseUrl}/api/files/${post?.collectionId}/${post?.id}/${post?.cover_image}`)}
+                                        src={imagePreview.value || (post?.immagine_principale?.startsWith('media/') ? '/' + post.immagine_principale : `${pbAdmin.baseUrl}/api/files/${post?.collectionId}/${post?.id}/${post?.immagine_principale}`)}
                                         alt="Preview"
                                         class="w-full h-full object-cover"
                                         onError$={(e) => {
@@ -219,7 +295,7 @@ export default component$<PostFormProps>(({ post, isNew }) => {
                                 )}
                                 <input
                                     type="file"
-                                    name="cover_image"
+                                    name="immagine_principale"
                                     accept="image/*"
                                     onInput$={handleImageChange}
                                     class="absolute inset-0 opacity-0 cursor-pointer"
@@ -242,8 +318,8 @@ export default component$<PostFormProps>(({ post, isNew }) => {
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Link Esterno (Opzionale)</label>
                             <input
                                 type="text"
-                                name="external_link"
-                                value={post?.external_link}
+                                name="link_esterno"
+                                value={post?.link_esterno}
                                 placeholder="es. https://fijlkam.it/gara..."
                                 class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all dark:text-white font-medium"
                             />
@@ -253,8 +329,8 @@ export default component$<PostFormProps>(({ post, isNew }) => {
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Data Scadenza (Auto-archiviazione)</label>
                             <input
                                 type="datetime-local"
-                                name="expiration_date"
-                                value={typeof post?.expiration_date === 'string' ? post.expiration_date.substring(0, 16).replace(' ', 'T') : ''}
+                                name="data_fine"
+                                value={typeof post?.data_fine === 'string' ? post.data_fine.substring(0, 16).replace(' ', 'T') : ''}
                                 class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all dark:text-white font-bold"
                             />
                         </div>
@@ -279,6 +355,12 @@ export default component$<PostFormProps>(({ post, isNew }) => {
                     </button>
                 </div>
             </form>
+
+            <MediaBrowserModal
+                isOpen={isMediaModalOpen.value}
+                onClose={$(() => { isMediaModalOpen.value = false; })}
+                onSelect={handleMediaSelect}
+            />
         </div>
     );
 });

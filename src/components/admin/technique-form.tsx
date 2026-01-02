@@ -3,6 +3,7 @@ import { useNavigate } from '@builder.io/qwik-city';
 import { pbAdmin } from '~/lib/pocketbase-admin';
 import { parsePbError } from '~/lib/error-parser';
 import RichTextEditor from './rich-text-editor';
+import { MediaBrowserModal } from './media-browser-modal';
 
 interface TechniqueFormProps {
     technique?: any;
@@ -18,6 +19,10 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
     const isFallback = useSignal(false);
     const audioInputRef = useSignal<HTMLInputElement>();
     const youtubeValue = useSignal(technique?.video_youtube || '');
+    const isMediaModalOpen = useSignal(false);
+    const selectedMediaName = useSignal<string | null>(null);
+    const danLevels = useSignal<any[]>([]);
+    const categories = useSignal<any[]>([]);
 
     const extractYoutubeId = (url: string) => {
         if (!url) return '';
@@ -25,6 +30,25 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
         const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:v\/|u\/\w\/|embed\/|watch\?v=))([^#&?]*)/);
         return (match && match[1].length === 11) ? match[1] : '';
     };
+
+    useVisibleTask$(async () => {
+        try {
+            // Fetch Dan Levels
+            const levels = await pbAdmin.collection('livelli_dan').getFullList({
+                sort: 'ordine',
+            });
+            danLevels.value = levels;
+
+            // Fetch Technique Categories
+            const cats = await pbAdmin.collection('categorie').getFullList({
+                filter: 'tipo_categoria = "tecnica" || tipo_categoria = "sottocategoria_tecnica"',
+                sort: 'ordine',
+            });
+            categories.value = cats;
+        } catch (e) {
+            console.error('[TechniqueForm] Error fetching lookup data:', e);
+        }
+    });
 
     useVisibleTask$(({ track }) => {
         track(() => technique);
@@ -75,15 +99,11 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
             return `/media/audio/${clean}.mp3`;
         };
 
-        if (technique?.image) {
-            previewImage.value = getUrl(technique, technique.image);
-            isFallback.value = false;
-        } else if (technique?.image_from_collection) {
-            const { file } = technique.image_from_collection;
-            previewImage.value = getUrl(technique.image_from_collection, file);
+        if (technique?.immagine_principale) {
+            previewImage.value = getUrl(technique, technique.immagine_principale);
             isFallback.value = false;
         } else {
-            const slugImage = getSlugFallback(technique?.name);
+            const slugImage = getSlugFallback(technique?.titolo);
             if (slugImage) {
                 previewImage.value = slugImage;
                 isFallback.value = false;
@@ -102,8 +122,8 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
             } else {
                 previewAudio.value = pbAdmin.files.getUrl(technique, technique.audio);
             }
-        } else if (technique?.name) {
-            previewAudio.value = getAudioSlugFallback(technique.name);
+        } else if (technique?.titolo) {
+            previewAudio.value = getAudioSlugFallback(technique.titolo);
         }
         console.log('[TechniqueForm] Resolved audio URL:', previewAudio.value);
     });
@@ -123,12 +143,22 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
             }
 
             error.value = null;
+            selectedMediaName.value = null; // Reset selection if manual upload
             const reader = new FileReader();
             reader.onload = (event) => {
                 previewImage.value = event.target?.result as string;
             };
             reader.readAsDataURL(file);
         }
+    });
+
+    const handleMediaSelect = $((filename: string) => {
+        selectedMediaName.value = filename;
+        previewImage.value = `/media/${filename}`;
+        isMediaModalOpen.value = false;
+        // Reset file input
+        const coverInput = document.querySelector('input[name="immagine_principale"]') as HTMLInputElement;
+        if (coverInput) coverInput.value = '';
     });
 
     const handleAudioChange = $((e: Event) => {
@@ -148,11 +178,50 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
         const form = e.target as HTMLFormElement;
         const formData = new FormData(form);
 
+        // Generate slug if it's missing or if name changed (simplified: always generate for new/updates if empty)
+        const generateSlug = (text: string) => {
+            return (text || 'untitled')
+                .toLowerCase()
+                .replace(/[àáâãäå]/g, 'a')
+                .replace(/[èéêë]/g, 'e')
+                .replace(/[ìíîï]/g, 'i')
+                .replace(/[òóôõö]/g, 'o')
+                .replace(/[ùúûü]/g, 'u')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .substring(0, 100);
+        };
+
+        const titolo = formData.get('titolo') as string;
+        if (!formData.get('slug')) {
+            formData.append('slug', generateSlug(titolo));
+        }
+
+        // Add video_id if video_link is present
+        const videoLink = formData.get('video_link') as string;
+        if (videoLink) {
+            const videoId = extractYoutubeId(videoLink);
+            if (videoId) formData.append('video_id', videoId);
+        }
+
+        // Handle existing media selection
+        if (selectedMediaName.value) {
+            try {
+                const response = await fetch(`/media/${selectedMediaName.value}`);
+                const blob = await response.blob();
+                const file = new File([blob], selectedMediaName.value, { type: blob.type });
+                formData.set('immagine_principale', file);
+            } catch (e) {
+                console.error('[TechniqueForm] Error attaching media file:', e);
+            }
+        }
+
         try {
             if (isNew) {
-                await pbAdmin.collection('techniques').create(formData);
+                await pbAdmin.collection('tecniche').create(formData);
             } else {
-                await pbAdmin.collection('techniques').update(technique.id, formData);
+                await pbAdmin.collection('tecniche').update(technique.id, formData);
             }
             nav('/gestione/tecniche');
         } catch (err: any) {
@@ -176,7 +245,16 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
                     {/* Left Side: Image Upload */}
                     <div class="space-y-4">
-                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Immagine Tecnica</label>
+                        <div class="flex items-center justify-between px-1">
+                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest">Immagine Tecnica</label>
+                            <button
+                                type="button"
+                                onClick$={() => isMediaModalOpen.value = true}
+                                class="text-[10px] font-black text-red-600 uppercase tracking-widest hover:underline"
+                            >
+                                Sfoglia Libreria
+                            </button>
+                        </div>
                         <div class="relative group">
                             <div class="aspect-square rounded-3xl bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700 overflow-hidden flex items-center justify-center relative shadow-inner">
                                 {previewImage.value ? (
@@ -199,7 +277,7 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
                                 )}
                                 <input
                                     type="file"
-                                    name="image"
+                                    name="immagine_principale"
                                     accept="image/*"
                                     onChange$={handleFileChange}
                                     class="absolute inset-0 opacity-0 cursor-pointer"
@@ -283,43 +361,39 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
                                 <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Nome Tecnica</label>
                                 <input
                                     type="text"
-                                    name="name"
+                                    name="titolo"
                                     required
-                                    value={technique?.name}
+                                    value={technique?.titolo}
                                     placeholder="es. Seoi Nage"
                                     class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all dark:text-white font-bold"
                                 />
                             </div>
                             <div class="space-y-2">
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Gruppo (Gokyo/Altri)</label>
-                                <select
-                                    name="group"
-                                    required
-                                    value={technique?.group}
-                                    class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all dark:text-white font-bold appearance-none"
-                                >
-                                    <option value="I Kyo">I Kyo</option>
-                                    <option value="II Kyo">II Kyo</option>
-                                    <option value="III Kyo">III Kyo</option>
-                                    <option value="IV Kyo">IV Kyo</option>
-                                    <option value="V Kyo">V Kyo</option>
-                                    <option value="Habukiretsu">Habukiretsu</option>
-                                    <option value="Shimmeisho No Waza">Shimmeisho No Waza</option>
-                                    <option value="Altri">Altri</option>
-                                </select>
+                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Tags / Gruppo</label>
+                                <input
+                                    type="text"
+                                    name="tags"
+                                    value={technique?.tags}
+                                    placeholder="es. I Kyo, Ashi-waza"
+                                    class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all dark:text-white font-bold"
+                                />
                             </div>
                             <div class="space-y-2">
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Categoria (Nage Waza/Katame Waza...)</label>
+                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Categoria</label>
                                 <select
-                                    name="category"
-                                    required
-                                    value={technique?.category}
+                                    name="categoria_secondaria"
                                     class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all dark:text-white font-bold appearance-none"
                                 >
-                                    <option value="Nage Waza">Nage Waza</option>
-                                    <option value="Katame Waza">Katame Waza</option>
-                                    <option value="Atemi Waza">Atemi Waza</option>
-                                    <option value="Ne Waza">Ne Waza</option>
+                                    <option value="">Seleziona Categoria...</option>
+                                    {categories.value.map(cat => (
+                                        <option
+                                            key={cat.id}
+                                            value={cat.nome}
+                                            selected={technique?.categoria_secondaria === cat.nome}
+                                        >
+                                            {`${cat.nome} ${cat.tipo_categoria === 'sottocategoria_tecnica' ? '(Sottocategoria)' : ''}`}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
@@ -329,24 +403,31 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
                                 <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Ordine</label>
                                 <input
                                     type="number"
-                                    name="order"
-                                    value={technique?.order || 1}
+                                    name="ordine"
+                                    value={technique?.ordine || 1}
                                     class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all dark:text-white font-bold"
                                 />
                             </div>
                             <div class="space-y-2">
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Dan (1-6)</label>
-                                <input
-                                    type="number"
-                                    name="dan_level"
-                                    min="1"
-                                    max="6"
-                                    value={technique?.dan_level || 1}
-                                    class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all dark:text-white font-bold"
-                                />
+                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Grado Richiesto</label>
+                                <select
+                                    name="livello"
+                                    class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all dark:text-white font-bold appearance-none"
+                                >
+                                    <option value="1">Base (1)</option>
+                                    {danLevels.value.map(level => (
+                                        <option
+                                            key={level.id}
+                                            value={level.grado}
+                                            selected={Number(technique?.livello) === level.grado}
+                                        >
+                                            {level.nome_completo}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             <div class="space-y-2">
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">YouTube ID</label>
+                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">YouTube Link</label>
                                 {extractYoutubeId(youtubeValue.value) && (
                                     <div class="mb-4 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-black/20 aspect-video relative group/yt">
                                         <iframe
@@ -361,23 +442,23 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
                                 )}
                                 <input
                                     type="text"
-                                    name="video_youtube"
+                                    name="video_link"
                                     value={youtubeValue.value}
                                     onInput$={(e) => {
                                         youtubeValue.value = (e.target as HTMLInputElement).value;
                                     }}
-                                    placeholder="ID o Link YouTube"
+                                    placeholder="Link YouTube"
                                     class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all dark:text-white font-bold"
                                 />
                             </div>
                         </div>
 
                         <div class="space-y-2">
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Descrizione</label>
+                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Contenuto / Descrizione</label>
                             <RichTextEditor
-                                id="description"
-                                name="description"
-                                value={technique?.description}
+                                id="contenuto"
+                                name="contenuto"
+                                value={technique?.contenuto}
                                 placeholder="Descrivi la tecnica, i suoi principi e punti chiave..."
                             />
                         </div>
@@ -401,6 +482,12 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
                     </button>
                 </div>
             </form>
+
+            <MediaBrowserModal
+                isOpen={isMediaModalOpen.value}
+                onClose={$(() => { isMediaModalOpen.value = false; })}
+                onSelect={handleMediaSelect}
+            />
         </div>
     );
 });

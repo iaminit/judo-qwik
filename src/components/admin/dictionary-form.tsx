@@ -38,11 +38,31 @@ export default component$<DictionaryFormProps>(({ term, isNew }) => {
         const form = e.target as HTMLFormElement;
         const formData = new FormData(form);
 
+        // Generate slug
+        const generateSlug = (text: string) => {
+            return (text || 'untitled')
+                .toLowerCase()
+                .replace(/[àáâãäå]/g, 'a')
+                .replace(/[èéêë]/g, 'e')
+                .replace(/[ìíîï]/g, 'i')
+                .replace(/[òóôõö]/g, 'o')
+                .replace(/[ùúûü]/g, 'u')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .substring(0, 100);
+        };
+
+        const titolo = formData.get('titolo') as string;
+        if (!formData.get('slug')) {
+            formData.append('slug', generateSlug(titolo));
+        }
+
         try {
             if (isNew) {
-                await pbAdmin.collection('dictionary').create(formData);
+                await pbAdmin.collection('dizionario').create(formData);
             } else {
-                await pbAdmin.collection('dictionary').update(term.id, formData);
+                await pbAdmin.collection('dizionario').update(term.id, formData);
             }
             nav('/gestione/dizionario');
         } catch (err: any) {
@@ -70,9 +90,9 @@ export default component$<DictionaryFormProps>(({ term, isNew }) => {
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Termine</label>
                             <input
                                 type="text"
-                                name="term"
+                                name="titolo"
                                 required
-                                value={term?.term}
+                                value={term?.titolo}
                                 placeholder="es. Dojo"
                                 class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all dark:text-white font-bold"
                             />
@@ -81,8 +101,8 @@ export default component$<DictionaryFormProps>(({ term, isNew }) => {
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Kanji</label>
                             <input
                                 type="text"
-                                name="kanji"
-                                value={term?.kanji}
+                                name="titolo_secondario"
+                                value={term?.titolo_secondario}
                                 placeholder="es. 道場"
                                 class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all dark:text-white font-serif text-xl"
                             />
@@ -91,8 +111,8 @@ export default component$<DictionaryFormProps>(({ term, isNew }) => {
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Pronuncia</label>
                             <input
                                 type="text"
-                                name="pronunciation"
-                                value={term?.pronunciation}
+                                name="categoria_secondaria"
+                                value={term?.categoria_secondaria}
                                 placeholder="es. doo-joo"
                                 class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all dark:text-white font-medium"
                             />
@@ -159,11 +179,11 @@ export default component$<DictionaryFormProps>(({ term, isNew }) => {
                 </div>
 
                 <div class="space-y-2">
-                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Descrizione</label>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Contenuto / Descrizione</label>
                     <RichTextEditor
-                        name="description"
-                        id="description"
-                        value={term?.description}
+                        name="contenuto"
+                        id="contenuto"
+                        value={term?.contenuto}
                         placeholder="Significato storico, tecnico o filosofico del termine..."
                     />
                 </div>

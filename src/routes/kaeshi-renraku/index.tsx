@@ -38,15 +38,28 @@ interface KaeshiRenrakuData {
 
 export const useKaeshiRenrakuData = routeLoader$<KaeshiRenrakuData>(async () => {
   try {
-    console.log('[KaeshiRenraku] Fetching from PocketBase...');
+    console.log('[KaeshiRenraku] Fetching from PocketBase (unified)...');
     const records = await pb.collection('kaeshi_renraku').getFullList({
-      sort: 'type,name',
+      sort: 'tipo,titolo',
       requestKey: null,
     });
     console.log('[KaeshiRenraku] Fetched', records.length, 'items');
 
+    const items = records.map((r: any) => ({
+      id: r.id,
+      name: r.titolo || '',
+      type: r.tipo || 'kaeshi',
+      category: r.categoria_secondaria || '',
+      difficulty: r.livello || 'medium',
+      from_technique: r.tecnica_da || '',
+      to_technique: r.tecnica_a || '',
+      description: r.contenuto || '',
+      key_points: r.punti_chiave || '',
+      video_url: r.video_link || ''
+    }));
+
     return {
-      items: records as unknown as KaeshiRenrakuItem[],
+      items: items as KaeshiRenrakuItem[],
     };
   } catch (err) {
     console.error('[KaeshiRenraku] Error loading items:', err);
@@ -209,8 +222,8 @@ export default component$(() => {
             <button
               onClick$={() => handleFilterClick('type', 'kaeshi')}
               class={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${activeFilters.type === 'kaeshi'
-                  ? 'bg-orange-600 text-white border-orange-600 shadow-md transform scale-105'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                ? 'bg-orange-600 text-white border-orange-600 shadow-md transform scale-105'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
             >
               🔄 Kaeshi (Contrattacchi)
@@ -218,8 +231,8 @@ export default component$(() => {
             <button
               onClick$={() => handleFilterClick('type', 'renraku')}
               class={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${activeFilters.type === 'renraku'
-                  ? 'bg-orange-600 text-white border-orange-600 shadow-md transform scale-105'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                ? 'bg-orange-600 text-white border-orange-600 shadow-md transform scale-105'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
             >
               🔗 Renraku (Combinazioni)
@@ -239,8 +252,8 @@ export default component$(() => {
                   key={cat}
                   onClick$={() => handleFilterClick('category', cat)}
                   class={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${activeFilters.category === cat
-                      ? 'bg-orange-600 text-white border-orange-600 shadow-md transform scale-105'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'bg-orange-600 text-white border-orange-600 shadow-md transform scale-105'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                 >
                   {cat}
@@ -261,8 +274,8 @@ export default component$(() => {
                 key={diff}
                 onClick$={() => handleFilterClick('difficulty', diff)}
                 class={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${activeFilters.difficulty === diff
-                    ? 'bg-orange-600 text-white border-orange-600 shadow-md transform scale-105'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  ? 'bg-orange-600 text-white border-orange-600 shadow-md transform scale-105'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
               >
                 {diff === 'easy' ? 'Facile' : diff === 'medium' ? 'Medio' : 'Difficile'}
@@ -429,10 +442,10 @@ export default component$(() => {
                 <div class="mb-6">
                   <span
                     class={`inline-block px-4 py-2 rounded-full text-sm font-bold ${modalState.selectedItem.difficulty === 'easy'
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                        : modalState.selectedItem.difficulty === 'medium'
-                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
-                          : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                      : modalState.selectedItem.difficulty === 'medium'
+                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
+                        : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
                       }`}
                   >
                     Difficoltà:{' '}

@@ -1,4 +1,4 @@
-import { component$, $, useSignal } from '@builder.io/qwik';
+import { component$, $, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import { useNavigate } from '@builder.io/qwik-city';
 import { pbAdmin } from '~/lib/pocketbase-admin';
 import RichTextEditor from './rich-text-editor';
@@ -6,13 +6,27 @@ import RichTextEditor from './rich-text-editor';
 interface FijlkamFormProps {
     item?: any;
     isNew: boolean;
-    type: 'info' | 'timeline' | 'regulations';
+    type: 'info' | 'timeline' | 'regulations' | 'programmi';
 }
 
 export default component$<FijlkamFormProps>(({ item, isNew, type }) => {
     const nav = useNavigate();
     const loading = useSignal(false);
     const error = useSignal<string | null>(null);
+    const danLevels = useSignal<any[]>([]);
+
+    useVisibleTask$(async () => {
+        if (type === 'programmi') {
+            try {
+                const levels = await pbAdmin.collection('livelli_dan').getFullList({
+                    sort: 'ordine',
+                });
+                danLevels.value = levels;
+            } catch (e) {
+                console.error('[FijlkamForm] Error fetching dan levels:', e);
+            }
+        }
+    });
 
     const handleSubmit = $(async (e: Event) => {
         e.preventDefault();
@@ -21,15 +35,38 @@ export default component$<FijlkamFormProps>(({ item, isNew, type }) => {
 
         const form = e.target as HTMLFormElement;
         const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
+
+        // Generate slug
+        const generateSlug = (text: string) => {
+            return (text || 'untitled')
+                .toLowerCase()
+                .replace(/[àáâãäå]/g, 'a')
+                .replace(/[èéêë]/g, 'e')
+                .replace(/[ìíîï]/g, 'i')
+                .replace(/[òóôõö]/g, 'o')
+                .replace(/[ùúûü]/g, 'u')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .substring(0, 100);
+        };
+
+        const titolo = formData.get('titolo') as string;
+        if (!formData.get('slug')) {
+            formData.append('slug', generateSlug(titolo));
+        }
+
+        // Add tag based on type
+        if (type === 'info') formData.append('tags', 'info');
+        else if (type === 'timeline') formData.append('tags', 'timeline');
+        else if (type === 'regulations') formData.append('tags', 'regolamento');
+        else if (type === 'programmi') formData.append('tags', 'esame_dan');
 
         try {
-            const collection = type === 'info' ? 'fijlkam' : type === 'timeline' ? 'timeline_fijlkam' : 'regulations';
-
             if (isNew) {
-                await pbAdmin.collection(collection).create(data);
+                await pbAdmin.collection('programmi_fijlkam').create(formData);
             } else {
-                await pbAdmin.collection(collection).update(item.id, data);
+                await pbAdmin.collection('programmi_fijlkam').update(item.id, formData);
             }
             nav('/gestione/fijlkam');
         } catch (err: any) {
@@ -53,22 +90,22 @@ export default component$<FijlkamFormProps>(({ item, isNew, type }) => {
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Titolo</label>
                         <input
                             type="text"
-                            name="title"
-                            value={item?.title || ''}
+                            name="titolo"
+                            value={item?.titolo || ''}
                             required
                             class="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border-none font-bold text-gray-900 dark:text-white"
                         />
                     </div>
                 )}
 
-                {type === 'info' && (
+                {(type === 'info' || type === 'programmi') && (
                     <div class="space-y-2">
-                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Sezione (slug)</label>
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Sezione / Sotto-sezione</label>
                         <input
                             type="text"
-                            name="section"
-                            value={item?.section || ''}
-                            placeholder="es: info, campioni, cinture..."
+                            name="categoria_secondaria"
+                            value={item?.categoria_secondaria || ''}
+                            placeholder={type === 'info' ? "es: info, campioni, cinture..." : "es: Te Waza, Kata, Teoria..."}
                             class="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border-none font-bold text-gray-900 dark:text-white"
                         />
                     </div>
@@ -78,9 +115,9 @@ export default component$<FijlkamFormProps>(({ item, isNew, type }) => {
                     <div class="space-y-2">
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Anno</label>
                         <input
-                            type="text"
-                            name="year"
-                            value={item?.year || ''}
+                            type="number"
+                            name="anno"
+                            value={item?.anno || ''}
                             required
                             class="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border-none font-bold text-gray-900 dark:text-white"
                         />
@@ -92,8 +129,8 @@ export default component$<FijlkamFormProps>(({ item, isNew, type }) => {
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Sottotitolo</label>
                         <input
                             type="text"
-                            name="subtitle"
-                            value={item?.subtitle || ''}
+                            name="titolo_secondario"
+                            value={item?.titolo_secondario || ''}
                             class="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border-none font-bold text-gray-900 dark:text-white"
                         />
                     </div>
@@ -104,20 +141,51 @@ export default component$<FijlkamFormProps>(({ item, isNew, type }) => {
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Link Esterno</label>
                         <input
                             type="url"
-                            name="link_external"
-                            value={item?.link_external || ''}
+                            name="link_esterno"
+                            value={item?.link_esterno || ''}
                             class="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border-none font-bold text-gray-900 dark:text-white"
                         />
                     </div>
                 )}
 
-                {(type === 'info' || type === 'regulations') && (
+                {type === 'programmi' && (
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Grado Richiesto</label>
+                            <select
+                                name="livello"
+                                class="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border-none font-bold text-gray-900 dark:text-white appearance-none"
+                            >
+                                {danLevels.value.map(level => (
+                                    <option
+                                        key={level.id}
+                                        value={level.grado}
+                                        selected={Number(item?.livello) === level.grado}
+                                    >
+                                        {level.nome_completo}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Ordine</label>
+                            <input
+                                type="number"
+                                name="ordine"
+                                value={item?.ordine || 0}
+                                class="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border-none font-bold text-gray-900 dark:text-white"
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {(type === 'info' || type === 'regulations' || type === 'programmi') && (
                     <div class="space-y-2">
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Contenuto (HTML)</label>
                         <RichTextEditor
-                            name="content"
-                            id="content"
-                            value={item?.content || ''}
+                            name="contenuto"
+                            id="contenuto_fijlkam"
+                            value={item?.contenuto || ''}
                         />
                     </div>
                 )}
@@ -126,9 +194,9 @@ export default component$<FijlkamFormProps>(({ item, isNew, type }) => {
                     <div class="space-y-2">
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Descrizione</label>
                         <RichTextEditor
-                            name="description"
-                            id="description"
-                            value={item?.description || ''}
+                            name="contenuto"
+                            id="contenuto_timeline_fijlkam"
+                            value={item?.contenuto || ''}
                         />
                     </div>
                 )}

@@ -21,16 +21,38 @@ interface TimelineItem {
 
 export const useHistoryData = routeLoader$(async () => {
   try {
-    console.log('[History] Fetching from PocketBase...');
-    const [historyData, timelineData] = await Promise.all([
-      pb.collection('history').getFullList({ requestKey: null }),
-      pb.collection('timeline_history').getFullList({ sort: 'year', requestKey: null }),
-    ]);
-    console.log('[History] Fetched', historyData.length, 'history items and', timelineData.length, 'timeline items');
+    console.log('[History] Fetching from collection "storia"...');
+
+    const storiaRecords = await pb.collection('storia').getFullList({
+      sort: 'anno,ordine',
+      requestKey: null,
+    });
+
+    console.log('[History] Fetched', storiaRecords.length, 'records');
+
+    // Split into articles (have contenuto) and timeline events
+    const historyItems = storiaRecords
+      .filter((r: any) => r.contenuto && r.contenuto.length > 100)
+      .map((r: any) => ({
+        id: r.id,
+        title: r.titolo || '',
+        subtitle: r.titolo_secondario || '',
+        content: r.contenuto || '',
+        image: r.immagine_principale || '',
+      }));
+
+    const timelineItems = storiaRecords
+      .filter((r: any) => r.anno || r.descrizione_breve)
+      .map((r: any) => ({
+        id: r.id,
+        year: String(r.anno || ''),
+        title: r.titolo || '',
+        description: r.descrizione_breve || r.contenuto?.substring(0, 200) || '',
+      }));
 
     return {
-      historyItems: historyData as unknown as HistoryItem[],
-      timelineItems: timelineData as unknown as TimelineItem[],
+      historyItems,
+      timelineItems,
     };
   } catch (err) {
     console.error('[History] Error loading history:', err);

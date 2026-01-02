@@ -6,65 +6,67 @@ import { AppContext } from '~/context/app-context';
 
 interface FijlkamItem {
   id: string;
-  title: string;
-  content: string;
-  section?: string;
+  titolo: string;
+  contenuto: string;
+  categoria_secondaria?: string;
 }
 
 interface TimelineItem {
   id: string;
-  year: string;
-  title: string;
-  description: string;
+  anno: number;
+  titolo: string;
+  contenuto: string;
 }
 
 interface Regulation {
   id: string;
-  title: string;
-  subtitle?: string;
-  content: string;
-  link_external?: string;
+  titolo: string;
+  titolo_secondario?: string;
+  contenuto: string;
+  link_esterno?: string;
 }
 
 interface ExamProgram {
   id: string;
-  dan_level: number;
-  section_type: string;
-  title: string;
-  content: string;
-  order: number;
+  livello: number;
+  categoria_secondaria: string;
+  titolo: string;
+  contenuto: string;
+  ordine: number;
 }
 
 export const useFijlkamData = routeLoader$(async () => {
   try {
-    console.log('[Fijlkam] Fetching from PocketBase...');
-    const [fijlkamResult, tlResult, regResult, programsResult] = await Promise.allSettled([
-      pb.collection('fijlkam').getFullList({ requestKey: null }),
-      pb.collection('timeline_fijlkam').getFullList({ sort: 'year', requestKey: null }),
-      pb.collection('regulations').getFullList({ sort: 'title', requestKey: null }),
-      pb.collection('exam_program').getFullList({ sort: 'order', requestKey: null }),
+    console.log('[Fijlkam] Fetching from PocketBase (unified)...');
+
+    // Fetch all items from the unified collection
+    const [infoResult, tlResult, regResult, programsResult] = await Promise.allSettled([
+      pb.collection('programmi_fijlkam').getFullList({
+        filter: 'tags ~ "info"',
+        sort: 'ordine',
+        requestKey: null
+      }),
+      pb.collection('programmi_fijlkam').getFullList({
+        filter: 'anno != null',
+        sort: 'anno',
+        requestKey: null
+      }),
+      pb.collection('programmi_fijlkam').getFullList({
+        filter: 'tags ~ "regolamento"',
+        sort: 'titolo',
+        requestKey: null
+      }),
+      pb.collection('programmi_fijlkam').getFullList({
+        filter: 'tags ~ "esame_dan"',
+        sort: 'ordine',
+        requestKey: null
+      }),
     ]);
 
-    const items =
-      fijlkamResult.status === 'fulfilled' ? (fijlkamResult.value as unknown as FijlkamItem[]) : [];
-    const timelineItems =
-      tlResult.status === 'fulfilled' ? (tlResult.value as unknown as TimelineItem[]) : [];
-    const regulations =
-      regResult.status === 'fulfilled' ? (regResult.value as unknown as Regulation[]) : [];
-    const programs =
-      programsResult.status === 'fulfilled' ? (programsResult.value as unknown as ExamProgram[]) : [];
-
-    console.log(
-      '[Fijlkam] Fetched',
-      items.length,
-      'items,',
-      timelineItems.length,
-      'timeline,',
-      regulations.length,
-      'regulations,',
-      programs.length,
-      'programs'
-    );
+    const items = infoResult.status === 'fulfilled' ? (infoResult.value as any[]) : [];
+    const timelineItems = tlResult.status === 'fulfilled' ? (tlResult.value as any[]) : [];
+    const regulations = regResult.status === 'fulfilled' ? (regResult.value as any[]) : [];
+    const programs = programsResult.status === 'fulfilled' ? (programsResult.value as any[]) : [];
 
     return {
       items,
@@ -75,10 +77,10 @@ export const useFijlkamData = routeLoader$(async () => {
   } catch (err) {
     console.error('[Fijlkam] Error loading data:', err);
     return {
-      items: [] as unknown as FijlkamItem[],
-      timelineItems: [] as unknown as TimelineItem[],
-      regulations: [] as unknown as Regulation[],
-      programs: [] as unknown as ExamProgram[],
+      items: [],
+      timelineItems: [],
+      regulations: [],
+      programs: [],
       error: 'Impossibile caricare i dati. Riprova più tardi.',
     };
   }
@@ -112,10 +114,10 @@ const FijlkamTimeline = component$<FijlkamTimelineProps>(({ items }) => {
 
               <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:scale-105 transition-all">
                 <span class="inline-block px-4 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-sm font-bold mb-3 shadow-md">
-                  {item.year}
+                  {item.anno}
                 </span>
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{item.title}</h3>
-                <p class="text-gray-600 dark:text-gray-400 leading-relaxed">{item.description}</p>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{item.titolo}</h3>
+                <p class="text-gray-600 dark:text-gray-400 leading-relaxed">{item.contenuto}</p>
               </div>
             </div>
           ))}
@@ -169,31 +171,31 @@ export default component$(() => {
 
   // Filter programs by active dan level
   const filteredPrograms = useComputed$(() => {
-    return data.value.programs.filter((program) => program.dan_level === activeDan.value);
+    return data.value.programs.filter((program) => program.livello === activeDan.value);
   });
 
   // Get unique dan levels from data
   const availableDans = useComputed$(() => {
-    const dans = new Set(data.value.programs.map((p) => p.dan_level));
+    const dans = new Set(data.value.programs.map((p) => p.livello));
     return Array.from(dans).sort((a, b) => a - b);
   });
 
   // Separate items by section field (from DB) or fallback to ID matching
-  const infoItems = data.value.items.filter((item) => item.section === 'info');
+  const infoItems = data.value.items.filter((item) => item.categoria_secondaria === 'info');
   const infoItem =
     infoItems[0] || data.value.items.find((item) => item.id === 'f1') || data.value.items[0];
   const structureItem =
     infoItems[1] || data.value.items.find((item) => item.id === 'f2') || data.value.items[1];
   const championsItem =
-    data.value.items.find((item) => item.section === 'campioni') ||
+    data.value.items.find((item) => item.categoria_secondaria === 'campioni') ||
     data.value.items.find((item) => item.id === 'f3') ||
     data.value.items[2];
   const beltsItem =
-    data.value.items.find((item) => item.section === 'cinture') ||
+    data.value.items.find((item) => item.categoria_secondaria === 'cinture') ||
     data.value.items.find((item) => item.id === 'f4') ||
     data.value.items[3];
   const comitatoItem =
-    data.value.items.find((item) => item.section === 'comitati') ||
+    data.value.items.find((item) => item.categoria_secondaria === 'comitati') ||
     data.value.items.find((item) => item.id === 'f5') ||
     data.value.items[4];
 
@@ -287,11 +289,11 @@ export default component$(() => {
           {infoItem && (
             <article class="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700">
               <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-                {infoItem.title}
+                {infoItem.titolo}
               </h2>
               <div
                 class="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300"
-                dangerouslySetInnerHTML={infoItem.content}
+                dangerouslySetInnerHTML={infoItem.contenuto}
               />
             </article>
           )}
@@ -299,11 +301,11 @@ export default component$(() => {
           {structureItem && (
             <article class="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700">
               <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-                {structureItem.title}
+                {structureItem.titolo}
               </h2>
               <div
                 class="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300"
-                dangerouslySetInnerHTML={structureItem.content}
+                dangerouslySetInnerHTML={structureItem.contenuto}
               />
             </article>
           )}
@@ -313,21 +315,21 @@ export default component$(() => {
       {activeTab.value === 'champions' && championsItem && (
         <article class="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700">
           <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-            {championsItem.title}
+            {championsItem.titolo}
           </h2>
           <div
             class="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300"
-            dangerouslySetInnerHTML={championsItem.content}
+            dangerouslySetInnerHTML={championsItem.contenuto}
           />
         </article>
       )}
 
       {activeTab.value === 'belts' && beltsItem && (
         <article class="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700">
-          <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">{beltsItem.title}</h2>
+          <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">{beltsItem.titolo}</h2>
           <div
             class="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300"
-            dangerouslySetInnerHTML={beltsItem.content}
+            dangerouslySetInnerHTML={beltsItem.contenuto}
           />
         </article>
       )}
@@ -335,11 +337,11 @@ export default component$(() => {
       {activeTab.value === 'comitato' && comitatoItem && (
         <article class="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700">
           <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-            {comitatoItem.title}
+            {comitatoItem.titolo}
           </h2>
           <div
             class="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300"
-            dangerouslySetInnerHTML={comitatoItem.content}
+            dangerouslySetInnerHTML={comitatoItem.contenuto}
           />
         </article>
       )}
@@ -361,17 +363,17 @@ export default component$(() => {
               <div class="flex justify-between items-start mb-4">
                 <div>
                   <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                    {item.title}
+                    {item.titolo}
                   </h3>
-                  {item.subtitle && (
+                  {item.titolo_secondario && (
                     <h4 class="text-lg text-yellow-600 dark:text-yellow-400 font-medium">
-                      {item.subtitle}
+                      {item.titolo_secondario}
                     </h4>
                   )}
                 </div>
-                {item.link_external && (
+                {item.link_esterno && (
                   <a
-                    href={item.link_external}
+                    href={item.link_esterno}
                     target="_blank"
                     rel="noopener noreferrer"
                     class="shrink-0 flex items-center gap-2 px-4 py-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-lg hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors text-sm font-medium"
@@ -384,7 +386,7 @@ export default component$(() => {
 
               <div
                 class="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300"
-                dangerouslySetInnerHTML={item.content}
+                dangerouslySetInnerHTML={item.contenuto}
               />
             </article>
           ))}
@@ -428,8 +430,8 @@ export default component$(() => {
                 key={dan}
                 onClick$={() => (activeDan.value = dan)}
                 class={`px-6 py-3 rounded-2xl font-bold transition-all duration-300 shadow-sm ${activeDan.value === dan
-                    ? 'bg-blue-600 text-white shadow-lg scale-105'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-2 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500'
+                  ? 'bg-blue-600 text-white shadow-lg scale-105'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-2 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500'
                   }`}
               >
                 {dan}° DAN
@@ -456,10 +458,10 @@ export default component$(() => {
 
                   <div class="surface-elevated p-6 md:p-8 hover:bg-white/60 dark:hover:bg-white/10">
                     {/* Section Type Badge */}
-                    {program.section_type && (
+                    {program.categoria_secondaria && (
                       <div class="mb-4 flex items-center gap-3">
                         <span class="inline-block px-3 py-1 bg-blue-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest">
-                          {program.section_type}
+                          {program.categoria_secondaria}
                         </span>
                         <div class="h-px flex-1 bg-gray-100 dark:bg-white/5"></div>
                       </div>
@@ -467,14 +469,14 @@ export default component$(() => {
 
                     {/* Title */}
                     <h3 class="text-2xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tighter">
-                      {program.title}
+                      {program.titolo}
                     </h3>
 
                     {/* Content */}
-                    {program.content && (
+                    {program.contenuto && (
                       <div
                         class="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300"
-                        dangerouslySetInnerHTML={program.content}
+                        dangerouslySetInnerHTML={program.contenuto}
                       />
                     )}
                   </div>

@@ -5,7 +5,7 @@ import TechniqueForm from '~/components/admin/technique-form';
 
 export const useTechniqueDetail = routeLoader$(async ({ params, fail }) => {
     try {
-        const record = await pbAdmin.collection('techniques').getOne(params.id, {
+        const record = await pbAdmin.collection('tecniche').getOne(params.id, {
             requestKey: null
         });
 
@@ -13,23 +13,6 @@ export const useTechniqueDetail = routeLoader$(async ({ params, fail }) => {
         // Add collection info for builder
         technique.collectionId = record.collectionId;
         technique.collectionName = record.collectionName;
-
-        // Check if there's an entry in technique_images
-        try {
-            const imageRecord = await pbAdmin.collection('technique_images').getFirstListItem(`technique="${params.id}"`, {
-                requestKey: null
-            });
-            if (imageRecord) {
-                technique.image_from_collection = {
-                    id: imageRecord.id,
-                    collectionId: imageRecord.collectionId,
-                    collectionName: 'technique_images', // Crucial for getUrl
-                    file: imageRecord.path || imageRecord.image || imageRecord.image_file
-                };
-            }
-        } catch (e) {
-            // No image found in collection, that's fine
-        }
 
         return technique;
     } catch (err) {
@@ -53,7 +36,7 @@ export default component$(() => {
         <div class="space-y-10">
             <header>
                 <h2 class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Modifica Tecnica</h2>
-                <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Stai modificando: <span class="text-red-600 font-black">{technique.value.name}</span></p>
+                <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Stai modificando: <span class="text-red-600 font-black">{technique.value.titolo}</span></p>
             </header>
 
             <TechniqueForm technique={technique.value} isNew={false} />

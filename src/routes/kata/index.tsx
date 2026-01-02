@@ -15,15 +15,26 @@ interface Kata {
 
 export const useKataData = routeLoader$(async () => {
   try {
-    console.log('[Kata] Fetching from PocketBase...');
-    const katas = await pb.collection('kata').getFullList({
-      sort: 'name',
+    console.log('[Kata] Fetching from collection "kata"...');
+
+    const records = await pb.collection('kata').getFullList({
+      sort: 'ordine,titolo',
       requestKey: null,
     });
+
+    const katas = records.map((k: any) => ({
+      id: k.id,
+      name: k.titolo || '',
+      japanese_name: k.titolo_secondario || '',
+      description: k.contenuto || '',
+      level: k.livello ? `${k.livello}° Dan` : '',
+      video_url: k.video_link || '',
+    }));
+
     console.log('[Kata] Fetched', katas.length, 'katas');
 
     return {
-      katas: katas as unknown as Kata[],
+      katas,
     };
   } catch (err) {
     console.error('[Kata] Error loading katas:', err);

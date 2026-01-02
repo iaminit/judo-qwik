@@ -22,19 +22,40 @@ export default component$<ProgramFormProps>(({ program, isNew }) => {
         const form = e.target as HTMLFormElement;
         const formData = new FormData(form);
 
+        // Generate slug
+        const generateSlug = (text: string) => {
+            return (text || 'untitled')
+                .toLowerCase()
+                .replace(/[àáâãäå]/g, 'a')
+                .replace(/[èéêë]/g, 'e')
+                .replace(/[ìíîï]/g, 'i')
+                .replace(/[òóôõö]/g, 'o')
+                .replace(/[ùúûü]/g, 'u')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .substring(0, 100);
+        };
+
+        const titolo = formData.get('titolo') as string;
+        const livello = formData.get('livello');
+
         const data: any = {
-            title: formData.get('title'),
-            section_type: formData.get('section_type'),
-            content: formData.get('content'),
-            dan_level: Number(formData.get('dan_level')),
-            order: Number(formData.get('order')),
+            titolo: titolo,
+            categoria_secondaria: formData.get('categoria_secondaria'),
+            contenuto: formData.get('contenuto'),
+            livello: Number(livello),
+            ordine: Number(formData.get('ordine')),
+            slug: generateSlug(titolo + '-dan-' + livello),
+            tags: 'esame_dan',
+            pubblicato: true
         };
 
         try {
             if (isNew) {
-                await pbAdmin.collection('exam_program').create(data);
+                await pbAdmin.collection('programmi_fijlkam').create(data);
             } else {
-                await pbAdmin.collection('exam_program').update(program.id, data);
+                await pbAdmin.collection('programmi_fijlkam').update(program.id, data);
             }
             nav('/gestione/programma');
         } catch (err: any) {
@@ -60,9 +81,9 @@ export default component$<ProgramFormProps>(({ program, isNew }) => {
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Titolo Sezione</label>
                         <input
                             type="text"
-                            name="title"
+                            name="titolo"
                             required
-                            value={program?.title}
+                            value={program?.titolo}
                             placeholder="es. Nage Waza"
                             class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all dark:text-white font-bold"
                         />
@@ -71,8 +92,8 @@ export default component$<ProgramFormProps>(({ program, isNew }) => {
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Sezione (Badge)</label>
                         <input
                             type="text"
-                            name="section_type"
-                            value={program?.section_type}
+                            name="categoria_secondaria"
+                            value={program?.categoria_secondaria}
                             placeholder="es. Pratica"
                             class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all dark:text-white font-bold"
                         />
@@ -84,11 +105,11 @@ export default component$<ProgramFormProps>(({ program, isNew }) => {
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Livello Dan (1-6)</label>
                         <input
                             type="number"
-                            name="dan_level"
+                            name="livello"
                             required
                             min={1}
                             max={6}
-                            value={program?.dan_level || 1}
+                            value={program?.livello || 1}
                             class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all dark:text-white font-bold"
                         />
                     </div>
@@ -96,9 +117,9 @@ export default component$<ProgramFormProps>(({ program, isNew }) => {
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Ordine Visualizzazione</label>
                         <input
                             type="number"
-                            name="order"
+                            name="ordine"
                             required
-                            value={program?.order || 0}
+                            value={program?.ordine || 0}
                             class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all dark:text-white font-bold"
                         />
                     </div>
@@ -107,9 +128,9 @@ export default component$<ProgramFormProps>(({ program, isNew }) => {
                 <div class="space-y-2">
                     <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Contenuto Programma</label>
                     <RichTextEditor
-                        name="content"
-                        id="content"
-                        value={program?.content}
+                        name="contenuto"
+                        id="contenuto_programma"
+                        value={program?.contenuto}
                         placeholder="Elenca le tecniche e i requisiti..."
                     />
                 </div>

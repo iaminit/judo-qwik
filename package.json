@@ -27,6 +27,7 @@
     "@builder.io/qwik-city": "^1.18.0",
     "@eslint/js": "latest",
     "@qwikdev/pwa": "^0.0.4",
+    "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "20.19.0",
     "@types/sql.js": "^1.4.9",
     "autoprefixer": "^10.4.23",
@@ -48,6 +49,8 @@
     "mailgun.js": "^12.4.1",
     "pocketbase": "^0.26.5",
     "quill": "^2.0.3",
-    "sql.js": "^1.13.0"
+    "sql.js": "^1.13.0",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
   }
 }

@@ -23,21 +23,21 @@ export default component$(() => {
         isLoading.value = true;
         try {
             const filter = searchTerm.value
-                ? `term ~ "${searchTerm.value}" || kanji ~ "${searchTerm.value}"`
+                ? `titolo ~ "${searchTerm.value}" || titolo_secondario ~ "${searchTerm.value}"`
                 : '';
 
-            const records = await pbAdmin.collection('dictionary').getFullList({
-                sort: 'term',
+            const records = await pbAdmin.collection('dizionario').getFullList({
+                sort: 'titolo',
                 filter: filter,
                 requestKey: null,
             });
 
             dictionaryTerms.value = records.map(r => ({
                 id: r.id,
-                term: r.term,
-                kanji: r.kanji,
-                description: r.description,
-                pronunciation: r.pronunciation,
+                term: r.titolo,
+                kanji: r.titolo_secondario,
+                description: r.contenuto,
+                pronunciation: r.categoria_secondaria,
                 audio: r.audio,
                 collectionId: r.collectionId
             })) as DictionaryTerm[];
@@ -58,7 +58,7 @@ export default component$(() => {
     const handleDelete = $(async (id: string, term: string) => {
         if (!confirm(`Sei sicuro di voler eliminare il termine "${term}"?`)) return;
         try {
-            await pbAdmin.collection('dictionary').delete(id);
+            await pbAdmin.collection('dizionario').delete(id);
             dictionaryTerms.value = dictionaryTerms.value.filter(t => t.id !== id);
             selectedIds.value = selectedIds.value.filter(sid => sid !== id);
         } catch (e: any) {
@@ -72,7 +72,7 @@ export default component$(() => {
         isDeleting.value = true;
         try {
             for (const id of selectedIds.value) {
-                await pbAdmin.collection('dictionary').delete(id);
+                await pbAdmin.collection('dizionario').delete(id);
             }
             dictionaryTerms.value = dictionaryTerms.value.filter(t => !selectedIds.value.includes(t.id));
             selectedIds.value = [];

@@ -23,8 +23,8 @@ errorOnDuplicatesPkgDeps(devDependencies, dependencies);
 export default defineConfig(({ command, mode }): UserConfig => {
   return {
     plugins: [
-      qwikCity(),
-      qwikVite(),
+      qwikCity({}),
+      qwikVite({}),
       tsconfigPaths({ root: "." }),
       qwikPwa({
         includeWebManifest: true,

@@ -5,7 +5,7 @@ import GalleryForm from '~/components/admin/gallery-form';
 
 export const useGalleryItemDetail = routeLoader$(async ({ params, fail }) => {
     try {
-        const record = await pbAdmin.collection('gallery').getOne(params.id, {
+        const record = await pbAdmin.collection('galleria').getOne(params.id, {
             requestKey: null
         });
         return JSON.parse(JSON.stringify(record));
@@ -30,7 +30,7 @@ export default component$(() => {
         <div class="space-y-10">
             <header>
                 <h2 class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Modifica Elemento Galleria</h2>
-                <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Stai modificando: <span class="text-red-600 font-black">{item.value.title}</span></p>
+                <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Stai modificando: <span class="text-red-600 font-black">{item.value.titolo}</span></p>
             </header>
 
             <GalleryForm item={item.value} isNew={false} />

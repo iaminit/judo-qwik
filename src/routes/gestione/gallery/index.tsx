@@ -21,21 +21,22 @@ export default component$(() => {
         isLoading.value = true;
         try {
             const filter = searchTerm.value
-                ? `title ~ "${searchTerm.value}" || description ~ "${searchTerm.value}"`
+                ? `titolo ~ "${searchTerm.value}" || contenuto ~ "${searchTerm.value}"`
                 : '';
 
-            const records = await pbAdmin.collection('gallery').getFullList({
-                sort: '-date,-created',
+            const records = await pbAdmin.collection('galleria').getFullList({
+                sort: '-data_riferimento,-created',
                 filter: filter || undefined,
                 requestKey: null,
             });
 
             galleryItems.value = records.map(r => {
                 let previewUrl = '';
-                if (r.type === 'photo' && r.image) {
-                    previewUrl = pbAdmin.files.getUrl(r, r.image, { thumb: '100x100' });
-                } else if (r.type === 'video' && r.video_url) {
-                    const videoId = r.video_url.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/)?.[1];
+                const type = r.tags || 'photo';
+                if (type === 'photo' && r.immagine_principale) {
+                    previewUrl = pbAdmin.files.getUrl(r, r.immagine_principale, { thumb: '100x100' });
+                } else if (type === 'video' && r.video_link) {
+                    const videoId = r.video_link.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/)?.[1];
                     if (videoId) {
                         previewUrl = `https://img.youtube.com/vi/${videoId}/default.jpg`;
                     }
@@ -43,9 +44,9 @@ export default component$(() => {
 
                 return {
                     id: r.id,
-                    title: r.title,
-                    type: r.type,
-                    date: r.date,
+                    title: r.titolo,
+                    type: type,
+                    date: r.data_riferimento,
                     previewUrl: previewUrl
                 } as GalleryItem;
             });
@@ -66,7 +67,7 @@ export default component$(() => {
     const handleDelete = $(async (id: string) => {
         if (!confirm('Sei sicuro di voler eliminare questo elemento dalla galleria?')) return;
         try {
-            await pbAdmin.collection('gallery').delete(id);
+            await pbAdmin.collection('galleria').delete(id);
             galleryItems.value = galleryItems.value.filter(item => item.id !== id);
             selectedIds.value = selectedIds.value.filter(sid => sid !== id);
         } catch (e) {
@@ -80,7 +81,7 @@ export default component$(() => {
         isDeleting.value = true;
         try {
             for (const id of selectedIds.value) {
-                await pbAdmin.collection('gallery').delete(id);
+                await pbAdmin.collection('galleria').delete(id);
             }
             galleryItems.value = galleryItems.value.filter(item => !selectedIds.value.includes(item.id));
             selectedIds.value = [];

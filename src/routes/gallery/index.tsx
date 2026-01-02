@@ -31,15 +31,27 @@ interface GalleryData {
 
 export const useGalleryData = routeLoader$<GalleryData>(async () => {
   try {
-    console.log('[Gallery] Fetching from PocketBase...');
-    const records = await pb.collection('gallery').getFullList({
-      sort: '-date,-created',
+    console.log('[Gallery] Fetching from PocketBase (unified)...');
+    const records = await pb.collection('galleria').getFullList({
+      sort: '-data_riferimento,-created',
       requestKey: null,
     });
     console.log('[Gallery] Fetched', records.length, 'items');
 
+    const items = records.map((r: any) => ({
+      id: r.id,
+      title: r.titolo,
+      description: r.descrizione_breve || r.contenuto,
+      type: (r.tags?.includes('video') || (r.video_link && !r.immagine_principale)) ? 'video' : 'photo',
+      image: r.immagine_principale,
+      video_url: r.video_link,
+      link: r.link_esterno,
+      date: r.data_riferimento,
+      collectionId: r.collectionId
+    }));
+
     return {
-      items: records as unknown as GalleryItem[],
+      items: items as GalleryItem[],
     };
   } catch (err) {
     console.error('[Gallery] Error loading gallery:', err);

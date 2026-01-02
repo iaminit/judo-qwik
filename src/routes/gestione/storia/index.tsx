@@ -15,41 +15,30 @@ export default component$(() => {
         isLoading.value = true;
         selectedIds.value = []; // Reset sub-selection
 
-        // Debug: Check auth state
-        console.log('[Admin Storia] Auth State:', {
-            isValid: pbAdmin.authStore.isValid,
-            token: pbAdmin.authStore.token ? 'EXISTS' : 'MISSING',
-            model: pbAdmin.authStore.model ? 'EXISTS' : 'MISSING'
-        });
-
         try {
             if (activeTab.value === 'articoli') {
-                console.log('[Admin Storia] Fetching history from collection...');
-                const results = await pbAdmin.collection('history').getFullList({
+                console.log('[Admin Storia] Fetching articles from storia...');
+                // Articles: filter by tags containing 'articolo' or simply items without anno if that's the logic
+                const results = await pbAdmin.collection('storia').getFullList({
+                    filter: 'tags ~ "articolo" || anno = null',
+                    sort: 'ordine,titolo',
                     requestKey: null
                 });
                 console.log('[Admin Storia] ✅ Fetched history items:', results.length);
-                if (results.length > 0) {
-                    console.log('[Admin Storia] First item:', { id: results[0].id, title: results[0].title });
-                }
                 historyList.value = results;
             } else {
-                console.log('[Admin Storia] Fetching timeline from collection...');
-                const results = await pbAdmin.collection('timeline_history').getFullList({
-                    sort: 'year',
+                console.log('[Admin Storia] Fetching timeline from storia...');
+                // Timeline: items with anno
+                const results = await pbAdmin.collection('storia').getFullList({
+                    filter: 'anno != null',
+                    sort: 'anno,ordine',
                     requestKey: null
                 });
                 console.log('[Admin Storia] ✅ Fetched timeline items:', results.length);
                 timelineList.value = results;
             }
         } catch (e: any) {
-            console.error('[Admin Storia] ❌ ERROR Details:', {
-                message: e.message,
-                status: e.status,
-                data: e.data,
-                isAbort: e.isAbort,
-                originalError: e
-            });
+            console.error('[Admin Storia] ERROR:', e.message);
             if (activeTab.value === 'articoli') historyList.value = [];
             else timelineList.value = [];
         } finally {
@@ -57,11 +46,12 @@ export default component$(() => {
         }
     });
 
-    const handleDelete = $(async (collection: string, id: string) => {
+    const handleDelete = $(async (id: string) => {
         if (!confirm('Sei sicuro di voler eliminare questo elemento?')) return;
         try {
-            await pbAdmin.collection(collection).delete(id);
-            if (collection === 'history') {
+            // Both articles and timeline are now in 'storia'
+            await pbAdmin.collection('storia').delete(id);
+            if (activeTab.value === 'articoli') {
                 historyList.value = historyList.value.filter(item => item.id !== id);
             } else {
                 timelineList.value = timelineList.value.filter(item => item.id !== id);
@@ -73,13 +63,12 @@ export default component$(() => {
     });
 
     const handleBulkDelete = $(async () => {
-        const collection = activeTab.value === 'articoli' ? 'history' : 'timeline_history';
         if (!confirm(`Sei sicuro di voler eliminare ${selectedIds.value.length} elementi selezionati?`)) return;
 
         isDeleting.value = true;
         try {
             for (const id of selectedIds.value) {
-                await pbAdmin.collection(collection).delete(id);
+                await pbAdmin.collection('storia').delete(id);
             }
             if (activeTab.value === 'articoli') {
                 historyList.value = historyList.value.filter(item => !selectedIds.value.includes(item.id));
@@ -183,18 +172,18 @@ export default component$(() => {
                                                         class="w-5 h-5 rounded-lg accent-red-600 cursor-pointer"
                                                     />
                                                     <div class="w-12 h-12 rounded-xl bg-white dark:bg-gray-900 overflow-hidden border border-gray-100 dark:border-gray-700 flex items-center justify-center">
-                                                        {item.image ? (
-                                                            <img src={pbAdmin.files.getUrl(item, item.image, { thumb: '50x50' })} class="w-full h-full object-cover" alt="" />
+                                                        {item.immagine_principale ? (
+                                                            <img src={pbAdmin.files.getUrl(item, item.immagine_principale, { thumb: '50x50' })} class="w-full h-full object-cover" alt="" />
                                                         ) : <span class="text-xl">📖</span>}
                                                     </div>
                                                     <div>
-                                                        <p class="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{item.title}</p>
-                                                        <p class="text-[10px] font-bold text-red-500 uppercase mt-1">{item.subtitle || 'Storia'}</p>
+                                                        <p class="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{item.titolo}</p>
+                                                        <p class="text-[10px] font-bold text-red-500 uppercase mt-1">{item.titolo_secondario || 'Storia'}</p>
                                                     </div>
                                                 </div>
                                                 <div class="flex gap-2 opacity-20 group-hover:opacity-100 transition-opacity">
                                                     <Link href={`/gestione/storia/info/${item.id}`} class="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors">✏️</Link>
-                                                    <button onClick$={() => handleDelete('history', item.id)} class="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors">🗑️</button>
+                                                    <button onClick$={() => handleDelete(item.id)} class="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors">🗑️</button>
                                                 </div>
                                             </div>
                                         ))
@@ -217,13 +206,13 @@ export default component$(() => {
                                                         class="w-5 h-5 rounded-lg accent-red-600 cursor-pointer"
                                                     />
                                                     <div>
-                                                        <p class="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight"><span class="text-red-600 mr-2">{item.year}</span> {item.title}</p>
-                                                        <p class="text-[10px] text-gray-400 line-clamp-1 mt-1">{item.description}</p>
+                                                        <p class="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight"><span class="text-red-600 mr-2">{item.anno}</span> {item.titolo}</p>
+                                                        <p class="text-[10px] text-gray-400 line-clamp-1 mt-1">{item.descrizione_breve || item.contenuto?.substring(0, 100)}</p>
                                                     </div>
                                                 </div>
                                                 <div class="flex gap-2 opacity-20 group-hover:opacity-100 transition-opacity">
                                                     <Link href={`/gestione/storia/timeline/${item.id}`} class="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors">✏️</Link>
-                                                    <button onClick$={() => handleDelete('timeline_history', item.id)} class="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors">🗑️</button>
+                                                    <button onClick$={() => handleDelete(item.id)} class="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors">🗑️</button>
                                                 </div>
                                             </div>
                                         ))

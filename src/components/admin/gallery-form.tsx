@@ -3,6 +3,7 @@ import { useNavigate } from '@builder.io/qwik-city';
 import { pbAdmin } from '~/lib/pocketbase-admin';
 import { parsePbError } from '~/lib/error-parser';
 import RichTextEditor from './rich-text-editor';
+import { MediaBrowserModal } from './media-browser-modal';
 
 interface GalleryFormProps {
     item?: any;
@@ -15,22 +16,34 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
     const error = useSignal<string | null>(null);
     const previewImage = useSignal<string | null>(null);
     const type = useSignal(item?.type || 'photo');
+    const isMediaModalOpen = useSignal(false);
+    const selectedMediaName = useSignal<string | null>(null);
 
     useVisibleTask$(() => {
-        if (item?.image) {
-            previewImage.value = pbAdmin.files.getUrl(item, item.image);
+        if (item?.immagine_principale) {
+            previewImage.value = pbAdmin.files.getUrl(item, item.immagine_principale);
         }
     });
 
     const handleFileChange = $((e: Event) => {
         const input = e.target as HTMLInputElement;
         if (input.files && input.files[0]) {
+            selectedMediaName.value = null; // Reset selection
             const reader = new FileReader();
             reader.onload = (event) => {
                 previewImage.value = event.target?.result as string;
             };
             reader.readAsDataURL(input.files[0]);
         }
+    });
+
+    const handleMediaSelect = $((filename: string) => {
+        selectedMediaName.value = filename;
+        previewImage.value = `/media/${filename}`;
+        isMediaModalOpen.value = false;
+        // Reset file input
+        const coverInput = document.querySelector('input[name="immagine_principale"]') as HTMLInputElement;
+        if (coverInput) coverInput.value = '';
     });
 
     const handleSubmit = $(async (e: Event) => {
@@ -41,11 +54,49 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
         const form = e.target as HTMLFormElement;
         const formData = new FormData(form);
 
+        // Generate slug
+        const generateSlug = (text: string) => {
+            return (text || 'untitled')
+                .toLowerCase()
+                .replace(/[àáâãäå]/g, 'a')
+                .replace(/[èéêë]/g, 'e')
+                .replace(/[ìíîï]/g, 'i')
+                .replace(/[òóôõö]/g, 'o')
+                .replace(/[ùúûü]/g, 'u')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .substring(0, 100);
+        };
+
+        const titolo = formData.get('titolo') as string;
+        if (!formData.get('slug')) {
+            formData.append('slug', generateSlug(titolo));
+        }
+
+        // Map type to tags
+        const mediaType = formData.get('type');
+        if (mediaType) {
+            formData.append('tags', mediaType as string);
+        }
+
+        // Handle existing media selection
+        if (selectedMediaName.value) {
+            try {
+                const response = await fetch(`/media/${selectedMediaName.value}`);
+                const blob = await response.blob();
+                const file = new File([blob], selectedMediaName.value, { type: blob.type });
+                formData.set('immagine_principale', file);
+            } catch (e) {
+                console.error('[GalleryForm] Error attaching media file:', e);
+            }
+        }
+
         try {
             if (isNew) {
-                await pbAdmin.collection('gallery').create(formData);
+                await pbAdmin.collection('galleria').create(formData);
             } else {
-                await pbAdmin.collection('gallery').update(item.id, formData);
+                await pbAdmin.collection('galleria').update(item.id, formData);
             }
             nav('/gestione/gallery');
         } catch (err: any) {
@@ -77,7 +128,18 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
                     {/* Left Side: Media Preview */}
                     <div class="space-y-4">
-                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Anteprima Media</label>
+                        <div class="flex items-center justify-between px-1">
+                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest">Anteprima Media</label>
+                            {type.value === 'photo' && (
+                                <button
+                                    type="button"
+                                    onClick$={() => isMediaModalOpen.value = true}
+                                    class="text-[10px] font-black text-pink-600 uppercase tracking-widest hover:underline"
+                                >
+                                    Sfoglia Libreria
+                                </button>
+                            )}
+                        </div>
 
                         {type.value === 'photo' ? (
                             <div class="relative group">
@@ -92,7 +154,7 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
                                     )}
                                     <input
                                         type="file"
-                                        name="image"
+                                        name="immagine_principale"
                                         accept="image/*"
                                         onChange$={handleFileChange}
                                         class="absolute inset-0 opacity-0 cursor-pointer"
@@ -106,9 +168,9 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
                             </div>
                         ) : (
                             <div class="aspect-square rounded-3xl bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700 overflow-hidden flex items-center justify-center relative shadow-inner">
-                                {item?.video_url && getYouTubeVideoId(item.video_url) ? (
+                                {item?.video_link && getYouTubeVideoId(item.video_link) ? (
                                     <img
-                                        src={`https://img.youtube.com/vi/${getYouTubeVideoId(item.video_url)}/hqdefault.jpg`}
+                                        src={`https://img.youtube.com/vi/${getYouTubeVideoId(item.video_link)}/hqdefault.jpg`}
                                         class="w-full h-full object-cover"
                                         alt="Video Preview"
                                     />
@@ -129,9 +191,9 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Titolo</label>
                             <input
                                 type="text"
-                                name="title"
+                                name="titolo"
                                 required
-                                value={item?.title}
+                                value={item?.titolo}
                                 placeholder="es. Stage di Natale 2023"
                                 class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all dark:text-white font-bold"
                             />
@@ -155,8 +217,8 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
                                 <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Data</label>
                                 <input
                                     type="date"
-                                    name="date"
-                                    value={item?.date ? new Date(item.date).toISOString().split('T')[0] : ''}
+                                    name="data_riferimento"
+                                    value={item?.data_riferimento ? new Date(item.data_riferimento).toISOString().split('T')[0] : ''}
                                     class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all dark:text-white font-bold"
                                 />
                             </div>
@@ -167,9 +229,9 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
                                 <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">YouTube URL</label>
                                 <input
                                     type="url"
-                                    name="video_url"
+                                    name="video_link"
                                     required={type.value === 'video'}
-                                    value={item?.video_url}
+                                    value={item?.video_link}
                                     placeholder="https://www.youtube.com/watch?v=..."
                                     class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all dark:text-white font-bold"
                                 />
@@ -180,8 +242,8 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Link Esterno (opzionale)</label>
                             <input
                                 type="url"
-                                name="link"
-                                value={item?.link}
+                                name="link_esterno"
+                                value={item?.link_esterno}
                                 placeholder="https://..."
                                 class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all dark:text-white font-bold"
                             />
@@ -190,9 +252,9 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
                         <div class="space-y-2">
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Descrizione</label>
                             <RichTextEditor
-                                id="description"
-                                name="description"
-                                value={item?.description}
+                                id="contenuto"
+                                name="contenuto"
+                                value={item?.contenuto}
                                 placeholder="Breve descrizione dell'evento o della foto..."
                             />
                         </div>
@@ -216,6 +278,12 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
                     </button>
                 </div>
             </form>
+
+            <MediaBrowserModal
+                isOpen={isMediaModalOpen.value}
+                onClose={$(() => { isMediaModalOpen.value = false; })}
+                onSelect={handleMediaSelect}
+            />
         </div>
     );
 });

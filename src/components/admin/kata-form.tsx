@@ -21,13 +21,32 @@ export default component$<KataFormProps>(({ kata, isNew }) => {
 
         const form = e.target as HTMLFormElement;
         const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
+
+        // Generate slug
+        const generateSlug = (text: string) => {
+            return (text || 'untitled')
+                .toLowerCase()
+                .replace(/[àáâãäå]/g, 'a')
+                .replace(/[èéêë]/g, 'e')
+                .replace(/[ìíîï]/g, 'i')
+                .replace(/[òóôõö]/g, 'o')
+                .replace(/[ùúûü]/g, 'u')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .substring(0, 100);
+        };
+
+        const titolo = formData.get('titolo') as string;
+        if (!formData.get('slug')) {
+            formData.append('slug', generateSlug(titolo));
+        }
 
         try {
             if (isNew) {
-                await pbAdmin.collection('kata').create(data);
+                await pbAdmin.collection('kata').create(formData);
             } else {
-                await pbAdmin.collection('kata').update(kata.id, data);
+                await pbAdmin.collection('kata').update(kata.id, formData);
             }
             nav('/gestione/kata');
         } catch (err: any) {
@@ -53,9 +72,9 @@ export default component$<KataFormProps>(({ kata, isNew }) => {
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Nome Kata</label>
                         <input
                             type="text"
-                            name="name"
+                            name="titolo"
                             required
-                            value={kata?.name}
+                            value={kata?.titolo}
                             placeholder="es. Nage No Kata"
                             class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all dark:text-white font-bold"
                         />
@@ -64,8 +83,8 @@ export default component$<KataFormProps>(({ kata, isNew }) => {
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Nome in Giapponese</label>
                         <input
                             type="text"
-                            name="japanese_name"
-                            value={kata?.japanese_name}
+                            name="titolo_secondario"
+                            value={kata?.titolo_secondario}
                             placeholder="es. 投の形"
                             class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all dark:text-white font-bold"
                         />
@@ -74,12 +93,13 @@ export default component$<KataFormProps>(({ kata, isNew }) => {
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="space-y-2">
-                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Livello/Dan</label>
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Livello (Dan)</label>
                         <input
-                            type="text"
-                            name="level"
-                            value={kata?.level}
-                            placeholder="es. I Dan"
+                            type="number"
+                            name="livello"
+                            value={kata?.livello || 1}
+                            min="1"
+                            max="6"
                             class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all dark:text-white font-bold"
                         />
                     </div>
@@ -87,8 +107,8 @@ export default component$<KataFormProps>(({ kata, isNew }) => {
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">YouTube Video URL</label>
                         <input
                             type="url"
-                            name="video_url"
-                            value={kata?.video_url}
+                            name="video_link"
+                            value={kata?.video_link}
                             placeholder="https://www.youtube.com/watch?v=..."
                             class="w-full px-5 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all dark:text-white font-bold"
                         />
@@ -96,11 +116,11 @@ export default component$<KataFormProps>(({ kata, isNew }) => {
                 </div>
 
                 <div class="space-y-2">
-                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Descrizione</label>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Contenuto / Descrizione</label>
                     <RichTextEditor
-                        name="description"
-                        id="description"
-                        value={kata?.description}
+                        name="contenuto"
+                        id="contenuto"
+                        value={kata?.contenuto}
                         placeholder="Origini, significato tecnico e punti chiave del Kata..."
                     />
                 </div>

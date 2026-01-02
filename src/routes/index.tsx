@@ -14,153 +14,109 @@ interface MenuItem {
   items?: MenuItem[];
 }
 
-interface Section {
-  id: string;
-  title: string;
-  subtitle: string;
-  items: MenuItem[];
-}
-
-const sections: Section[] = [
+// Tutti gli items in ordine alfabetico
+const menuItems: MenuItem[] = [
   {
-    id: 'judo',
-    title: 'Il Judo',
-    subtitle: 'La via della cedevolezza, tra storia e arte',
+    id: 'bacheca',
+    title: 'Bacheca & Archivio',
+    desc: 'News recenti e archivio storico del Dojo',
+    icon: '/media/home/bacheca.webp',
+    color: 'red',
+    link: '/bacheca',
+  },
+  {
+    id: 'dizionario',
+    title: 'Dizionario',
+    desc: 'Glossario completo della terminologia nipponica',
+    icon: '/media/home/dizionario.webp',
+    color: 'amber',
+    link: '/dizionario',
+  },
+  {
+    id: 'fijlkam',
+    title: 'FIJLKAM',
+    desc: 'Federazione Italiana: programmi e regolamenti',
+    icon: '/media/home/fijlkam.webp',
+    color: 'blue',
+    link: '/fijlkam',
+  },
+  {
+    id: 'kata',
+    title: 'I Kata',
+    desc: 'Le forme tradizionali: l\'estetica del movimento',
+    icon: '/media/home/kata.webp',
+    color: 'orange',
+    link: '/kata',
+  },
+  {
+    id: 'giochi-group',
+    title: 'Laboratorio Interattivo',
+    desc: 'Quiz, Game, Flash Cards e strumenti di analisi',
+    icon: '🎯',
+    type: 'emoji',
+    color: 'indigo',
+    isAccordion: true,
     items: [
       {
-        id: 'storia',
-        title: 'Storia del Judo',
-        desc: 'Origini, filosofia e l\'eredità del Maestro Kano',
-        icon: '/icons/home_v2/storia.webp',
+        id: 'flash',
+        title: 'Flash Cards',
+        desc: 'Memorizzazione rapida dei termini',
+        icon: '🎴',
+        type: 'emoji',
+        color: 'emerald',
+        link: '/flash',
+      },
+      {
+        id: 'gokyo-game',
+        title: 'Gokyo Quiz',
+        desc: 'Sfida la tua conoscenza dei gruppi',
+        icon: '🥋',
+        type: 'emoji',
         color: 'red',
-        link: '/storia',
+        link: '/gokyo-game',
       },
       {
-        id: 'kata',
-        title: 'I Kata',
-        desc: 'Le forme tradizionali: l\'estetica del movimento',
-        icon: '/icons/home_v2/kata.webp',
-        color: 'orange',
-        link: '/kata',
-      },
-      {
-        id: 'tecniche',
-        title: 'Tecniche',
-        desc: 'Database completo del Gokyo no Waza',
-        icon: '/icons/home_v2/tecniche.webp',
-        color: 'red',
-        link: '/tecniche',
-      },
-      {
-        id: 'fijlkam',
-        title: 'FIJLKAM',
-        desc: 'Federazione Italiana: programmi e regolamenti',
-        icon: '/icons/home_v2/fijlkam.webp',
+        id: 'gokyo-tris',
+        title: 'Gokyo-Tris',
+        desc: 'Strategia e tecnica in un classico',
+        icon: '⭕',
+        type: 'emoji',
         color: 'blue',
-        link: '/fijlkam',
+        link: '/gokyo-tris',
+      },
+      {
+        id: 'kaeshi',
+        title: 'Kaeshi & Renraku',
+        desc: 'Contrattacchi e combinazioni avanzate',
+        icon: '/media/home/kaeshi.webp',
+        color: 'purple',
+        link: '/kaeshi-renraku',
+      },
+      {
+        id: 'quiz',
+        title: 'Quiz Esame',
+        desc: 'Simulazioni per i passaggi di grado',
+        icon: '/media/home/quiz.webp',
+        color: 'red',
+        link: '/quiz',
       },
     ],
   },
   {
-    id: 'strumenti',
-    title: 'Strumenti di Studio',
-    subtitle: 'Risorse interattive per il miglioramento tecnico',
-    items: [
-      {
-        id: 'dizionario',
-        title: 'Dizionario',
-        desc: 'Glossario completo della terminologia nipponica',
-        icon: '/icons/home_v2/dizionario.webp',
-        color: 'amber',
-        link: '/dizionario',
-      },
-      {
-        id: 'giochi-group',
-        title: 'Laboratorio Interattivo',
-        desc: 'Quiz, Game, Flash Cards e strumenti di analisi',
-        icon: '🎯',
-        type: 'emoji',
-        color: 'indigo',
-        isAccordion: true,
-        items: [
-          {
-            id: 'quiz',
-            title: 'Quiz Esame',
-            desc: 'Simulazioni per i passaggi di grado',
-            icon: '/icons/home_v2/quiz.webp',
-            color: 'red',
-            link: '/quiz',
-          },
-          {
-            id: 'gokyo-game',
-            title: 'Gokyo Quiz',
-            desc: 'Sfida la tua conoscenza dei gruppi',
-            icon: '🥋',
-            type: 'emoji',
-            color: 'red',
-            link: '/gokyo-game',
-          },
-          {
-            id: 'gokyo-tris',
-            title: 'Gokyo-Tris',
-            desc: 'Strategia e tecnica in un classico',
-            icon: '⭕',
-            type: 'emoji',
-            color: 'blue',
-            link: '/gokyo-tris',
-          },
-          {
-            id: 'flash',
-            title: 'Flash Cards',
-            desc: 'Memorizzazione rapida dei termini',
-            icon: '🎴',
-            type: 'emoji',
-            color: 'emerald',
-            link: '/flash',
-          },
-          {
-            id: 'kaeshi',
-            title: 'Kaeshi & Renraku',
-            desc: 'Contrattacchi e combinazioni avanzate',
-            icon: '/icons/home_v2/kaeshi.webp',
-            color: 'purple',
-            link: '/kaeshi-renraku',
-          },
-        ],
-      },
-      {
-        id: 'gallery',
-        title: 'Media Gallery',
-        desc: 'Archivio visivo di proiezioni e momenti storici',
-        icon: '/icons/home_v2/galleria.webp',
-        color: 'blue',
-        link: '/gallery',
-      },
-    ],
+    id: 'storia',
+    title: 'Storia del Judo',
+    desc: 'Origini, filosofia e l\'eredità del Maestro Kano',
+    icon: '/media/home/storia.webp',
+    color: 'red',
+    link: '/storia',
   },
   {
-    id: 'community',
-    title: 'Community',
-    subtitle: 'Resta connesso con il mondo del Judo',
-    items: [
-      {
-        id: 'bacheca',
-        title: 'Bacheca News',
-        desc: 'Ultimi aggiornamenti e comunicazioni',
-        icon: '/icons/home_v2/bacheca.webp',
-        color: 'red',
-        link: '/bacheca',
-      },
-      {
-        id: 'archivio',
-        title: 'Archivio Storico',
-        desc: 'Documentazione e news del passato',
-        icon: '📜',
-        type: 'emoji',
-        color: 'slate',
-        link: '/community',
-      },
-    ],
+    id: 'tecniche',
+    title: 'Tecniche',
+    desc: 'Database completo del Gokyo no Waza',
+    icon: '/media/home/tecniche.webp',
+    color: 'red',
+    link: '/tecniche',
   },
 ];
 
@@ -253,39 +209,17 @@ export default component$(() => {
   return (
     <div class="min-h-screen">
       <div class="max-w-6xl mx-auto px-6 py-12 md:py-20">
-
-        {/* Sections Grid */}
-        <div class="space-y-24">
-          {sections.map((section) => (
-            <div key={section.id} class="relative">
-              <div class="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-4">
-                <div class="relative">
-                  <span class="absolute -top-10 left-0 text-[100px] font-black text-gray-500/5 leading-none select-none -z-10 uppercase tracking-tighter">
-                    {section.id}
-                  </span>
-                  <h2 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tighter flex items-center gap-4">
-                    <span class="w-12 h-1 bg-red-600 rounded-full"></span>
-                    {section.title}
-                  </h2>
-                  <p class="text-sm md:text-base text-gray-400 dark:text-slate-500 font-bold uppercase tracking-[0.2em] mt-2 ml-16">
-                    {section.subtitle}
-                  </p>
-                </div>
+        {/* Grid Pulsanti senza sezioni */}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-x-10">
+          {menuItems.map((item) =>
+            item.isAccordion ? (
+              <div key={item.id} class="md:col-span-2">
+                <AccordionItem group={item} />
               </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-x-10">
-                {section.items.map((item) =>
-                  item.isAccordion ? (
-                    <div key={item.id} class="md:col-span-2">
-                      <AccordionItem group={item} />
-                    </div>
-                  ) : (
-                    <ListItem key={item.id} item={item} />
-                  )
-                )}
-              </div>
-            </div>
-          ))}
+            ) : (
+              <ListItem key={item.id} item={item} />
+            )
+          )}
         </div>
       </div>
     </div>

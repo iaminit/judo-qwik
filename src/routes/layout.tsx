@@ -108,7 +108,6 @@ export default component$(() => {
     },
     { title: 'Storia', href: '/storia' },
     { title: 'FIJLKAM', href: '/fijlkam' },
-    { title: 'Galleria', href: '/gallery' },
     { title: 'Bacheca', href: '/bacheca' },
     { title: 'Archivio', href: '/community' },
   ];
@@ -129,7 +128,7 @@ export default component$(() => {
           {/* Left: Logo/Title */}
           <div class="flex items-center">
             <Link href="/" class="text-xl font-bold text-gray-900 dark:text-ice-white flex items-center gap-3 no-underline hover:opacity-80 transition-opacity">
-              <img src="/icons/apple-touch-icon.png" alt="Judo Logo" class="h-10 w-auto rounded-lg shadow-lg" width={40} height={40} />
+              <img src="/media/icons/apple-touch-icon.png" alt="Judo Logo" class="h-10 w-auto rounded-lg shadow-lg" width={40} height={40} />
               <span class="tracking-tighter font-black">JudoOK</span>
             </Link>
 

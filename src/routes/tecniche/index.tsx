@@ -9,11 +9,13 @@ import path from 'node:path';
 
 export const useTechniquesData = routeLoader$(async () => {
   try {
-    console.log('[Techniques] Fetching techniques records...');
-    const records = await pb.collection('techniques').getFullList({
-      sort: 'order,name',
+    console.log('[Techniques] Fetching techniques records from collection "tecniche"...');
+
+    const records = await pb.collection('tecniche').getFullList({
+      sort: 'ordine,titolo',
       requestKey: null,
     });
+
     console.log('[Techniques] Fetched', records.length, 'techniques');
 
     // Load technique_images to check which techniques have images
@@ -48,8 +50,17 @@ export const useTechniquesData = routeLoader$(async () => {
     );
 
     const techniques: Technique[] = records.map((t: any) => {
+      // Use new Italian field structure
+      const techName = t.titolo || '';
+      const techGroup = t.tags?.split(',')[0] || '';
+      const techCategory = t.categoria_secondaria || '';
+      const techDescription = t.contenuto || '';
+      const techVideo = t.video_link || '';
+      const techOrder = t.ordine || 0;
+      const techDanLevel = t.livello || 1;
+
       // 1. Generate slug-based fallback (e.g., "O-Soto-Gari" -> "o-soto-gari.webp")
-      let slugBase = t.name.toLowerCase()
+      let slugBase = techName.toLowerCase()
         .trim()
         .replace(/ō/g, 'o')
         .replace(/ū/g, 'u')
@@ -100,7 +111,7 @@ export const useTechniquesData = routeLoader$(async () => {
       }
 
       // 2. Audio normalization (mostly no hyphens)
-      const normalizedName = t.name.toLowerCase()
+      const normalizedName = techName.toLowerCase()
         .replace(/[\s-]/g, '')
         .replace(/ō/g, 'o')
         .replace(/ū/g, 'u')
@@ -122,14 +133,14 @@ export const useTechniquesData = routeLoader$(async () => {
 
       return {
         id: t.id,
-        nome: t.name,
-        gruppo: t.group,
-        tipo: t.category,
-        descrizione: t.description,
-        video_youtube: t.video_youtube,
+        nome: techName,
+        gruppo: techGroup,
+        tipo: techCategory,
+        descrizione: techDescription,
+        video_youtube: techVideo,
         audio_file: pbAudio || fallbackAudio,
         has_audio: !!pbAudio || true,
-        dan_level: t.dan_level || 1,
+        dan_level: techDanLevel,
         image: imageName
       };
     });

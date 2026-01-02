@@ -5,7 +5,7 @@ import ProgramForm from '~/components/admin/program-form';
 
 export const useProgramDetail = routeLoader$(async ({ params, fail }) => {
     try {
-        const record = await pbAdmin.collection('exam_program').getOne(params.id, {
+        const record = await pbAdmin.collection('programmi_fijlkam').getOne(params.id, {
             requestKey: null
         });
         return JSON.parse(JSON.stringify(record));
@@ -30,7 +30,7 @@ export default component$(() => {
         <div class="space-y-10">
             <header>
                 <h2 class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Modifica Sezione Programma</h2>
-                <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Stai modificando: <span class="text-red-600 font-black">{program.value.title}</span></p>
+                <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Stai modificando: <span class="text-red-600 font-black">{program.value.titolo}</span></p>
             </header>
 
             <ProgramForm program={program.value} isNew={false} />

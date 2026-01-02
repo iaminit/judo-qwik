@@ -13,23 +13,13 @@ export default component$(() => {
         isLoading.value = true;
         try {
             const filter = searchTerm.value
-                ? `name ~ "${searchTerm.value}" || group ~ "${searchTerm.value}"`
+                ? `titolo ~ "${searchTerm.value}" || tags ~ "${searchTerm.value}"`
                 : '';
 
-            const [records, techniqueImages] = await Promise.all([
-                pbAdmin.collection('techniques').getFullList({
-                    sort: 'group,order,name',
-                    filter: filter,
-                    requestKey: null,
-                }),
-                pbAdmin.collection('technique_images').getFullList({
-                    requestKey: null
-                }).catch(() => [])
-            ]);
-
-            const imgMap = new Map();
-            techniqueImages.forEach(img => {
-                imgMap.set(img.technique, img);
+            const records = await pbAdmin.collection('tecniche').getFullList({
+                sort: 'tags,ordine,titolo',
+                filter: filter,
+                requestKey: null,
             });
 
             const processed = records.map(r => {
@@ -48,23 +38,17 @@ export default component$(() => {
                     return '/media/' + slug + '.webp';
                 };
 
-                if (r.image) {
-                    previewUrl = processImageUrl(r, r.image);
+                if (r.immagine_principale) {
+                    previewUrl = processImageUrl(r, r.immagine_principale);
                 } else {
-                    const extraImg = imgMap.get(r.id);
-                    if (extraImg) {
-                        const file = extraImg.path || extraImg.image || extraImg.image_file;
-                        previewUrl = processImageUrl(extraImg, file);
-                    } else {
-                        previewUrl = getSlugFallback(r.name);
-                    }
+                    previewUrl = getSlugFallback(r.titolo);
                 }
 
                 return {
                     id: r.id,
-                    name: r.name,
-                    group: r.group,
-                    order: r.order,
+                    name: r.titolo,
+                    group: r.tags,
+                    order: r.ordine,
                     previewUrl: previewUrl
                 };
             });
@@ -86,7 +70,7 @@ export default component$(() => {
     const handleDelete = $(async (id: string, name: string) => {
         if (!confirm(`Sei sicuro di voler eliminare la tecnica "${name}"?`)) return;
         try {
-            await pbAdmin.collection('techniques').delete(id);
+            await pbAdmin.collection('tecniche').delete(id);
             techList.value = techList.value.filter(t => t.id !== id);
             selectedIds.value = selectedIds.value.filter(sid => sid !== id);
         } catch (e: any) {
@@ -101,7 +85,7 @@ export default component$(() => {
         try {
             // Delete one by one
             for (const id of selectedIds.value) {
-                await pbAdmin.collection('techniques').delete(id);
+                await pbAdmin.collection('tecniche').delete(id);
             }
             techList.value = techList.value.filter(t => !selectedIds.value.includes(t.id));
             selectedIds.value = [];

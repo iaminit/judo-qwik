@@ -1,5 +1,6 @@
 import { component$, useSignal, $, useVisibleTask$ } from '@builder.io/qwik';
 import { pbAdmin } from '~/lib/pocketbase-admin';
+import { ReminderModal } from './reminder-modal';
 
 interface TaskAdmin {
     id: string;
@@ -16,8 +17,7 @@ interface TaskAdmin {
     created: string;
     expand?: {
         assegnato_a_id?: {
-            nome?: string;
-            cognome?: string;
+            name?: string;
             email?: string;
         };
     };
@@ -30,6 +30,8 @@ interface AdminTaskListProps {
 export const AdminTaskList = component$<AdminTaskListProps>(({ onRefresh }) => {
     const tasks = useSignal<TaskAdmin[]>([]);
     const isLoading = useSignal(true);
+    const isReminderModalOpen = useSignal(false);
+    const selectedTask = useSignal<TaskAdmin | null>(null);
 
     const fetchTasks = $(async () => {
         isLoading.value = true;
@@ -90,41 +92,9 @@ export const AdminTaskList = component$<AdminTaskListProps>(({ onRefresh }) => {
         }
     });
 
-    const sendReminder = $(async (task: TaskAdmin) => {
-        // Se c'è assegnato_a_id espanso, usa la sua email
-        const defaultEmail = task.expand?.assegnato_a_id?.email || '';
-        const email = prompt('Email dell\'amministratore da notificare:', defaultEmail);
-        if (!email) return;
-
-        try {
-            const response = await fetch('/api/send-task-reminder', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    to: email,
-                    task: {
-                        titolo: task.titolo,
-                        contenuto: task.contenuto || task.descrizione_breve,
-                        priorita: task.priorita
-                    }
-                })
-            });
-
-            if (response.ok) {
-                // Aggiorna flag promemoria inviato
-                await pbAdmin.collection('task_admin').update(task.id, {
-                    promemoria_inviato: true,
-                    promemoria_data: new Date().toISOString()
-                });
-                alert('✅ Promemoria inviato con successo!');
-                await fetchTasks();
-            } else {
-                alert('⚠️ Errore nell\'invio del promemoria');
-            }
-        } catch (e) {
-            console.error('Error sending reminder:', e);
-            alert('⚠️ Errore nell\'invio. Verifica configurazione Mailgun.');
-        }
+    const openReminderModal = $((task: TaskAdmin) => {
+        selectedTask.value = task;
+        isReminderModalOpen.value = true;
     });
 
     const getPriorityColor = (priorita: string) => {
@@ -182,10 +152,10 @@ export const AdminTaskList = component$<AdminTaskListProps>(({ onRefresh }) => {
                 <div
                     key={task.id}
                     class={`group flex items-start gap-4 p-4 rounded-xl border transition-all ${task.completato
-                            ? 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 opacity-60'
-                            : task.in_evidenza
-                                ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800 shadow-sm'
-                                : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-md'
+                        ? 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 opacity-60'
+                        : task.in_evidenza
+                            ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800 shadow-sm'
+                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-md'
                         }`}
                 >
                     {/* Pin indicator per task in evidenza */}
@@ -197,8 +167,8 @@ export const AdminTaskList = component$<AdminTaskListProps>(({ onRefresh }) => {
                     <button
                         onClick$={() => toggleComplete(task.id, task.completato)}
                         class={`flex-shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${task.completato
-                                ? 'bg-emerald-500 border-emerald-500'
-                                : 'border-gray-300 dark:border-gray-600 hover:border-emerald-400'
+                            ? 'bg-emerald-500 border-emerald-500'
+                            : 'border-gray-300 dark:border-gray-600 hover:border-emerald-400'
                             }`}
                     >
                         {task.completato && <span class="text-white text-sm">✓</span>}
@@ -219,7 +189,7 @@ export const AdminTaskList = component$<AdminTaskListProps>(({ onRefresh }) => {
                                 {/* Mostra utente assegnato se presente */}
                                 {task.expand?.assegnato_a_id && (
                                     <p class="text-[10px] text-gray-400 mt-1">
-                                        👤 {task.expand.assegnato_a_id.nome} {task.expand.assegnato_a_id.cognome}
+                                        👤 {task.expand.assegnato_a_id.name || task.expand.assegnato_a_id.email}
                                     </p>
                                 )}
                             </div>
@@ -252,7 +222,7 @@ export const AdminTaskList = component$<AdminTaskListProps>(({ onRefresh }) => {
                         {/* Actions */}
                         <div class="flex items-center gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
-                                onClick$={() => sendReminder(task)}
+                                onClick$={() => openReminderModal(task)}
                                 class="px-3 py-1.5 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
                                 title="Invia promemoria via email"
                             >
@@ -268,6 +238,13 @@ export const AdminTaskList = component$<AdminTaskListProps>(({ onRefresh }) => {
                     </div>
                 </div>
             ))}
+            {/* Modal Sollecito */}
+            <ReminderModal
+                isOpen={isReminderModalOpen.value}
+                task={selectedTask.value}
+                onClose$={$(() => isReminderModalOpen.value = false)}
+                onSent$={$(() => fetchTasks())}
+            />
         </div>
     );
 });

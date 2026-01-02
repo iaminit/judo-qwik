@@ -20,20 +20,20 @@ export default component$(() => {
         isLoading.value = true;
         try {
             const filter = searchTerm.value
-                ? `name ~ "${searchTerm.value}" || japanese_name ~ "${searchTerm.value}"`
+                ? `titolo ~ "${searchTerm.value}" || titolo_secondario ~ "${searchTerm.value}"`
                 : '';
 
             const records = await pbAdmin.collection('kata').getFullList({
-                sort: 'name',
+                sort: 'ordine,titolo',
                 filter: filter || undefined,
                 requestKey: null,
             });
 
             kataList.value = records.map(r => ({
                 id: r.id,
-                name: r.name,
-                japanese_name: r.japanese_name,
-                level: r.level,
+                name: r.titolo,
+                japanese_name: r.titolo_secondario,
+                level: r.livello ? `${r.livello}° Dan` : '-',
             })) as KataItem[];
         } catch (e) {
             console.error('[Admin Kata] Error:', e);

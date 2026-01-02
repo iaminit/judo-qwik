@@ -28,10 +28,10 @@ export default component$(() => {
     try {
       // Fetch collections individually to avoid one failing breaking all
       const [techsResult, dictResult, galleryResult, postsResult] = await Promise.allSettled([
-        pbAdmin.collection('techniques').getFullList({ requestKey: null }),
-        pbAdmin.collection('dictionary').getList(1, 1, { requestKey: null }),
-        pbAdmin.collection('gallery').getList(1, 1, { requestKey: null }),
-        pbAdmin.collection('post').getList(1, 1, { requestKey: null }),
+        pbAdmin.collection('tecniche').getFullList({ requestKey: null }),
+        pbAdmin.collection('dizionario').getList(1, 1, { requestKey: null }),
+        pbAdmin.collection('galleria').getList(1, 1, { requestKey: null }),
+        pbAdmin.collection('bacheca').getList(1, 1, { requestKey: null }),
       ]);
 
       const techs = techsResult.status === 'fulfilled' ? techsResult.value : [];
@@ -41,7 +41,7 @@ export default component$(() => {
 
       const catMap: Record<string, number> = {};
       techs.forEach(t => {
-        const cat = t.category || 'Altro';
+        const cat = (t.tags || 'Altro').split(',')[0].trim();
         catMap[cat] = (catMap[cat] || 0) + 1;
       });
 
