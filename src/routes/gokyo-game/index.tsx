@@ -29,23 +29,28 @@ const GOKYO_GROUPS = ['Dai Ikkyo', 'Dai Nikyo', 'Dai Sankyo', 'Dai Yonkyo', 'Dai
 
 export const useGokyoGameData = routeLoader$<GameData>(async () => {
   try {
-    console.log('[GokyoGame] Fetching techniques from PocketBase...');
-    const records = await pb.collection('techniques').getFullList({
-      filter: 'group != "" && group != "Altre"',
+    console.log('[GokyoGame] Fetching techniques from collection "tecniche"...');
+    const records = await pb.collection('tecniche').getFullList({
       requestKey: null,
     });
 
-    // Filter to only valid Gokyo groups
-    const gokyoTechs = records.filter((t: any) =>
-      GOKYO_GROUPS.includes(t.group)
-    );
+    // Valid Gokyo groups usually stored in tags (e.g. "Dai Ikkyo, Ashi-waza")
+    // Map to Technique interface
+    const mappedTechs: Technique[] = records
+      .map((t: any) => ({
+        id: t.id,
+        name: t.titolo || '',
+        kanji: t.titolo_secondario || '', // New schema uses titolo_secondario for kanji
+        group: t.tags?.split(',')[0].trim() || ''
+      }))
+      .filter((t: any) => GOKYO_GROUPS.includes(t.group));
 
     // Shuffle and take 10 random techniques
-    const shuffled = gokyoTechs.sort(() => 0.5 - Math.random()).slice(0, 10);
+    const shuffled = mappedTechs.sort(() => 0.5 - Math.random()).slice(0, 10);
     console.log('[GokyoGame] Prepared', shuffled.length, 'techniques for quiz');
 
     return {
-      techniques: shuffled as unknown as Technique[],
+      techniques: shuffled,
     };
   } catch (err) {
     console.error('[GokyoGame] Error loading techniques:', err);
@@ -200,11 +205,10 @@ export default component$(() => {
 
           {/* Feedback Card */}
           <div
-            class={`bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-4 p-8 animate-bounce ${
-              gameStore.isCorrect
+            class={`bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-4 p-8 animate-bounce ${gameStore.isCorrect
                 ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
                 : 'border-red-500 bg-red-50 dark:bg-red-900/20'
-            }`}
+              }`}
           >
             <div class="text-center mb-6">
               <div class="text-6xl mb-4">{gameStore.isCorrect ? '✅' : '❌'}</div>
@@ -257,10 +261,10 @@ export default component$(() => {
                 {gameStore.score === data.value.techniques.length
                   ? 'Perfetto! Sei un maestro del Gokyo! 🥋'
                   : gameStore.score >= data.value.techniques.length * 0.7
-                  ? 'Ottimo lavoro! Continua così! 👏'
-                  : gameStore.score >= data.value.techniques.length * 0.5
-                  ? 'Buon lavoro! Studia ancora un po\'. 📚'
-                  : 'Non scoraggiarti, riprova! 💪'}
+                    ? 'Ottimo lavoro! Continua così! 👏'
+                    : gameStore.score >= data.value.techniques.length * 0.5
+                      ? 'Buon lavoro! Studia ancora un po\'. 📚'
+                      : 'Non scoraggiarti, riprova! 💪'}
               </p>
             </div>
             <button

@@ -1,0 +1,32 @@
+# Dipendenze (verranno reinstallate)
+node_modules
+npm-debug.log
+
+# File di development
+.git
+.gitignore
+.env
+.env.local
+.DS_Store
+
+# IDE
+.vscode
+.idea
+.claude
+
+# Markdown e documentazione
+*.md
+gcloud.md
+README.md
+
+# Database temporanei (non vogliamo sovrascrivere i dati)
+pb_data/*.db-shm
+pb_data/*.db-wal
+
+# Build artifacts locali (verranno rigenerati)
+dist
+server
+.adapters
+
+# Logs
+*.log

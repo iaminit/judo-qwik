@@ -1,0 +1,15 @@
+.git
+.gitignore
+node_modules/
+.env
+*.local
+dist/
+server/
+.adapters/
+*.log
+.DS_Store
+
+# Includiamo pb_data per il deploy (sovrascriviamo l'esclusione del .gitignore)
+!pb_data/
+pb_data/*.db-shm
+pb_data/*.db-wal

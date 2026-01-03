@@ -30,7 +30,7 @@ const collections: Collection[] = [
   { name: 'domande_quiz', label: 'Quiz', icon: '❓', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300', fields: ['domanda', 'spiegazione'] },
   { name: 'kata', label: 'Kata', icon: '形', color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600', fields: ['titolo', 'contenuto', 'titolo_secondario'] },
   { name: 'storia', label: 'Storia', icon: '📜', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', fields: ['titolo', 'contenuto'] },
-  { name: 'programmi_fijlkam', label: 'FIJLKAM', icon: '🇮🇹', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', fields: ['titolo', 'contenuto'] },
+  { name: 'fijlkam', label: 'FIJLKAM', icon: '🇮🇹', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', fields: ['titolo', 'contenuto'] },
   { name: 'bacheca', label: 'Bacheca', icon: '📌', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300', fields: ['titolo', 'contenuto'] },
   { name: 'galleria', label: 'Galleria', icon: '📸', color: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300', fields: ['titolo', 'contenuto'] },
 ];
@@ -181,7 +181,7 @@ export default component$<SearchModalProps>(({ isOpen, onClose }) => {
       domande_quiz: '/quiz',
       storia: `/storia?search=${encodeURIComponent(result.titolo || '')}&id=${result.id}`,
       kata: `/kata?search=${encodeURIComponent(result.titolo || '')}&id=${result.id}`,
-      programmi_fijlkam: `/fijlkam?id=${result.id}`,
+      fijlkam: `/fijlkam?id=${result.id}`,
       bacheca: `/bacheca?search=${encodeURIComponent(result.titolo || '')}&id=${result.id}`,
       galleria: `/gallery?search=${encodeURIComponent(result.titolo || '')}&id=${result.id}`,
     };

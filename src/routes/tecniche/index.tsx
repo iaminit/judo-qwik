@@ -24,7 +24,11 @@ export const useTechniquesData = routeLoader$(async () => {
         requestKey: null,
       }).catch(() => []),
       new Promise<string[]>((resolve) => {
-        const mediaPath = path.join(process.cwd(), 'public', 'media');
+        const isProd = process.env.NODE_ENV === 'production';
+        const mediaPath = isProd
+          ? path.join(process.cwd(), 'dist', 'media')
+          : path.join(process.cwd(), 'public', 'media');
+
         fs.readdir(mediaPath, (err, files) => {
           if (err) {
             console.error('[Techniques] Error reading media directory:', err);

@@ -5,7 +5,7 @@ import FijlkamForm from '~/components/admin/fijlkam-form';
 
 export const useProgramData = routeLoader$(async ({ params, error }) => {
     try {
-        return await pbAdmin.collection('programmi_fijlkam').getOne(params.id);
+        return await pbAdmin.collection('fijlkam').getOne(params.id);
     } catch (e) {
         throw error(404, 'Programma non trovato');
     }

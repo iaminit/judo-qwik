@@ -103,13 +103,11 @@ export default component$(() => {
         { title: 'Gokyo Quiz', href: '/gokyo-game' },
         { title: 'Gokyo-Tris', href: '/gokyo-tris' },
         { title: 'Flash Card', href: '/flash' },
-        { title: 'Kaeshi & Renraku', href: '/kaeshi-renraku' },
       ]
     },
     { title: 'Storia', href: '/storia' },
     { title: 'FIJLKAM', href: '/fijlkam' },
     { title: 'Bacheca', href: '/bacheca' },
-    { title: 'Archivio', href: '/community' },
   ];
 
   return (

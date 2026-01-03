@@ -85,14 +85,6 @@ const menuItems: MenuItem[] = [
         link: '/gokyo-tris',
       },
       {
-        id: 'kaeshi',
-        title: 'Kaeshi & Renraku',
-        desc: 'Contrattacchi e combinazioni avanzate',
-        icon: '/media/home/kaeshi.webp',
-        color: 'purple',
-        link: '/kaeshi-renraku',
-      },
-      {
         id: 'quiz',
         title: 'Quiz Esame',
         desc: 'Simulazioni per i passaggi di grado',

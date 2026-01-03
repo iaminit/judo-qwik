@@ -18,18 +18,25 @@ interface FlashCardData {
 
 export const useFlashCardData = routeLoader$<FlashCardData>(async () => {
   try {
-    console.log('[FlashCard] Fetching from PocketBase...');
-    const records = await pb.collection('dictionary').getFullList({
-      sort: '@random',
+    console.log('[FlashCard] Fetching from collection "dizionario"...');
+    const records = await pb.collection('dizionario').getFullList({
       requestKey: null,
     });
 
+    // Map fields to FlashCard interface
+    const mappedCards: FlashCard[] = records.map((r: any) => ({
+      id: r.id,
+      term: r.titolo || '',
+      kanji: r.titolo_secondario || '',
+      description: r.contenuto || '',
+    }));
+
     // Shuffle client side and limit to 50
-    const shuffled = records.sort(() => 0.5 - Math.random()).slice(0, 50);
+    const shuffled = mappedCards.sort(() => 0.5 - Math.random()).slice(0, 50);
     console.log('[FlashCard] Prepared', shuffled.length, 'flash cards');
 
     return {
-      cards: shuffled as unknown as FlashCard[],
+      cards: shuffled,
     };
   } catch (err) {
     console.error('[FlashCard] Error loading flash cards:', err);
@@ -101,9 +108,8 @@ export default component$(() => {
         style="perspective: 1000px;"
       >
         <div
-          class={`relative w-full h-full text-center transition-transform duration-500 ${
-            isFlipped.value ? 'rotate-y-180' : ''
-          }`}
+          class={`relative w-full h-full text-center transition-transform duration-500 ${isFlipped.value ? 'rotate-y-180' : ''
+            }`}
           style="transform-style: preserve-3d;"
         >
           {/* Front */}

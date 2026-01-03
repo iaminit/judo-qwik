@@ -16,7 +16,10 @@ export const onPost: RequestHandler = async ({ request, json }) => {
         const buffer = Buffer.from(await file.arrayBuffer());
         const fileName = file.name.replace(/\s+/g, '-').toLowerCase();
 
-        const targetDir = path.join(process.cwd(), 'public', 'media', folder);
+        const isProd = process.env.NODE_ENV === 'production';
+        const targetDir = isProd
+            ? path.join(process.cwd(), 'dist', 'media', folder)
+            : path.join(process.cwd(), 'public', 'media', folder);
 
         if (!fs.existsSync(targetDir)) {
             fs.mkdirSync(targetDir, { recursive: true });

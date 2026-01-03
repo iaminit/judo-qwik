@@ -5,7 +5,7 @@ import FijlkamForm from '~/components/admin/fijlkam-form';
 
 export const useItemDetail = routeLoader$(async ({ params, fail }) => {
     try {
-        const record = await pbAdmin.collection('programmi_fijlkam').getOne(params.id, { requestKey: null });
+        const record = await pbAdmin.collection('fijlkam').getOne(params.id, { requestKey: null });
         return JSON.parse(JSON.stringify(record));
     } catch (err) {
         return fail(404, { message: 'Elemento non trovato' });

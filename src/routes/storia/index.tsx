@@ -141,7 +141,6 @@ export default component$(() => {
   const loc = useLocation();
   const data = useHistoryData();
 
-  const selectedTab = useSignal<'storia' | 'valori'>('storia');
   const searchTerm = useSignal('');
   const targetId = useSignal<string | null>(null);
   const appState = useContext(AppContext);
@@ -160,9 +159,6 @@ export default component$(() => {
 
     if (idParam) {
       targetId.value = idParam;
-      if (idParam === 'h4') {
-        selectedTab.value = 'valori';
-      }
       setTimeout(() => {
         targetId.value = null;
       }, 3000);
@@ -185,12 +181,8 @@ export default component$(() => {
     });
   });
 
-  const valuesItem = useComputed$(() => {
-    return filteredHistory.value.find((item) => item.id === 'h4');
-  });
-
-  const otherHistoryItems = useComputed$(() => {
-    return filteredHistory.value.filter((item) => item.id !== 'h4');
+  const historyItems = useComputed$(() => {
+    return filteredHistory.value;
   });
 
   const handleSearchChange = $((value: string) => {
@@ -224,116 +216,68 @@ export default component$(() => {
         )}
       </div>
 
-      {/* Tabs */}
-      <div class="flex justify-center gap-2">
-        <button
-          onClick$={() => {
-            selectedTab.value = 'storia';
-          }}
-          class={`px-6 py-3 rounded-full font-bold transition-all ${selectedTab.value === 'storia'
-            ? 'bg-red-600 text-white shadow-lg'
-            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-        >
-          📖 Storia
-        </button>
-        <button
-          onClick$={() => {
-            selectedTab.value = 'valori';
-          }}
-          class={`px-6 py-3 rounded-full font-bold transition-all ${selectedTab.value === 'valori'
-            ? 'bg-red-600 text-white shadow-lg'
-            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-        >
-          🎯 Valori
-        </button>
-      </div>
 
-      {/* Content based on selected tab */}
-      {selectedTab.value === 'storia' ? (
-        <>
-          {/* History Articles */}
-          <section class="space-y-8">
-            <div class="grid gap-8">
-              {otherHistoryItems.value.map((item, index) => (
-                <article
-                  key={item.id}
-                  class={`surface-elevated rounded-3xl overflow-hidden hover:scale-[1.01] ${item.id === targetId.value ? 'animate-term-highlight' : ''
-                    }`}
-                >
-                  {item.image && (
-                    <div class="relative h-80 flex items-center justify-center border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/20">
-                      <img
-                        src={`/media/${item.image}`}
-                        alt={item.title}
-                        class="max-w-full max-h-full object-contain p-6 mix-blend-multiply dark:mix-blend-screen"
-                        onError$={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                      <div class="absolute top-4 left-4 bg-red-600 text-white px-4 py-2 rounded-full font-bold text-sm shadow-md">
-                        Capitolo {index + 1}
-                      </div>
-                    </div>
-                  )}
 
-                  <div class="p-8">
-                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                      {item.title}
-                    </h2>
-                    {item.subtitle && (
-                      <h3 class="text-lg text-red-600 dark:text-red-400 font-medium mb-6">
-                        {item.subtitle}
-                      </h3>
-                    )}
-
-                    <div
-                      class="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300"
-                      dangerouslySetInnerHTML={item.content}
-                    />
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          {/* Timeline */}
-          {data.value.timelineItems.length > 0 && (
-            <section class="mt-16">
-              <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  Cronologia Storica
-                </h2>
-                <p class="text-gray-600 dark:text-gray-400">
-                  Le tappe fondamentali del Judo nel mondo
-                </p>
-              </div>
-
-              <TimelineSection items={data.value.timelineItems} targetId={targetId.value} />
-            </section>
-          )}
-        </>
-      ) : (
-        /* Values Section */
-        valuesItem.value && (
-          <article class="bg-white dark:bg-gray-800 p-8 md:p-12 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700">
+      {/* Timeline */}
+      {data.value.timelineItems.length > 0 && (
+        <section class="mt-8 mb-16 px-4">
+          <div class="text-center mb-12">
             <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {valuesItem.value.title}
+              Cronologia Storica
             </h2>
-            {valuesItem.value.subtitle && (
-              <h3 class="text-lg text-red-600 dark:text-red-400 font-medium mb-6">
-                {valuesItem.value.subtitle}
-              </h3>
-            )}
+            <p class="text-gray-600 dark:text-gray-400">
+              Le tappe fondamentali del Judo nel mondo
+            </p>
+          </div>
 
-            <div
-              class="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300"
-              dangerouslySetInnerHTML={valuesItem.value.content}
-            />
-          </article>
-        )
+          <TimelineSection items={data.value.timelineItems} targetId={targetId.value} />
+        </section>
       )}
+
+      {/* History Articles */}
+      <section class="space-y-8">
+        <div class="grid gap-8">
+          {historyItems.value.map((item, index) => (
+            <article
+              key={item.id}
+              class={`surface-elevated rounded-3xl overflow-hidden hover:scale-[1.01] ${item.id === targetId.value ? 'animate-term-highlight' : ''
+                }`}
+            >
+              {item.image && (
+                <div class="relative h-80 flex items-center justify-center border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/20">
+                  <img
+                    src={`/media/${item.image}`}
+                    alt={item.title}
+                    class="max-w-full max-h-full object-contain p-6 mix-blend-multiply dark:mix-blend-screen"
+                    onError$={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <div class="absolute top-4 left-4 bg-red-600 text-white px-4 py-2 rounded-full font-bold text-sm shadow-md">
+                    Capitolo {index + 1}
+                  </div>
+                </div>
+              )}
+
+              <div class="p-8">
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                  {item.title}
+                </h2>
+                {item.subtitle && (
+                  <h3 class="text-lg text-red-600 dark:text-red-400 font-medium mb-6">
+                    {item.subtitle}
+                  </h3>
+                )}
+
+                <div
+                  class="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300"
+                  dangerouslySetInnerHTML={item.content}
+                />
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   );
 });

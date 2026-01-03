@@ -14,7 +14,7 @@ export default component$(() => {
         track(() => activeTab.value);
         track(() => isClient.value);
         if (!isClient.value || activeTab.value !== 'info') return [];
-        return await pbAdmin.collection('programmi_fijlkam').getFullList({
+        return await pbAdmin.collection('fijlkam').getFullList({
             filter: 'tags ~ "info"',
             sort: 'ordine,titolo',
             requestKey: null
@@ -25,7 +25,7 @@ export default component$(() => {
         track(() => activeTab.value);
         track(() => isClient.value);
         if (!isClient.value || activeTab.value !== 'timeline') return [];
-        return await pbAdmin.collection('programmi_fijlkam').getFullList({
+        return await pbAdmin.collection('fijlkam').getFullList({
             filter: 'anno != null',
             sort: 'anno,ordine',
             requestKey: null
@@ -36,7 +36,7 @@ export default component$(() => {
         track(() => activeTab.value);
         track(() => isClient.value);
         if (!isClient.value || activeTab.value !== 'regulations') return [];
-        return await pbAdmin.collection('programmi_fijlkam').getFullList({
+        return await pbAdmin.collection('fijlkam').getFullList({
             filter: 'tags ~ "regolamento"',
             sort: 'titolo',
             requestKey: null
@@ -47,7 +47,7 @@ export default component$(() => {
         track(() => activeTab.value);
         track(() => isClient.value);
         if (!isClient.value || activeTab.value !== 'programmi') return [];
-        return await pbAdmin.collection('programmi_fijlkam').getFullList({
+        return await pbAdmin.collection('fijlkam').getFullList({
             filter: 'tags ~ "esame_dan"',
             sort: 'livello,ordine',
             requestKey: null
@@ -57,7 +57,7 @@ export default component$(() => {
     const handleDelete = $(async (id: string) => {
         if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
             try {
-                await pbAdmin.collection('programmi_fijlkam').delete(id);
+                await pbAdmin.collection('fijlkam').delete(id);
                 window.location.reload();
             } catch (e) {
                 alert('Errore durante l\'eliminazione');

@@ -53,9 +53,9 @@ export default component$<ProgramFormProps>(({ program, isNew }) => {
 
         try {
             if (isNew) {
-                await pbAdmin.collection('programmi_fijlkam').create(data);
+                await pbAdmin.collection('fijlkam').create(data);
             } else {
-                await pbAdmin.collection('programmi_fijlkam').update(program.id, data);
+                await pbAdmin.collection('fijlkam').update(program.id, data);
             }
             nav('/gestione/programma');
         } catch (err: any) {

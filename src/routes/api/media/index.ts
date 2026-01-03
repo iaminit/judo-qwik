@@ -4,7 +4,11 @@ import path from "path";
 
 export const onGet: RequestHandler = async ({ json }) => {
     try {
-        const mediaDir = path.join(process.cwd(), "public", "media");
+        const isProd = process.env.NODE_ENV === 'production';
+        const mediaDir = isProd
+            ? path.join(process.cwd(), 'dist', 'media')
+            : path.join(process.cwd(), 'public', 'media');
+
         const files = fs.readdirSync(mediaDir);
 
         const mediaFiles = files

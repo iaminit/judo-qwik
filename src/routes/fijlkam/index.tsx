@@ -41,22 +41,22 @@ export const useFijlkamData = routeLoader$(async () => {
 
     // Fetch all items from the unified collection
     const [infoResult, tlResult, regResult, programsResult] = await Promise.allSettled([
-      pb.collection('programmi_fijlkam').getFullList({
+      pb.collection('fijlkam').getFullList({
         filter: 'tags ~ "info"',
         sort: 'ordine',
         requestKey: null
       }),
-      pb.collection('programmi_fijlkam').getFullList({
+      pb.collection('fijlkam').getFullList({
         filter: 'anno != null',
         sort: 'anno',
         requestKey: null
       }),
-      pb.collection('programmi_fijlkam').getFullList({
+      pb.collection('fijlkam').getFullList({
         filter: 'tags ~ "regolamento"',
         sort: 'titolo',
         requestKey: null
       }),
-      pb.collection('programmi_fijlkam').getFullList({
+      pb.collection('fijlkam').getFullList({
         filter: 'tags ~ "esame_dan"',
         sort: 'ordine',
         requestKey: null
@@ -117,7 +117,10 @@ const FijlkamTimeline = component$<FijlkamTimelineProps>(({ items }) => {
                   {item.anno}
                 </span>
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{item.titolo}</h3>
-                <p class="text-gray-600 dark:text-gray-400 leading-relaxed">{item.contenuto}</p>
+                <div
+                  class="prose prose-sm dark:prose-invert text-gray-600 dark:text-gray-400 leading-relaxed"
+                  dangerouslySetInnerHTML={item.contenuto}
+                />
               </div>
             </div>
           ))}

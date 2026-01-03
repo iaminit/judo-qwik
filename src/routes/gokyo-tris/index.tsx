@@ -124,15 +124,56 @@ const GOKYO_GROUPS: Record<number, { color: string; name: string }> = {
 
 export const useTechniquesData = routeLoader$<TechniquesData>(async () => {
   try {
-    console.log('[GokyoTris] Fetching techniques from PocketBase...');
-    const records = await pb.collection('techniques').getFullList({
-      filter: 'group != "" && group != "Altre"',
+    console.log('[GokyoTris] Fetching from collection "tecniche"...');
+    const records = await pb.collection('tecniche').getFullList({
       sort: '@random',
       requestKey: null,
     });
-    console.log('[GokyoTris] Fetched', records.length, 'techniques');
+
+    // Map to Technique interface including image resolution logic
+    const techniques: Technique[] = records.map((t: any) => {
+      const techName = t.titolo || '';
+      const techGroup = t.tags?.split(',')[0].trim() || '';
+      const techKanji = t.titolo_secondario || '';
+
+      // Image resolution logic consistent with /tecniche route
+      let slugBase = techName.toLowerCase()
+        .trim()
+        .replace(/ō/g, 'o')
+        .replace(/ū/g, 'u')
+        .replace(/ā/g, 'a')
+        .replace(/ī/g, 'i')
+        .replace(/ē/g, 'e')
+        .replace(/[\s/]+/g, '-');
+
+      slugBase = slugBase.replace(/tsuri-?komi/g, 'tsuri-komi');
+      slugBase = slugBase.replace(/seoi-?nage/g, 'seoi-nage');
+      slugBase = slugBase.replace(/maki-?komi/g, 'maki-komi');
+      slugBase = slugBase.replace(/ashi-?guruma/g, 'ashi-guruma');
+      slugBase = slugBase.replace(/de-?ashi/g, 'de-ashi');
+      slugBase = slugBase.replace(/o-?goshi/g, 'o-goshi');
+      slugBase = slugBase.replace(/o-?uchi/g, 'o-uchi');
+      slugBase = slugBase.replace(/ko-?uchi/g, 'ko-uchi');
+      slugBase = slugBase.replace(/o-?soto/g, 'o-soto');
+      slugBase = slugBase.replace(/ko-?soto/g, 'ko-soto');
+
+      const slugBaseClean = slugBase
+        .replace(/[^-a-z0-9]/g, '')
+        .replace(/--+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+      return {
+        id: t.id,
+        name: techName,
+        kanji: techKanji,
+        group: techGroup,
+        image: `${slugBaseClean}.webp` // Default fallback, card component will handle missing files
+      };
+    });
+
+    console.log('[GokyoTris] Prepared', techniques.length, 'techniques');
     return {
-      techniques: records as unknown as Technique[],
+      techniques,
     };
   } catch (err) {
     console.error('[GokyoTris] Error loading techniques:', err);
@@ -240,12 +281,12 @@ export default component$(() => {
     };
   };
 
-  const rotate = (matrix: number[][]) => {
+  const rotate = $((matrix: number[][]) => {
     const N = matrix.length - 1;
     return matrix.map((row, i) => row.map((val, j) => matrix[N - j][i]));
-  };
+  });
 
-  const isValidMove = (matrix: number[][], cellRow: number, cellCol: number, playfield: (string | number)[][]) => {
+  const isValidMove = $((matrix: number[][], cellRow: number, cellCol: number, playfield: (string | number)[][]) => {
     for (let row = 0; row < matrix.length; row++) {
       for (let col = 0; col < matrix[row].length; col++) {
         if (
@@ -260,9 +301,9 @@ export default component$(() => {
       }
     }
     return true;
-  };
+  });
 
-  const drawNextPiece = () => {
+  const drawNextPiece = $(() => {
     const canvas = nextCanvasRef.value;
     if (!canvas || !gameState.nextTetromino) return;
     const ctx = canvas.getContext('2d');
@@ -282,26 +323,26 @@ export default component$(() => {
         }
       });
     });
-  };
+  });
 
-  const updateScore = (lines: number) => {
+  const updateScore = $((lines: number) => {
     if (lines >= 4) score.ippon++;
     else if (lines >= 2) score.waza++;
     else score.yuko++;
 
     level.value = Math.min(level.value + 1, 10);
     gameState.gameSpeed = Math.max(5, 35 - level.value * 2);
-  };
+  });
 
-  const showGameOver = () => {
+  const showGameOver = $(() => {
     if (gameState.requestId) {
       cancelAnimationFrame(gameState.requestId);
     }
     isGameOver.value = true;
     isPlaying.value = false;
-  };
+  });
 
-  const placeTetromino = () => {
+  const placeTetromino = $(async () => {
     const { currentTetromino } = gameState;
     if (!currentTetromino) return;
 
@@ -310,7 +351,7 @@ export default component$(() => {
       for (let col = 0; col < currentTetromino.matrix[row].length; col++) {
         if (currentTetromino.matrix[row][col]) {
           if (currentTetromino.row + row < 0) {
-            return showGameOver();
+            return await showGameOver();
           }
           gameState.playfield[currentTetromino.row + row][currentTetromino.col + col] =
             currentTetromino.color;
@@ -320,7 +361,7 @@ export default component$(() => {
 
     // Check for lines
     let linesCleared = 0;
-    for (let row = ROWS - 1; row >= 0; ) {
+    for (let row = ROWS - 1; row >= 0;) {
       if (gameState.playfield[row].every((cell) => !!cell)) {
         linesCleared++;
         gameState.playfield.splice(row, 1);
@@ -332,7 +373,7 @@ export default component$(() => {
 
     if (linesCleared > 0) {
       SoundFX.lineClear();
-      updateScore(linesCleared);
+      await updateScore(linesCleared);
     } else {
       SoundFX.drop();
     }
@@ -343,18 +384,7 @@ export default component$(() => {
     // Update displayed technique
     if (gameState.currentTetromino.techData) {
       const t = gameState.currentTetromino.techData;
-      const generatedImage =
-        t.name
-          .toLowerCase()
-          .replace(/ /g, '-')
-          .replace(/ō/g, 'o')
-          .replace(/ū/g, 'u') + '.webp';
-
-      const imgPath = t.image
-        ? t.image.startsWith('http')
-          ? t.image
-          : `/media/${t.image}`
-        : `/media/${generatedImage}`;
+      const imgPath = t.image.startsWith('http') ? t.image : `/media/${t.image}`;
 
       currentTechInfo.name = t.name;
       currentTechInfo.kanji = t.kanji || '';
@@ -362,10 +392,10 @@ export default component$(() => {
       imageError.value = false;
     }
 
-    drawNextPiece();
-  };
+    await drawNextPiece();
+  });
 
-  const draw = () => {
+  const draw = $(() => {
     const canvas = canvasRef.value;
     if (!canvas) return;
     const context = canvas.getContext('2d');
@@ -419,9 +449,9 @@ export default component$(() => {
         });
       });
     }
-  };
+  });
 
-  const loop = (time: number) => {
+  const loop = async (time: number) => {
     if (!isPlaying.value) return;
 
     gameState.requestId = requestAnimationFrame(loop);
@@ -433,7 +463,7 @@ export default component$(() => {
 
       const row = gameState.currentTetromino.row + 1;
       if (
-        isValidMove(
+        await isValidMove(
           gameState.currentTetromino.matrix,
           row,
           gameState.currentTetromino.col,
@@ -442,17 +472,17 @@ export default component$(() => {
       ) {
         gameState.currentTetromino.row = row;
       } else {
-        placeTetromino();
+        await placeTetromino();
       }
     }
 
-    draw();
+    await draw();
   };
 
-  const handleLeft = $(() => {
+  const handleLeft = $(async () => {
     const col = gameState.currentTetromino.col - 1;
     if (
-      isValidMove(
+      await isValidMove(
         gameState.currentTetromino.matrix,
         gameState.currentTetromino.row,
         col,
@@ -464,10 +494,10 @@ export default component$(() => {
     }
   });
 
-  const handleRight = $(() => {
+  const handleRight = $(async () => {
     const col = gameState.currentTetromino.col + 1;
     if (
-      isValidMove(
+      await isValidMove(
         gameState.currentTetromino.matrix,
         gameState.currentTetromino.row,
         col,
@@ -479,10 +509,10 @@ export default component$(() => {
     }
   });
 
-  const handleRotate = $(() => {
-    const matrix = rotate(gameState.currentTetromino.matrix);
+  const handleRotate = $(async () => {
+    const matrix = await rotate(gameState.currentTetromino.matrix);
     if (
-      isValidMove(
+      await isValidMove(
         matrix,
         gameState.currentTetromino.row,
         gameState.currentTetromino.col,
@@ -494,10 +524,10 @@ export default component$(() => {
     }
   });
 
-  const handleDrop = $(() => {
+  const handleDrop = $(async () => {
     const row = gameState.currentTetromino.row + 1;
     if (
-      isValidMove(
+      await isValidMove(
         gameState.currentTetromino.matrix,
         row,
         gameState.currentTetromino.col,
@@ -508,7 +538,7 @@ export default component$(() => {
     }
   });
 
-  const startGame = $(() => {
+  const startGame = $(async () => {
     SoundFX.init();
     gameState.playfield = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
     gameState.tetrominoSequence = [];
@@ -516,22 +546,11 @@ export default component$(() => {
 
     gameState.nextTetromino = getNextTetromino();
     gameState.currentTetromino = getNextTetromino();
-    drawNextPiece();
+    await drawNextPiece();
 
     if (gameState.currentTetromino.techData) {
       const t = gameState.currentTetromino.techData;
-      const generatedImage =
-        t.name
-          .toLowerCase()
-          .replace(/ /g, '-')
-          .replace(/ō/g, 'o')
-          .replace(/ū/g, 'u') + '.webp';
-
-      const imgPath = t.image
-        ? t.image.startsWith('http')
-          ? t.image
-          : `/media/${t.image}`
-        : `/media/${generatedImage}`;
+      const imgPath = t.image.startsWith('http') ? t.image : `/media/${t.image}`;
 
       currentTechInfo.name = t.name;
       currentTechInfo.kanji = t.kanji || '';

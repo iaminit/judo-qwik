@@ -64,9 +64,9 @@ export default component$<FijlkamFormProps>(({ item, isNew, type }) => {
 
         try {
             if (isNew) {
-                await pbAdmin.collection('programmi_fijlkam').create(formData);
+                await pbAdmin.collection('fijlkam').create(formData);
             } else {
-                await pbAdmin.collection('programmi_fijlkam').update(item.id, formData);
+                await pbAdmin.collection('fijlkam').update(item.id, formData);
             }
             nav('/gestione/fijlkam');
         } catch (err: any) {

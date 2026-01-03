@@ -5,7 +5,7 @@ import ProgramForm from '~/components/admin/program-form';
 
 export const useProgramDetail = routeLoader$(async ({ params, fail }) => {
     try {
-        const record = await pbAdmin.collection('programmi_fijlkam').getOne(params.id, {
+        const record = await pbAdmin.collection('fijlkam').getOne(params.id, {
             requestKey: null
         });
         return JSON.parse(JSON.stringify(record));

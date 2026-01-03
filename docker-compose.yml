@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  # PocketBase - Database (solo questo per sviluppo locale)
+  pocketbase:
+    image: ghcr.io/muchobien/pocketbase:latest
+    container_name: judo-pocketbase
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./pb_data:/pb/pb_data
+      - ./pb_migrations:/pb/pb_migrations
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8090/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: /usr/local/bin/pocketbase serve --http=0.0.0.0:8090

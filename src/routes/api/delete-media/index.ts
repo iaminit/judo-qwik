@@ -17,7 +17,11 @@ export const onPost: RequestHandler = async ({ request, json }) => {
             return;
         }
 
-        const filePath = path.join(process.cwd(), 'public', 'media', fileName);
+        const isProd = process.env.NODE_ENV === 'production';
+        const filePath = isProd
+            ? path.join(process.cwd(), 'dist', 'media', fileName)
+            : path.join(process.cwd(), 'public', 'media', fileName);
+
 
         if (!fs.existsSync(filePath)) {
             json(404, { error: 'File not found' });

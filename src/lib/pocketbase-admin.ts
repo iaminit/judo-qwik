@@ -4,7 +4,9 @@ import PocketBase from 'pocketbase';
 // But for the client-side/browser usage, a single instance is usually fine.
 // For SSR, we might need a fresh instance per request.
 
-const PB_URL = import.meta.env.VITE_PB_URL || 'http://127.0.0.1:8090';
+const isServer = import.meta.env.SSR;
+const isProd = import.meta.env.PROD;
+const PB_URL = import.meta.env.VITE_PB_URL || (isServer ? 'http://127.0.0.1:8090' : (isProd ? '/' : 'http://127.0.0.1:8090'));
 
 export const pbAdmin = new PocketBase(PB_URL);
 

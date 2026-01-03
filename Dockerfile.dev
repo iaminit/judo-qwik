@@ -1,0 +1,18 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copia i file di package
+COPY package*.json ./
+
+# Installa dipendenze
+RUN npm install
+
+# Copia il resto del codice (verrà sovrascritto dal volume)
+COPY . .
+
+# Esponi la porta di sviluppo
+EXPOSE 5173
+
+# Il comando verrà specificato nel docker-compose
+CMD ["npm", "run", "dev"]

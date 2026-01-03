@@ -16,7 +16,7 @@ export default component$(() => {
                 ? `livello = ${activeDan.value} && tags ~ "esame_dan"`
                 : 'tags ~ "esame_dan"';
 
-            const records = await pbAdmin.collection('programmi_fijlkam').getFullList({
+            const records = await pbAdmin.collection('fijlkam').getFullList({
                 sort: 'livello,ordine',
                 filter: filter,
                 requestKey: null,
@@ -45,7 +45,7 @@ export default component$(() => {
     const handleDelete = $(async (id: string) => {
         if (!confirm('Sei sicuro di voler eliminare questa sezione del programma?')) return;
         try {
-            await pbAdmin.collection('programmi_fijlkam').delete(id);
+            await pbAdmin.collection('fijlkam').delete(id);
             programList.value = programList.value.filter(item => item.id !== id);
             selectedIds.value = selectedIds.value.filter(sid => sid !== id);
         } catch (e) {
@@ -59,7 +59,7 @@ export default component$(() => {
         isDeleting.value = true;
         try {
             for (const id of selectedIds.value) {
-                await pbAdmin.collection('programmi_fijlkam').delete(id);
+                await pbAdmin.collection('fijlkam').delete(id);
             }
             programList.value = programList.value.filter(item => !selectedIds.value.includes(item.id));
             selectedIds.value = [];

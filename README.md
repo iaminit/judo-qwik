@@ -92,7 +92,6 @@ judo-qwik/
 │   │   ├── 📂 gokyo-game/            # Gioco Gokyo
 │   │   ├── 📂 gokyo-tris/            # Tris Gokyo
 │   │   ├── 📂 flash/                 # Flash Cards
-│   │   ├── 📂 kaeshi-renraku/        # Contrattacchi e combinazioni
 │   │   │
 │   │   └── 📂 gestione/              # Area amministrazione
 │   │       ├── index.tsx             # Dashboard admin
@@ -171,7 +170,7 @@ Database ausiliario con i dati delle collection:
 - `bacheca` (4 record) - News ed eventi
 - `storia` (33 record) - Timeline storica
 - `galleria` (2 record) - Foto e video
-- `programmi_fijlkam` - Programmi esami
+- `fijlkam` - Programmi esami
 - `domande_quiz` - Domande quiz
 - `task_admin` - Task amministrativi
 - `livelli_dan` (9 record) - Gradi Kyu/Dan
@@ -218,33 +217,50 @@ Tutte le collection principali condividono **35 campi comuni**:
    ```
 
 3. **Configura variabili ambiente**
-   
+
    Crea file `.env` dalla copia di esempio:
    ```bash
    cp .env.example .env
    ```
-   
-   Modifica `.env`:
+
+   Modifica `.env` con le tue credenziali:
    ```env
    VITE_PB_URL=http://127.0.0.1:8090
-   MAILGUN_API_KEY=key-xxxxxxxxxxxxx
-   MAILGUN_DOMAIN=mg.tuodominio.com
-   MAILGUN_FROM_EMAIL=noreply@judook.com
+   MAILGUN_API_KEY=your_mailgun_api_key_here
+   MAILGUN_DOMAIN=your_mailgun_domain_here
+   MAILGUN_FROM_EMAIL=your_email@example.com
    MAILGUN_FROM_NAME=JudoOK Admin
+   ADMIN_EMAIL=admin@example.com
    ```
 
-4. **Avvia PocketBase**
+4. **Scarica e avvia PocketBase**
+
+   **Opzione A - Usando lo script (consigliato)**:
    ```bash
-   ./pb-server serve
+   # Lo script scarica PocketBase automaticamente se non presente
+   ./start-pocketbase.sh
    ```
-   
+
+   **Opzione B - Docker** (se hai Docker installato):
+   ```bash
+   docker compose up -d pocketbase
+   ```
+
+   **Opzione C - Manuale**:
+   ```bash
+   # Scarica PocketBase per il tuo OS da: https://pocketbase.io/docs/
+   # Estrai l'eseguibile nella root del progetto
+   chmod +x pocketbase
+   ./pocketbase serve --http=127.0.0.1:8090
+   ```
+
    Al primo avvio, crea un admin su: `http://127.0.0.1:8090/_/`
 
-5. **Avvia dev server**
+5. **Avvia dev server** (in un'altra finestra del terminale)
    ```bash
    npm run dev
    ```
-   
+
    App disponibile su: `http://localhost:5173/`
 
 ---

@@ -63,7 +63,6 @@
 - [x] `/gokyo-game` - Gioco interattivo tecniche
 - [x] `/gokyo-tris` - Tris Gokyo
 - [x] `/flash` - Flash cards studio
-- [x] `/kaeshi-renraku` - Contrattacchi e combinazioni
 
 #### 7. Assets & Media
 - [x] 149 immagini tecniche (WebP)
@@ -112,7 +111,7 @@
 6. `bacheca` - Schema unificato italiano
 7. `galleria` - Schema unificato italiano
 8. `storia` - Unifica history + timeline
-9. `programmi_fijlkam` - Schema unificato italiano
+9. `fijlkam` - Schema unificato italiano
 
 **Riferimento completo**: Vedi `reorg.md`
 
@@ -150,7 +149,7 @@ Tutte le collection principali condividono **35 campi comuni** (BaseRecord):
 4. `bacheca` (ex post)
 5. `galleria` (ex gallery)
 6. `storia` (unifica history + timeline_history)
-7. `programmi_fijlkam` (ex program)
+7. `fijlkam` (ex program)
 8. `regolamenti_fijlkam` (NUOVO)
 9. `info_fijlkam` (NUOVO)
 
