@@ -339,18 +339,28 @@ export default component$(() => {
             <div class="space-y-6">
               <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Gokyo no Waza</h3>
               <div class="flex flex-wrap gap-2">
-                {['Dai Ikkyo', 'Dai Nikyo', 'Dai Sankyo', 'Dai Yonkyo', 'Dai Gokyo'].map(g => (
-                  <button
-                    key={g}
-                    onClick$={() => handleFilterClick('group', g)}
-                    class={`px-4 py-2 rounded-xl text-xs font-black transition-all border ${activeFilters.group === g
-                      ? 'bg-red-600 text-white border-red-600 shadow-lg'
-                      : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 border-transparent hover:border-red-500/30'
-                      }`}
-                  >
-                    {g.toUpperCase()}
-                  </button>
-                ))}
+                {['Dai Ikkyo', 'Dai Nikyo', 'Dai Sankyo', 'Dai Yonkyo', 'Dai Gokyo'].map(g => {
+                  const isActive = activeFilters.group === g;
+                  let colorClass = 'bg-red-600 border-red-600 text-white';
+                  if (g.includes('Ikkyo')) colorClass = 'bg-yellow-400 border-yellow-400 text-gray-900 shadow-yellow-500/20';
+                  if (g.includes('Nikyo')) colorClass = 'bg-orange-500 border-orange-500 text-white shadow-orange-500/20';
+                  if (g.includes('Sankyo')) colorClass = 'bg-green-500 border-green-500 text-white shadow-green-500/20';
+                  if (g.includes('Yonkyo')) colorClass = 'bg-blue-600 border-blue-600 text-white shadow-blue-500/20';
+                  if (g.includes('Gokyo')) colorClass = 'bg-black border-black text-white shadow-black/20';
+
+                  return (
+                    <button
+                      key={g}
+                      onClick$={() => handleFilterClick('group', g)}
+                      class={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${isActive
+                        ? `${colorClass} shadow-lg scale-95`
+                        : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 border-transparent hover:border-red-500/30'
+                        }`}
+                    >
+                      {g}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

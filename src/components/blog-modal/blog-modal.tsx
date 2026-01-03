@@ -1,5 +1,6 @@
 import { component$, type QRL, useStyles$, useVisibleTask$ } from '@builder.io/qwik';
-import type { Post } from '../blog-card';
+import { pbAdmin } from '~/lib/pocketbase-admin';
+import type { Post } from '../blog-card/blog-card';
 
 interface BlogModalProps {
   post: Post | null;
@@ -84,7 +85,10 @@ export default component$<BlogModalProps>(({ post, isOpen, onClose }) => {
   // Genera URL per l'immagine di copertina
   const getImageUrl = (post: Post): string => {
     if (!post.cover_image) return '/media/blog/default.webp';
-    return `http://127.0.0.1:8090/api/files/${post.collectionId}/${post.id}/${post.cover_image}`;
+    if (post.cover_image.startsWith('media/')) return '/' + post.cover_image;
+
+    // In produzione usiamo sempre percorsi relativi
+    return `/api/files/${post.collectionId}/${post.id}/${post.cover_image}`;
   };
 
   // Estrai ID video YouTube

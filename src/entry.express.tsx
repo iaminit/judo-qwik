@@ -41,6 +41,14 @@ const { router, notFound, staticFile } = createQwikCity({
 // Create the express server
 const app = express();
 
+// Log requests for debugging 403
+app.use((req, res, next) => {
+  if (req.method === 'POST' && req.path.startsWith('/api')) {
+    console.log(`[Express] POST ${req.path} - Origin: ${req.headers.origin}, Host: ${req.headers.host}`);
+  }
+  next();
+});
+
 // Enable gzip compression
 app.use(compression());
 
@@ -66,8 +74,18 @@ app.use(
 app.use(`/build`, express.static(buildDir, { immutable: true, maxAge: "1y" }));
 app.use(express.static(distDir, { redirect: false }));
 
-// Add a specific route for media just in case
+// Add specific routes for media
+// 1. Static media from the Docker image (read-only system images)
 app.use("/media", express.static(join(distDir, "media")));
+
+// 2. Persistent media from the Cloud Storage bucket
+if (process.env.NODE_ENV === "production") {
+  const persistentRoot = "/app/pb_data";
+  // Prioritize the new organized /media folder
+  app.use("/media", express.static(join(persistentRoot, "media")));
+  // Fallback to the root bucket folders (audio, bacheca, home, icons)
+  app.use("/media", express.static(persistentRoot));
+}
 
 // Use Qwik City's page and endpoint request handler
 app.use(router);

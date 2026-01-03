@@ -3,8 +3,10 @@ import fs from 'fs';
 import path from 'path';
 
 export const onPost: RequestHandler = async ({ request, json }) => {
+    console.log('[API Upload] Request received');
     try {
         const formData = await request.formData();
+        console.log('[API Upload] Form data parsed');
         const file = formData.get('file') as File;
         const folder = (formData.get('folder') as string) || '';
 
@@ -14,12 +16,26 @@ export const onPost: RequestHandler = async ({ request, json }) => {
         }
 
         const buffer = Buffer.from(await file.arrayBuffer());
+        const ext = path.extname(file.name).toLowerCase();
         const fileName = file.name.replace(/\s+/g, '-').toLowerCase();
+
+        // 1. Determine base folder by file type or priority
+        let finalFolder = folder;
+        if (!finalFolder) {
+            if (['.mp3', '.wav', '.m4a', '.ogg'].includes(ext)) {
+                finalFolder = 'audio';
+            } else if (['.mp4', '.webm', '.mov', '.avi'].includes(ext)) {
+                finalFolder = 'video';
+            } else if (['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'].includes(ext)) {
+                // Default image folder if no context is provided
+                finalFolder = 'immagini';
+            }
+        }
 
         const isProd = process.env.NODE_ENV === 'production';
         const targetDir = isProd
-            ? path.join(process.cwd(), 'dist', 'media', folder)
-            : path.join(process.cwd(), 'public', 'media', folder);
+            ? path.join('/app/pb_data', 'media', finalFolder)
+            : path.join(process.cwd(), 'public', 'media', finalFolder);
 
         if (!fs.existsSync(targetDir)) {
             fs.mkdirSync(targetDir, { recursive: true });
@@ -29,19 +45,19 @@ export const onPost: RequestHandler = async ({ request, json }) => {
 
         let finalFileName = fileName;
         if (fs.existsSync(filePath)) {
-            const ext = path.extname(fileName);
-            const name = path.basename(fileName, ext);
-            finalFileName = `${name}-${Date.now()}${ext}`;
+            const nameWithoutExt = path.basename(fileName, ext);
+            finalFileName = `${nameWithoutExt}-${Date.now()}${ext}`;
         }
 
         const finalPath = path.join(targetDir, finalFileName);
         fs.writeFileSync(finalPath, buffer);
+        console.log(`[API Upload] File written to: ${finalPath}`);
 
-        const relativeUrl = folder ? `/media/${folder}/${finalFileName}` : `/media/${finalFileName}`;
+        const relativeUrl = `/media/${finalFolder}/${finalFileName}`;
 
         json(200, {
             url: relativeUrl,
-            fileName: finalFileName
+            fileName: `${finalFolder}/${finalFileName}`
         });
     } catch (error: any) {
         console.error('[API Upload] Error:', error);

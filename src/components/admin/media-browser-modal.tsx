@@ -93,13 +93,20 @@ export const MediaBrowserModal = component$<MediaBrowserModalProps>(({ isOpen, o
                                     class="group relative aspect-square bg-gray-50 dark:bg-white/5 rounded-2xl overflow-hidden cursor-pointer hover:ring-4 hover:ring-red-500/30 transition-all border border-gray-100 dark:border-white/5"
                                     onClick$={() => onSelect(file.name)}
                                 >
-                                    <img
-                                        src={file.url}
-                                        alt={file.name}
-                                        class="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-500"
-                                        loading="lazy"
-                                    />
-                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                                    {((file as any).tag === 'VIDEO') ? (
+                                        <div class="w-full h-full flex items-center justify-center text-4xl">🎥</div>
+                                    ) : ((file as any).tag === 'AUDIO') ? (
+                                        <div class="w-full h-full flex items-center justify-center text-4xl text-red-500">🔊</div>
+                                    ) : (
+                                        <img
+                                            src={file.url}
+                                            alt={file.name}
+                                            class="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-500"
+                                            loading="lazy"
+                                        />
+                                    )}
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3 text-center">
+                                        <span class="text-[7px] font-black text-red-500 uppercase tracking-widest mb-1">{(file as any).tag}</span>
                                         <p class="text-[9px] font-black text-white truncate uppercase tracking-widest">{file.name}</p>
                                     </div>
                                 </div>

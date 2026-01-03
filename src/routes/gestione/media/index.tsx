@@ -16,7 +16,7 @@ interface MediaItem {
 export default component$(() => {
     const mediaItems = useSignal<MediaItem[]>([]);
     const isLoading = useSignal(true);
-    const filter = useSignal<'all' | 'gallery' | 'techniques' | 'storia' | 'local'>('all');
+    const filter = useSignal<'TUTTI' | 'IMMAGINI' | 'VIDEO' | 'AUDIO' | 'POST'>('TUTTI');
     const searchTerm = useSignal('');
     const isUploading = useSignal(false);
     const fileInputRef = useSignal<HTMLInputElement>();
@@ -26,143 +26,46 @@ export default component$(() => {
         try {
             const allMedia: MediaItem[] = [];
 
-            // 1. Fetch from PocketBase (Gallery)
-            if (filter.value === 'all' || filter.value === 'gallery') {
-                const galleryRecords = await pbAdmin.collection('gallery').getFullList({
-                    sort: '-created',
-                    filter: 'image != ""',
-                    requestKey: null
-                });
+            // Fetch unified local media info
+            const response = await fetch('/api/local-media');
+            const localFiles = response.ok ? await response.json() : [];
+            console.log('[Media Center] Local media received:', localFiles.length, 'items');
 
+            allMedia.push(...localFiles.map((file: any) => ({
+                id: file.path,
+                collectionName: file.tag,
+                file: file.path,
+                url: file.url,
+                thumb: file.url,
+                name: file.name,
+                type: file.tag.toLowerCase(),
+                source: 'local' as const
+            })));
+
+            // Also keep PocketBase images for context, but tag them
+            try {
+                const galleryRecords = await pbAdmin.collection('gallery').getFullList({ sort: '-created', filter: 'image != ""', requestKey: null });
                 allMedia.push(...galleryRecords.map(r => ({
                     id: r.id,
                     collectionId: r.collectionId,
-                    collectionName: 'gallery',
+                    collectionName: 'GALLERY',
                     file: r.image,
                     url: pbAdmin.files.getUrl(r, r.image),
                     thumb: pbAdmin.files.getUrl(r, r.image, { thumb: '200x200' }),
                     name: r.title || r.image,
-                    type: 'image',
+                    type: 'immagini',
                     source: 'pocketbase' as const
                 })));
+            } catch (e) {
+                console.warn('[Media Center] Gallery records (pb) not available:', e);
             }
 
-            // 2. Fetch from PocketBase (Technique Images & Smart Mapping)
-            if (filter.value === 'all' || filter.value === 'techniques') {
-                try {
-                    const [techRecords, techImages, localFiles] = await Promise.all([
-                        pbAdmin.collection('techniques').getFullList({ requestKey: null }),
-                        pbAdmin.collection('technique_images').getFullList({ requestKey: null }).catch(() => []),
-                        fetch('/api/local-media').then(res => res.ok ? res.json() : [])
-                    ]);
+            const currentFilter = filter.value;
+            const filteredByTag = currentFilter === 'TUTTI'
+                ? allMedia
+                : allMedia.filter(m => m.type.toUpperCase() === currentFilter);
 
-                    const localFileSet = new Set(localFiles.map((f: any) => f.name));
-
-                    const techniqueImageMap = new Map<string, string>(
-                        techImages.map((img: any) => {
-                            const rawPath = img.path || img.image_file || img.image || '';
-                            const filename = rawPath ? rawPath.replace(/^media\//, '').split('/').pop() : '';
-                            return [img.technique, filename];
-                        })
-                    );
-
-                    techRecords.forEach((t: any) => {
-                        // Slug fallback logic (same as frontend)
-                        let slugBase = t.name.toLowerCase().trim()
-                            .replace(/[ōō]/g, 'o').replace(/[ūū]/g, 'u').replace(/[āā]/g, 'a')
-                            .replace(/[īī]/g, 'i').replace(/[ēē]/g, 'e').replace(/[\s/]+/g, '-');
-
-                        // Common term normalization
-                        slugBase = slugBase.replace(/tsuri-?komi/g, 'tsuri-komi').replace(/seoi-?nage/g, 'seoi-nage')
-                            .replace(/maki-?komi/g, 'maki-komi').replace(/ashi-?guruma/g, 'ashi-guruma')
-                            .replace(/de-?ashi/g, 'de-ashi').replace(/o-?goshi/g, 'o-goshi')
-                            .replace(/o-?uchi/g, 'o-uchi').replace(/ko-?uchi/g, 'ko-uchi')
-                            .replace(/o-?soto/g, 'o-soto').replace(/ko-?soto/g, 'ko-soto');
-
-                        const slugBaseClean = slugBase.replace(/[^-a-z0-9]/g, '').replace(/--+/g, '-').replace(/^-+|-+$/g, '');
-                        const extensions = ['.webp', '.svg', '.jpg', '.jpeg', '.png'];
-
-                        let foundImage = '';
-                        search_loop: for (const ext of extensions) {
-                            if (localFileSet.has(slugBaseClean + ext)) {
-                                foundImage = slugBaseClean + ext;
-                                break search_loop;
-                            }
-                        }
-
-                        const dbImage = techniqueImageMap.get(t.id);
-                        const finalFile = dbImage || foundImage;
-
-                        if (finalFile) {
-                            allMedia.push({
-                                id: t.id + '_img',
-                                collectionId: t.collectionId,
-                                collectionName: 'techniques',
-                                file: finalFile,
-                                url: finalFile.startsWith('http') ? finalFile : `/media/${finalFile}`,
-                                thumb: finalFile.startsWith('http') ? finalFile : `/media/${finalFile}`,
-                                name: `${t.name} (Tecnica)`,
-                                type: 'image',
-                                source: dbImage ? 'pocketbase' : 'local'
-                            });
-                        }
-                    });
-                } catch (e) {
-                    console.warn('[Media Center] Error fetching techniques logic:', e);
-                }
-            }
-
-            // 2b. Fetch from PocketBase (Storia)
-            if (filter.value === 'all' || filter.value === 'storia') {
-                try {
-                    const historyRecords = await pbAdmin.collection('history').getFullList({
-                        sort: '-created',
-                        filter: 'image != ""',
-                        requestKey: null
-                    });
-
-                    allMedia.push(...historyRecords.map(r => ({
-                        id: r.id,
-                        collectionId: r.collectionId,
-                        collectionName: 'history',
-                        file: r.image,
-                        url: pbAdmin.files.getUrl(r, r.image),
-                        thumb: pbAdmin.files.getUrl(r, r.image, { thumb: '200x200' }),
-                        name: r.title || r.image,
-                        type: 'image',
-                        source: 'pocketbase' as const
-                    })));
-                } catch (e) {
-                    console.warn('[Media Center] history images not accessible');
-                }
-            }
-
-            // 3. Scan Local /public/media (via API or manual list for now if API missing)
-            // Note: Since we can't easily read filesystem from browser, we usually need an API.
-            // But for this project, I'll add the discovery of local files if they have a consistent pattern.
-            // For now, let's assume we want to see the local files too.
-            if (filter.value === 'all' || filter.value === 'local') {
-                try {
-                    const response = await fetch('/api/local-media');
-                    if (response.ok) {
-                        const localFiles = await response.json();
-                        allMedia.push(...localFiles.map((file: string) => ({
-                            id: file,
-                            collectionName: 'public/media',
-                            file: file,
-                            url: `/media/${file}`,
-                            thumb: `/media/${file}`,
-                            name: file,
-                            type: file.endsWith('.mp4') ? 'video' : 'image',
-                            source: 'local' as const
-                        })));
-                    }
-                } catch (e) {
-                    console.warn('[Media Center] Local media API not found');
-                }
-            }
-
-            mediaItems.value = allMedia;
+            mediaItems.value = filteredByTag;
         } catch (e) {
             console.error('[Media Center] Error:', e);
         } finally {
@@ -202,8 +105,10 @@ export default component$(() => {
             const formData = new FormData();
             formData.append('file', input.files[0]);
 
-            // If we are filtering by 'local' and it looks like a subfolder...
-            // For now just upload to root media/
+            // Set folder based on current filter if it's a specific category
+            if (filter.value !== 'TUTTI') {
+                formData.append('folder', filter.value.toLowerCase());
+            }
 
             const resp = await fetch('/api/upload', {
                 method: 'POST',
@@ -257,7 +162,7 @@ export default component$(() => {
                         class="hidden"
                         ref={fileInputRef}
                         onChange$={handleUpload}
-                        accept="image/*,video/*"
+                        accept="image/*,video/*,audio/*"
                     />
                     <button
                         onClick$={() => fileInputRef.value?.click()}
@@ -275,36 +180,36 @@ export default component$(() => {
                         />
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
                     </div>
-                    <div class="flex bg-white dark:bg-gray-900 p-1 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                    <div class="flex bg-white dark:bg-gray-900 p-1 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-x-auto">
                         <button
-                            onClick$={() => filter.value = 'all'}
-                            class={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter.value === 'all' ? 'bg-gray-900 text-white dark:bg-white dark:text-black' : 'text-gray-400 hover:text-gray-600'}`}
+                            onClick$={() => filter.value = 'TUTTI'}
+                            class={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter.value === 'TUTTI' ? 'bg-red-600 text-white shadow-lg shadow-red-500/30' : 'text-gray-400 hover:text-gray-600'}`}
                         >
                             Tutti
                         </button>
                         <button
-                            onClick$={() => filter.value = 'gallery'}
-                            class={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter.value === 'gallery' ? 'bg-gray-900 text-white dark:bg-white dark:text-black' : 'text-gray-400 hover:text-gray-600'}`}
+                            onClick$={() => filter.value = 'IMMAGINI'}
+                            class={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter.value === 'IMMAGINI' ? 'bg-red-600 text-white shadow-lg shadow-red-500/30' : 'text-gray-400 hover:text-gray-600'}`}
                         >
-                            Galleria
+                            Immagini
                         </button>
                         <button
-                            onClick$={() => filter.value = 'techniques'}
-                            class={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter.value === 'techniques' ? 'bg-gray-900 text-white dark:bg-white dark:text-black' : 'text-gray-400 hover:text-gray-600'}`}
+                            onClick$={() => filter.value = 'VIDEO'}
+                            class={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter.value === 'VIDEO' ? 'bg-red-600 text-white shadow-lg shadow-red-500/30' : 'text-gray-400 hover:text-gray-600'}`}
                         >
-                            Tecniche
+                            Video
                         </button>
                         <button
-                            onClick$={() => filter.value = 'storia'}
-                            class={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter.value === 'storia' ? 'bg-gray-900 text-white dark:bg-white dark:text-black' : 'text-gray-400 hover:text-gray-600'}`}
+                            onClick$={() => filter.value = 'AUDIO'}
+                            class={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter.value === 'AUDIO' ? 'bg-red-600 text-white shadow-lg shadow-red-500/30' : 'text-gray-400 hover:text-gray-600'}`}
                         >
-                            Storia
+                            Audio
                         </button>
                         <button
-                            onClick$={() => filter.value = 'local'}
-                            class={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter.value === 'local' ? 'bg-gray-900 text-white dark:bg-white dark:text-black' : 'text-gray-400 hover:text-gray-600'}`}
+                            onClick$={() => filter.value = 'POST'}
+                            class={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter.value === 'POST' ? 'bg-red-600 text-white shadow-lg shadow-red-500/30' : 'text-gray-400 hover:text-gray-600'}`}
                         >
-                            Media Locali
+                            Post
                         </button>
                     </div>
                 </div>
@@ -321,6 +226,10 @@ export default component$(() => {
                             {item.type === 'video' ? (
                                 <div class="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-800 p-2 rounded-3xl">
                                     <span class="text-4xl">🎥</span>
+                                </div>
+                            ) : item.type === 'audio' ? (
+                                <div class="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-800 p-2 rounded-3xl">
+                                    <span class="text-4xl text-red-500">🔊</span>
                                 </div>
                             ) : (
                                 <img src={item.thumb} alt={item.name} class="w-full h-full object-cover p-2 rounded-3xl" />

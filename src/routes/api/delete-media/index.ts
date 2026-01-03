@@ -18,9 +18,19 @@ export const onPost: RequestHandler = async ({ request, json }) => {
         }
 
         const isProd = process.env.NODE_ENV === 'production';
-        const filePath = isProd
-            ? path.join(process.cwd(), 'dist', 'media', fileName)
+        const persistentRoot = '/app/pb_data';
+
+        let filePath = isProd
+            ? path.join(persistentRoot, 'media', fileName)
             : path.join(process.cwd(), 'public', 'media', fileName);
+
+        // Fallback for production: if not in organized media/, try root bucket
+        if (isProd && !fs.existsSync(filePath)) {
+            const rootPath = path.join(persistentRoot, fileName);
+            if (fs.existsSync(rootPath)) {
+                filePath = rootPath;
+            }
+        }
 
 
         if (!fs.existsSync(filePath)) {

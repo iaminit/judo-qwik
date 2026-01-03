@@ -22,6 +22,20 @@ interface TechniqueCardProps {
 export default component$<TechniqueCardProps>(({ technique, onOpenModal, isTarget }) => {
   const isPlaying = useSignal(false);
 
+  // Gokyo Color Mapping
+  const getGroupColor = (group: string) => {
+    const g = group.toLowerCase();
+    if (g.includes('ikkyo')) return 'bg-yellow-400 text-gray-900';
+    if (g.includes('nikyo')) return 'bg-orange-500 text-white';
+    if (g.includes('sankyo')) return 'bg-green-500 text-white';
+    if (g.includes('yonkyo')) return 'bg-blue-600 text-white';
+    if (g.includes('gokyo')) return 'bg-black text-white';
+    if (g.includes('atemi')) return 'bg-red-700 text-white';
+    return 'bg-gray-800 text-white'; // Default for Ne-waza or others
+  };
+
+  const groupColorClass = getGroupColor(technique.gruppo);
+
   const playAudio = $((audioFile: string) => {
     if (!audioFile) return;
 
@@ -48,15 +62,15 @@ export default component$<TechniqueCardProps>(({ technique, onOpenModal, isTarge
 
   return (
     <div
-      class={`bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:-translate-y-1 transition-all duration-200 cursor-pointer group ${isTarget ? 'animate-term-highlight' : ''}`}
+      class={`bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer group flex flex-col ${isTarget ? 'animate-term-highlight' : ''}`}
       onClick$={handleCardClick}
     >
       {/* Image Container */}
-      <div class="aspect-square bg-white dark:bg-gray-900/50 relative overflow-hidden border-b border-gray-100 dark:border-gray-700">
+      <div class="flex-1 aspect-square bg-white dark:bg-slate-900 relative overflow-hidden">
         <img
           src={`/media/${technique.image}`}
           alt={technique.nome}
-          class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-300 mix-blend-multiply dark:mix-blend-screen"
+          class="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-500 mix-blend-multiply dark:mix-blend-screen"
           onError$={(e) => {
             const target = e.target as HTMLImageElement;
             if (target.src.indexOf('kano_non_sa.webp') === -1) {
@@ -69,11 +83,10 @@ export default component$<TechniqueCardProps>(({ technique, onOpenModal, isTarge
         {/* Audio Button Overlay */}
         {technique.has_audio && technique.audio_file && (
           <button
-            class={`absolute top-2 left-2 p-2.5 rounded-xl transition-all shadow-xl backdrop-blur-md border ${
-              isPlaying.value
+            class={`absolute top-3 left-3 p-2.5 rounded-xl transition-all shadow-xl backdrop-blur-md border ${isPlaying.value
                 ? 'bg-red-600 text-white border-red-500'
                 : 'bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-200 border-white/20 hover:bg-red-600 hover:text-white'
-            }`}
+              }`}
             onClick$={(e) => {
               e.stopPropagation();
               playAudio(technique.audio_file!);
@@ -88,27 +101,20 @@ export default component$<TechniqueCardProps>(({ technique, onOpenModal, isTarge
 
         {/* Video Badge */}
         {technique.video_youtube && (
-          <div class="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5v14l11-7z" />
-            </svg>
+          <div class="absolute top-3 right-3 bg-red-600/90 backdrop-blur-sm text-white px-2.5 py-1.5 rounded-xl text-[8px] font-black tracking-widest flex items-center gap-1.5 shadow-lg">
+            <div class="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
             VIDEO
           </div>
         )}
-
-        {/* Active Indicator */}
-        <div class="absolute bottom-2 right-2 w-3 h-3 rounded-full bg-green-500 border-2 border-white dark:border-gray-800 shadow-sm"></div>
       </div>
 
-      {/* Content */}
-      <div class="p-3 text-center">
-        <div class="flex items-center justify-center gap-2 mb-1">
-          <h3 class="font-bold text-gray-800 dark:text-gray-100 text-sm md:text-base leading-tight">
-            {technique.nome}
-          </h3>
-        </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400">
-          {technique.gruppo} • {technique.tipo}
+      {/* Content - Characterized by Color at the bottom */}
+      <div class={`p-4 text-center min-h-[80px] flex flex-col justify-center transition-colors duration-300 ${groupColorClass}`}>
+        <h3 class="font-black text-sm md:text-base leading-tight uppercase tracking-tighter mb-1">
+          {technique.nome}
+        </h3>
+        <p class={`text-[9px] font-bold uppercase tracking-widest opacity-60`}>
+          {technique.gruppo}
         </p>
       </div>
     </div>

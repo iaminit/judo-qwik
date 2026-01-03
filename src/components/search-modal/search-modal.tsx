@@ -77,6 +77,7 @@ export default component$<SearchModalProps>(({ isOpen, onClose }) => {
   const expandedId = useSignal<string | null>(null);
   const selectedFilter = useSignal('all');
   const searchTimerRef = useSignal<number | null>(null);
+  const inputRef = useSignal<HTMLInputElement>();
 
   // Debounced search
   // eslint-disable-next-line qwik/no-use-visible-task
@@ -136,7 +137,7 @@ export default component$<SearchModalProps>(({ isOpen, onClose }) => {
     }, 300);
   });
 
-  // Reset when modal closes
+  // Reset when modal closes and focus when opens
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => isOpen);
@@ -146,6 +147,11 @@ export default component$<SearchModalProps>(({ isOpen, onClose }) => {
       results.value = [];
       expandedId.value = null;
       selectedFilter.value = 'all';
+    } else {
+      // Force focus on mount/open
+      setTimeout(() => {
+        inputRef.value?.focus();
+      }, 100);
     }
   });
 
@@ -234,6 +240,7 @@ export default component$<SearchModalProps>(({ isOpen, onClose }) => {
           {/* Search Input Container */}
           <div class="relative group">
             <input
+              ref={inputRef}
               type="text"
               placeholder="Cerca termini, tecniche, storie..."
               value={searchQuery.value}

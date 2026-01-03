@@ -279,7 +279,7 @@ export default component$<PostFormProps>(({ post, isNew }) => {
                             <div class="relative group aspect-video rounded-3xl overflow-hidden bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700">
                                 {(imagePreview.value || (post?.immagine_principale && !isNew)) ? (
                                     <img
-                                        src={imagePreview.value || (post?.immagine_principale?.startsWith('media/') ? '/' + post.immagine_principale : `${pbAdmin.baseUrl}/api/files/${post?.collectionId}/${post?.id}/${post?.immagine_principale}`)}
+                                        src={imagePreview.value || (post?.immagine_principale?.startsWith('media/') ? '/' + post.immagine_principale : `/api/files/${post?.collectionId}/${post?.id}/${post?.immagine_principale}`)}
                                         alt="Preview"
                                         class="w-full h-full object-cover"
                                         onError$={(e) => {
