@@ -113,6 +113,5 @@ export default component$<TechniqueCardProps>(({ technique, onOpenModal, isTarge
         </h3>
       </div>
     </div>
-    </div >
   );
 });
