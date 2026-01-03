@@ -352,8 +352,14 @@ export default component$<SearchModalProps>(({ isOpen, onClose }) => {
                   <div class="flex items-start justify-between gap-4 relative z-10">
                     <div class="flex-1">
                       <div class="flex items-center gap-3 mb-4">
-                        <span class="px-3 py-1 bg-red-500/10 text-red-600 dark:text-red-400 rounded-full text-[9px] font-black uppercase tracking-widest border border-red-500/10">
-                          {result._collectionIcon} {result._collectionLabel}
+                        <span class="px-3 py-1 bg-red-500/10 text-red-600 dark:text-red-400 rounded-full text-[9px] font-black uppercase tracking-widest border border-red-500/10 flex items-center gap-2">
+                          <span>{result._collectionIcon} {result._collectionLabel}</span>
+                          {result._collection === 'tecniche' && (
+                            <span class="flex items-center gap-1 opacity-60">
+                              {(result.audio || result.audio_file) && <span>🔊</span>}
+                              {(result.video_link || result.video_youtube) && <span>🎥</span>}
+                            </span>
+                          )}
                         </span>
                         {result.kanji && (
                           <span class="text-red-500/40 font-serif text-lg leading-none">

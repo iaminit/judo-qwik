@@ -164,6 +164,7 @@ export default component$(() => {
   const searchTerm = useSignal('');
   const modalTechnique = useSignal<Technique | null>(null);
   const targetId = useSignal<string | null>(null);
+  const viewMode = useSignal<'grid' | 'board'>('board');
   const appState = useContext(AppContext);
 
   useVisibleTask$(({ track }) => {
@@ -290,12 +291,30 @@ export default component$(() => {
               type="text"
               placeholder="Cerca una tecnica..."
               value={searchTerm.value}
-              onInput$={(e) => searchTerm.value = (e.target as HTMLInputElement).value}
+              onInput$={(e) => {
+                searchTerm.value = (e.target as HTMLInputElement).value;
+                if (searchTerm.value) viewMode.value = 'grid';
+              }}
               class="w-full pl-6 pr-14 py-4 rounded-[2rem] bg-white dark:bg-slate-900 border border-gray-100 dark:border-white/5 focus:outline-none focus:ring-4 focus:ring-red-500/5 transition-all shadow-2xl shadow-gray-200/50 dark:shadow-none text-lg text-gray-900 dark:text-white placeholder-gray-400 font-bold"
             />
             <div class="absolute inset-y-0 right-0 pr-6 flex items-center pointer-events-none">
               <span class="text-xl opacity-30 group-focus-within:opacity-100 group-focus-within:text-red-500 transition-all">🔍</span>
             </div>
+          </div>
+
+          <div class="flex bg-white dark:bg-slate-900 border border-gray-100 dark:border-white/5 rounded-[2rem] p-1 shadow-2xl shadow-gray-200/50 dark:shadow-none">
+            <button
+              onClick$={() => viewMode.value = 'board'}
+              class={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${viewMode.value === 'board' ? 'bg-red-600 text-white shadow-lg' : 'text-gray-400'}`}
+            >
+              Board
+            </button>
+            <button
+              onClick$={() => viewMode.value = 'grid'}
+              class={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${viewMode.value === 'grid' ? 'bg-red-600 text-white shadow-lg' : 'text-gray-400'}`}
+            >
+              Grid
+            </button>
           </div>
 
           <button
@@ -386,16 +405,65 @@ export default component$(() => {
         </div>
       </div>
 
-      {/* Results Grid - Using the standard TechniqueCard which will inherit global surface-elevated style */}
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
-        {filteredTechniques.value.map(tech => (
-          <TechniqueCard
-            key={tech.id}
-            technique={tech}
-            onOpenModal={openModal}
-            isTarget={tech.id === targetId.value}
-          />
-        ))}
+      {/* Results Rendering System */}
+      <div class="max-w-[1400px] mx-auto px-4">
+        {viewMode.value === 'board' && !searchTerm.value ? (
+          <div class="space-y-16">
+            {['Dai Ikkyo', 'Dai Nikyo', 'Dai Sankyo', 'Dai Yonkyo', 'Dai Gokyo'].map((group) => (
+              <div key={group} class="space-y-6">
+                <div class="flex items-center gap-4">
+                  <div class={`w-2 h-8 rounded-full ${group.includes('Ikkyo') ? 'bg-[#ffd700]' : group.includes('Nikyo') ? 'bg-[#ff8c00]' : group.includes('Sankyo') ? 'bg-[#4ade80]' : group.includes('Yonkyo') ? 'bg-[#3b82f6]' : 'bg-black'}`}></div>
+                  <h3 class="text-2xl font-black uppercase tracking-widest text-gray-900 dark:text-white">{group}</h3>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+                  {data.value.techniques
+                    .filter(t => t.gruppo === group)
+                    .map(tech => (
+                      <TechniqueCard
+                        key={tech.id}
+                        technique={tech}
+                        onOpenModal={openModal}
+                        isTarget={tech.id === targetId.value}
+                      />
+                    ))}
+                </div>
+              </div>
+            ))}
+
+            {/* Ne-waza / Others */}
+            {data.value.techniques.some(t => !t.gruppo.includes('Dai')) && (
+              <div class="space-y-6">
+                <div class="flex items-center gap-4">
+                  <div class="w-2 h-8 rounded-full bg-gray-400"></div>
+                  <h3 class="text-2xl font-black uppercase tracking-widest text-gray-900 dark:text-white">Altre Tecniche</h3>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+                  {data.value.techniques
+                    .filter(t => !t.gruppo.includes('Dai'))
+                    .map(tech => (
+                      <TechniqueCard
+                        key={tech.id}
+                        technique={tech}
+                        onOpenModal={openModal}
+                        isTarget={tech.id === targetId.value}
+                      />
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {filteredTechniques.value.map(tech => (
+              <TechniqueCard
+                key={tech.id}
+                technique={tech}
+                onOpenModal={openModal}
+                isTarget={tech.id === targetId.value}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Empty State */}
