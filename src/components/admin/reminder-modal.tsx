@@ -1,4 +1,4 @@
-import { component$, useSignal, $, useVisibleTask$ } from '@builder.io/qwik';
+import { component$, useSignal, $, useVisibleTask$, type QRL } from '@builder.io/qwik';
 import { pbAdmin } from '~/lib/pocketbase-admin';
 
 interface User {
@@ -17,8 +17,8 @@ interface ReminderModalProps {
         descrizione_breve?: string;
         priorita: string;
     } | null;
-    onClose$: () => void;
-    onSent$: () => void;
+    onClose$: QRL<() => void>;
+    onSent$: QRL<() => void>;
 }
 
 export const ReminderModal = component$<ReminderModalProps>(({ isOpen, task, onClose$, onSent$ }) => {

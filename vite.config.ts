@@ -15,6 +15,7 @@ const { dependencies = {}, devDependencies = {} } = pkg as any as {
   devDependencies: PkgDep;
   [key: string]: unknown;
 };
+
 errorOnDuplicatesPkgDeps(devDependencies, dependencies);
 
 /**

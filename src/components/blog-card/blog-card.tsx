@@ -1,5 +1,5 @@
 import { component$, type QRL, useStyles$ } from '@builder.io/qwik';
-import { pbAdmin } from '~/lib/pocketbase-admin';
+import { getPBFileUrl } from '~/lib/pocketbase';
 
 export interface Post {
   id: string;
@@ -46,8 +46,7 @@ export default component$<BlogCardProps>(({ post, onClick, viewMode = 'grid' }) 
     if (!post.cover_image) return '/media/blog/default.webp';
     if (post.cover_image.startsWith('media/')) return '/' + post.cover_image;
 
-    // In produzione usiamo sempre percorsi relativi per passare correttamente attraverso il proxy
-    return `/api/files/${post.collectionId}/${post.id}/${post.cover_image}`;
+    return getPBFileUrl(post.collectionId!, post.id, post.cover_image);
   };
 
   // Colore di sfondo in base all'attività

@@ -9,7 +9,7 @@ import {
 } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
-import { pb } from '~/lib/pocketbase';
+import { pb, getPBFileUrl } from '~/lib/pocketbase';
 import { AppContext } from '~/context/app-context';
 
 interface GalleryItem {
@@ -114,7 +114,7 @@ export default component$(() => {
 
     // If it's an item from PocketBase (has collectionId and id)
     if (item.collectionId && item.id) {
-      return `http://127.0.0.1:8090/api/files/${item.collectionId}/${item.id}/${item.image}`;
+      return getPBFileUrl(item.collectionId, item.id, item.image);
     }
 
     // Fallback

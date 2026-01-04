@@ -164,7 +164,7 @@ export default component$<RichTextEditorProps>(({ value, id, name, placeholder, 
             console.warn('[RichText] Error registering styles:', e);
         }
 
-        const imageHandler = $(() => {
+        const imageHandler = () => {
             const input = document.createElement('input');
             input.setAttribute('type', 'file');
             input.setAttribute('accept', 'image/*');
@@ -199,7 +199,7 @@ export default component$<RichTextEditorProps>(({ value, id, name, placeholder, 
                     isUploading.value = false;
                 }
             };
-        });
+        };
 
         const quill = new Quill(editorRef.value as HTMLElement, {
             theme: 'snow',

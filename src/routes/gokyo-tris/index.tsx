@@ -6,6 +6,7 @@ import {
   useContext,
   $,
   type Signal,
+  type QRL,
 } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
@@ -215,18 +216,18 @@ export default component$(() => {
   });
 
   // Helper functions
-  const generateSequence = () => {
+  const generateSequence = $(() => {
     const sequence = ['I', 'J', 'L', 'O', 'S', 'Z', 'T'];
     while (sequence.length) {
       const rand = Math.floor(Math.random() * sequence.length);
       const name = sequence.splice(rand, 1)[0];
       gameState.tetrominoSequence.push(name);
     }
-  };
+  });
 
-  const getNextTetromino = () => {
+  const getNextTetromino = $(async () => {
     if (gameState.tetrominoSequence.length === 0) {
-      generateSequence();
+      await generateSequence();
     }
     const name = gameState.tetrominoSequence.pop()!;
     const matrix = TETROMINOES[name];
@@ -279,7 +280,7 @@ export default component$(() => {
       gokyoGroup: gokyoIndex,
       techData: tech,
     };
-  };
+  });
 
   const rotate = $((matrix: number[][]) => {
     const N = matrix.length - 1;
@@ -379,7 +380,7 @@ export default component$(() => {
     }
 
     gameState.currentTetromino = gameState.nextTetromino;
-    gameState.nextTetromino = getNextTetromino();
+    gameState.nextTetromino = await getNextTetromino();
 
     // Update displayed technique
     if (gameState.currentTetromino.techData) {
@@ -451,10 +452,10 @@ export default component$(() => {
     }
   });
 
-  const loop = async (time: number) => {
+  const loop = $(async (time: number) => {
     if (!isPlaying.value) return;
 
-    gameState.requestId = requestAnimationFrame(loop);
+    gameState.requestId = requestAnimationFrame((t) => loop(t));
 
     gameState.count++;
 
@@ -477,7 +478,7 @@ export default component$(() => {
     }
 
     await draw();
-  };
+  });
 
   const handleLeft = $(async () => {
     const col = gameState.currentTetromino.col - 1;
@@ -544,8 +545,8 @@ export default component$(() => {
     gameState.tetrominoSequence = [];
     gameState.count = 0;
 
-    gameState.nextTetromino = getNextTetromino();
-    gameState.currentTetromino = getNextTetromino();
+    gameState.nextTetromino = await getNextTetromino();
+    gameState.currentTetromino = await getNextTetromino();
     await drawNextPiece();
 
     if (gameState.currentTetromino.techData) {
@@ -571,7 +572,7 @@ export default component$(() => {
     track(() => isPlaying.value);
 
     if (isPlaying.value) {
-      gameState.requestId = requestAnimationFrame(loop);
+      gameState.requestId = requestAnimationFrame((t) => loop(t));
     }
 
     cleanup(() => {
@@ -599,10 +600,10 @@ export default component$(() => {
   });
 
   const Joystick = component$<{
-    onLeft: () => void;
-    onRight: () => void;
-    onUp?: () => void;
-    onDown?: () => void;
+    onLeft: QRL<() => void>;
+    onRight: QRL<() => void>;
+    onUp?: QRL<() => void>;
+    onDown?: QRL<() => void>;
     label: string;
   }>(({ onLeft, onRight, onUp, onDown, label }) => {
     return (

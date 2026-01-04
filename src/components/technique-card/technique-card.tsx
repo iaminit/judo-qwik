@@ -11,6 +11,7 @@ export interface Technique {
   has_audio: boolean;
   dan_level: number;
   image: string;
+  image_url?: string;
 }
 
 interface TechniqueCardProps {
@@ -68,7 +69,7 @@ export default component$<TechniqueCardProps>(({ technique, onOpenModal, isTarge
       {/* Image Container - White background like in the physical cards */}
       <div class="flex-1 aspect-square bg-white relative overflow-hidden flex items-center justify-center">
         <img
-          src={`/media/${technique.image}`}
+          src={technique.image_url || (technique.image?.startsWith('media/') ? '/' + technique.image : `/media/${technique.image}`)}
           alt={technique.nome}
           class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-700 mix-blend-multiply"
           onError$={(e) => {
@@ -101,7 +102,7 @@ export default component$<TechniqueCardProps>(({ technique, onOpenModal, isTarge
         {/* Video Badge - Minimalist */}
         {technique.video_youtube && (
           <div class="absolute top-4 right-4 bg-red-600 text-[8px] font-black text-white px-2 py-1 rounded-lg tracking-tighter shadow-lg opacity-80 group-hover:opacity-100 transition-opacity">
-            TV
+            YT
           </div>
         )}
       </div>

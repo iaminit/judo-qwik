@@ -10,6 +10,13 @@ interface TechniqueFormProps {
     isNew?: boolean;
 }
 
+const extractYoutubeId = (url: string) => {
+    if (!url) return '';
+    if (url.length === 11) return url; // Already an ID
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:v\/|u\/\w\/|embed\/|watch\?v=))([^#&?]*)/);
+    return (match && match[1].length === 11) ? match[1] : '';
+};
+
 export default component$<TechniqueFormProps>(({ technique, isNew }) => {
     const nav = useNavigate();
     const loading = useSignal(false);
@@ -23,13 +30,6 @@ export default component$<TechniqueFormProps>(({ technique, isNew }) => {
     const selectedMediaName = useSignal<string | null>(null);
     const danLevels = useSignal<any[]>([]);
     const categories = useSignal<any[]>([]);
-
-    const extractYoutubeId = (url: string) => {
-        if (!url) return '';
-        if (url.length === 11) return url; // Already an ID
-        const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:v\/|u\/\w\/|embed\/|watch\?v=))([^#&?]*)/);
-        return (match && match[1].length === 11) ? match[1] : '';
-    };
 
     useVisibleTask$(async () => {
         try {

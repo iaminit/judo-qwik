@@ -21,6 +21,7 @@ import compression from "compression";
 import { createProxyMiddleware } from "http-proxy-middleware";
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface QwikCityPlatform extends PlatformNode { }
 }
 

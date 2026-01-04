@@ -1,10 +1,10 @@
-import { component$, useSignal, $ } from '@builder.io/qwik';
+import { component$, useSignal, $, type QRL } from '@builder.io/qwik';
 import { pbAdmin } from '~/lib/pocketbase-admin';
 
 interface TaskModalProps {
     isOpen: boolean;
-    onClose: () => void;
-    onTaskCreated: () => void;
+    onClose: QRL<() => void>;
+    onTaskCreated: QRL<() => void>;
 }
 
 export const TaskModal = component$<TaskModalProps>(({ isOpen, onClose, onTaskCreated }) => {

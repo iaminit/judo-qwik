@@ -2,6 +2,7 @@ import formData from 'form-data';
 import Mailgun from 'mailgun.js';
 
 // Configurazione Mailgun
+// Configurazione Mailgun
 const mailgun = new Mailgun(formData);
 
 // Client Mailgun (lazy initialization)

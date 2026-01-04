@@ -1,4 +1,4 @@
-import { component$, useSignal } from '@builder.io/qwik';
+import { component$, useSignal, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 
 export default component$(() => {
@@ -211,19 +211,16 @@ export default component$(() => {
 
             {/* Risultato */}
             {result.value && (
-              <div class={`p-4 rounded-lg ${
-                result.value.success
+              <div class={`p-4 rounded-lg ${result.value.success
                   ? 'bg-green-50 border border-green-200'
                   : 'bg-red-50 border border-red-200'
-              }`}>
-                <h3 class={`font-semibold mb-2 ${
-                  result.value.success ? 'text-green-900' : 'text-red-900'
                 }`}>
+                <h3 class={`font-semibold mb-2 ${result.value.success ? 'text-green-900' : 'text-red-900'
+                  }`}>
                   {result.value.success ? '✓ Successo!' : '✗ Errore'}
                 </h3>
-                <pre class={`text-sm overflow-auto ${
-                  result.value.success ? 'text-green-800' : 'text-red-800'
-                }`}>
+                <pre class={`text-sm overflow-auto ${result.value.success ? 'text-green-800' : 'text-red-800'
+                  }`}>
                   {JSON.stringify(result.value, null, 2)}
                 </pre>
               </div>
@@ -241,7 +238,7 @@ export default component$(() => {
             <div>
               <h3 class="font-semibold text-gray-900 mb-2">Esempio 1: Inviare email generica</h3>
               <pre class="bg-gray-50 p-4 rounded-lg overflow-auto">
-{`import { sendEmail } from '~/utils/mailgun';
+                {`import { sendEmail } from '~/utils/mailgun';
 
 // In una route o action
 const result = await sendEmail({
@@ -256,7 +253,7 @@ const result = await sendEmail({
             <div>
               <h3 class="font-semibold text-gray-900 mb-2">Esempio 2: Notifica task (dal form admin)</h3>
               <pre class="bg-gray-50 p-4 rounded-lg overflow-auto">
-{`import { sendAdminTaskNotification } from '~/utils/mailgun';
+                {`import { sendAdminTaskNotification } from '~/utils/mailgun';
 
 // Dopo aver creato una task
 await sendAdminTaskNotification({
@@ -271,7 +268,7 @@ await sendAdminTaskNotification({
             <div>
               <h3 class="font-semibold text-gray-900 mb-2">Esempio 3: Inviare reminder</h3>
               <pre class="bg-gray-50 p-4 rounded-lg overflow-auto">
-{`import { sendReminderEmail } from '~/utils/mailgun';
+                {`import { sendReminderEmail } from '~/utils/mailgun';
 
 await sendReminderEmail({
   to: 'admin@esempio.com',

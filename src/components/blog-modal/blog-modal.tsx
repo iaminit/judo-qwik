@@ -1,5 +1,5 @@
 import { component$, type QRL, useStyles$, useVisibleTask$ } from '@builder.io/qwik';
-import { pbAdmin } from '~/lib/pocketbase-admin';
+import { getPBFileUrl } from '~/lib/pocketbase';
 import type { Post } from '../blog-card/blog-card';
 
 interface BlogModalProps {
@@ -87,8 +87,7 @@ export default component$<BlogModalProps>(({ post, isOpen, onClose }) => {
     if (!post.cover_image) return '/media/blog/default.webp';
     if (post.cover_image.startsWith('media/')) return '/' + post.cover_image;
 
-    // In produzione usiamo sempre percorsi relativi
-    return `/api/files/${post.collectionId}/${post.id}/${post.cover_image}`;
+    return getPBFileUrl(post.collectionId!, post.id, post.cover_image);
   };
 
   // Estrai ID video YouTube

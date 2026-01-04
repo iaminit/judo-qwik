@@ -1,7 +1,7 @@
 import { component$, useSignal, useStore, useComputed$, useVisibleTask$, $, useContext, useStyles$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
-import { pb } from '~/lib/pocketbase';
+import { pb, getPBFileUrl } from '~/lib/pocketbase';
 import { AppContext } from '~/context/app-context';
 import TechniqueCard, { type Technique } from '~/components/technique-card';
 import fs from 'node:fs';
@@ -42,15 +42,9 @@ export const useTechniquesData = routeLoader$(async () => {
 
     const mediaFileSet = new Set(mediaFiles);
 
-    // Create a Map of technique ID → actual image filename from DB
-    const techniqueImageMap = new Map<string, string>(
-      techniqueImages.map((img: any) => {
-        // Try multiple common field names for the image path
-        const rawPath = img.path || img.image_file || img.image || '';
-        // Extract filename from path (e.g., "media/o-soto-gari.webp" → "o-soto-gari.webp")
-        const filename = rawPath ? rawPath.replace(/^media\//, '').split('/').pop() : '';
-        return [img.technique, filename];
-      })
+    // Create a Map of technique ID -> actual image record from DB
+    const techniqueImageMap = new Map<string, any>(
+      techniqueImages.map((img: any) => [img.technique, img])
     );
 
     const techniques: Technique[] = records.map((t: any) => {
@@ -91,7 +85,6 @@ export const useTechniquesData = routeLoader$(async () => {
         .replace(/^-+|-+$/g, '');
 
       // Try to find the image in media folder with priority extensions
-      // We also handle common variations in naming (shio/shiho, hishigi/hisiji)
       const extensions = ['.webp', '.svg', '.jpg', '.jpeg', '.png', '.gif'];
       const variations = [
         slugBaseClean,
@@ -99,12 +92,11 @@ export const useTechniquesData = routeLoader$(async () => {
         slugBaseClean.replace(/shiho/g, 'shio'),
         slugBaseClean.replace(/hishigi/g, 'hisiji'),
         slugBaseClean.replace(/hisiji/g, 'hishigi'),
-        slugBaseClean.replace(/-/g, '_'), // Try underscore instead of hyphen
-        slugBaseClean.replace(/-/g, ''),  // Try no separators
+        slugBaseClean.replace(/-/g, '_'),
+        slugBaseClean.replace(/-/g, ''),
       ];
 
       let foundImage = '';
-
       search_loop: for (const variant of variations) {
         for (const ext of extensions) {
           if (mediaFileSet.has(variant + ext)) {
@@ -114,7 +106,7 @@ export const useTechniquesData = routeLoader$(async () => {
         }
       }
 
-      // 2. Audio normalization (mostly no hyphens)
+      // 2. Audio normalization
       const normalizedName = techName.toLowerCase()
         .replace(/[\s-]/g, '')
         .replace(/ō/g, 'o')
@@ -127,11 +119,20 @@ export const useTechniquesData = routeLoader$(async () => {
       const fallbackAudio = `${normalizedName}.mp3`;
 
       // 3. Resolve Image: DB first, then slug fallback, then general placeholder
-      const dbImage = techniqueImageMap.get(t.id);
-      let imageName = (dbImage && dbImage !== '') ? dbImage : foundImage;
+      const dbImageRecord = techniqueImageMap.get(t.id);
+      let imageUrl = '';
+      let imageName = foundImage;
+
+      if (dbImageRecord) {
+        const rawPath = dbImageRecord.path || dbImageRecord.image_file || dbImageRecord.image || '';
+        imageName = rawPath ? rawPath.replace(/^media\//, '').split('/').pop() : '';
+        if (dbImageRecord.collectionId && dbImageRecord.id && imageName) {
+          imageUrl = getPBFileUrl(dbImageRecord.collectionId, dbImageRecord.id, imageName);
+        }
+      }
 
       // Final fallback if still no image
-      if (!imageName) {
+      if (!imageName && !imageUrl) {
         imageName = 'kano_non_sa.webp';
       }
 
@@ -145,7 +146,8 @@ export const useTechniquesData = routeLoader$(async () => {
         audio_file: pbAudio || fallbackAudio,
         has_audio: !!pbAudio || true,
         dan_level: techDanLevel,
-        image: imageName
+        image: imageName,
+        image_url: imageUrl
       };
     });
 
@@ -492,7 +494,7 @@ export default component$(() => {
           <div class="fixed inset-y-0 inset-x-4 md:inset-x-10 flex justify-between items-center pointer-events-none z-[120]">
             <button
               onClick$={prevTechnique}
-              class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all pointer-events-auto shadow-2xl active:scale-90"
+              class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-slate-900/5 backdrop-blur-xl border border-slate-900/10 text-slate-900 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all pointer-events-auto shadow-xl active:scale-90"
             >
               <svg class="w-6 h-6 md:w-8 md:h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m15 18-6-6 6-6" />
@@ -500,7 +502,7 @@ export default component$(() => {
             </button>
             <button
               onClick$={nextTechnique}
-              class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all pointer-events-auto shadow-2xl active:scale-95"
+              class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-slate-900/5 backdrop-blur-xl border border-slate-900/10 text-slate-900 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all pointer-events-auto shadow-xl active:scale-95"
             >
               <svg class="w-6 h-6 md:w-8 md:h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m9 18 6-6-6-6" />

@@ -10,7 +10,8 @@ export const onPost: RequestHandler = async ({ json, request, env }) => {
         const { to, task } = body;
 
         if (!to || !task) {
-            return json({ error: 'Missing required fields' }, 400);
+            json(400, { error: 'Missing required fields' });
+            return;
         }
 
         // Get Mailgun credentials from environment
@@ -21,11 +22,12 @@ export const onPost: RequestHandler = async ({ json, request, env }) => {
 
         if (!apiKey || !domain) {
             console.warn('[Email API] Mailgun not configured, email will be simulated');
-            return json({
+            json(200, {
                 success: true,
                 message: 'Email reminder logged (Mailgun not configured)',
                 simulated: true
             });
+            return;
         }
 
         // Initialize Mailgun client
@@ -112,16 +114,16 @@ export const onPost: RequestHandler = async ({ json, request, env }) => {
 
         console.log('[Email API] ✅ Email sent successfully to:', to);
 
-        return json({
+        json(200, {
             success: true,
             message: 'Email reminder sent successfully'
         });
 
     } catch (e: any) {
         console.error('[Email API] ❌ Error:', e);
-        return json({
+        json(500, {
             error: e.message || 'Failed to send email',
             details: e.details || null
-        }, 500);
+        });
     }
 };
