@@ -5,7 +5,6 @@ import {
   useVisibleTask$,
   useContext,
   $,
-  type Signal,
   type QRL,
 } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
@@ -199,6 +198,7 @@ export default component$(() => {
   const currentTechInfo = useStore({ name: '', kanji: '', image: '' });
   const imageError = useSignal(false);
 
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     appState.sectionTitle = 'Gokyo-Tris';
     appState.sectionIcon = '🕹️';
@@ -452,10 +452,10 @@ export default component$(() => {
     }
   });
 
-  const loop = $(async (time: number) => {
+  const loop = $(async () => {
     if (!isPlaying.value) return;
 
-    gameState.requestId = requestAnimationFrame((t) => loop(t));
+    gameState.requestId = requestAnimationFrame(() => loop());
 
     gameState.count++;
 
@@ -568,6 +568,7 @@ export default component$(() => {
   });
 
   // Game loop effect
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track, cleanup }) => {
     track(() => isPlaying.value);
 
@@ -583,6 +584,7 @@ export default component$(() => {
   });
 
   // Keyboard controls
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track, cleanup }) => {
     track(() => isPlaying.value);
     track(() => isGameOver.value);

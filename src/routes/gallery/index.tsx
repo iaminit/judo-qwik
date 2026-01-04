@@ -74,12 +74,14 @@ export default component$(() => {
     selectedItem: null,
   });
 
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     appState.sectionTitle = 'Galleria';
     appState.sectionIcon = '🖼️';
   });
 
   // Handle URL params
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => loc.url.searchParams);
 
@@ -189,6 +191,8 @@ export default component$(() => {
                   <img
                     src={getImageUrl(item)}
                     alt={item.title}
+                    width="400"
+                    height="400"
                     class="w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
                   />
@@ -196,6 +200,8 @@ export default component$(() => {
                   <img
                     src={`https://img.youtube.com/vi/${getYouTubeVideoId(item.video_url)}/hqdefault.jpg`}
                     alt={item.title}
+                    width="400"
+                    height="400"
                     class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
                   />
@@ -336,6 +342,8 @@ export default component$(() => {
                 <img
                   src={getImageUrl(modalState.selectedItem)}
                   alt={modalState.selectedItem.title}
+                  width="1200"
+                  height="800"
                   class="max-w-full max-h-[80vh] object-contain shadow-2xl"
                 />
               )}

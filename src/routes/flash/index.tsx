@@ -54,6 +54,7 @@ export default component$(() => {
   const currentIndex = useSignal(0);
   const isFlipped = useSignal(false);
 
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     appState.sectionTitle = 'Flash Cards';
     appState.sectionIcon = '🎴';

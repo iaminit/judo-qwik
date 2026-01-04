@@ -74,6 +74,7 @@ export default component$(() => {
     isCorrect: null,
   });
 
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     appState.sectionTitle = 'Gokyo Game';
     appState.sectionIcon = '🎮';

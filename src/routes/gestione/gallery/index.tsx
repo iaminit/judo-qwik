@@ -197,6 +197,8 @@ export default component$(() => {
                                                         <img
                                                             src={item.previewUrl}
                                                             alt={item.title}
+                                                            width="64"
+                                                            height="64"
                                                             class="max-w-full max-h-full object-contain"
                                                         />
                                                     ) : (

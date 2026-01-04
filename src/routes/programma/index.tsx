@@ -44,6 +44,7 @@ export default component$(() => {
   const activeDan = useSignal(1);
   const appState = useContext(AppContext);
 
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     appState.sectionTitle = 'Programmi d\'Esame';
     appState.sectionIcon = '📚';

@@ -4,14 +4,6 @@ import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { pb } from '~/lib/pocketbase';
 import { AppContext } from '~/context/app-context';
 
-interface HistoryItem {
-  id: string;
-  title: string;
-  subtitle?: string;
-  content: string;
-  image?: string;
-}
-
 interface TimelineItem {
   id: string;
   year: string;
@@ -145,12 +137,14 @@ export default component$(() => {
   const targetId = useSignal<string | null>(null);
   const appState = useContext(AppContext);
 
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     appState.sectionTitle = 'Storia del Judo';
     appState.sectionIcon = '🥋';
   });
 
   // Handle URL params for search and highlight
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => loc.url.searchParams);
 

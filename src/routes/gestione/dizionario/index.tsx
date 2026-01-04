@@ -1,4 +1,4 @@
-import { component$, useSignal, useResource$, Resource, $, useVisibleTask$ } from '@builder.io/qwik';
+import { component$, useSignal, $, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { pbAdmin } from '~/lib/pocketbase-admin';
 
@@ -49,6 +49,7 @@ export default component$(() => {
         }
     });
 
+    // eslint-disable-next-line qwik/no-use-visible-task
     useVisibleTask$(({ track }) => {
         track(() => searchTerm.value);
         selectedIds.value = []; // Reset sub-selection on search

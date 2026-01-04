@@ -4,15 +4,6 @@ import { routeLoader$, useLocation, Link } from '@builder.io/qwik-city';
 import { pb } from '~/lib/pocketbase';
 import { AppContext } from '~/context/app-context';
 
-interface Kata {
-  id: string;
-  name: string;
-  japanese_name?: string;
-  description?: string;
-  level?: string;
-  video_url?: string;
-}
-
 export const useKataData = routeLoader$(async () => {
   try {
     console.log('[Kata] Fetching from collection "kata"...');
@@ -52,12 +43,14 @@ export default component$(() => {
   const searchTerm = useSignal('');
   const appState = useContext(AppContext);
 
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     appState.sectionTitle = 'Kata';
     appState.sectionIcon = '🥋';
   });
 
   // Handle URL params for search
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => loc.url.searchParams);
 

@@ -170,6 +170,7 @@ export default component$(() => {
       {gameState.value === 'setup' && (
         <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 border border-gray-100 dark:border-gray-700 animate-in fade-in zoom-in duration-300">
           <div class="text-center mb-10">
+            {/* eslint-disable-next-line qwik/jsx-img */}
             <img
               src="/media/mifune_sorride.webp"
               alt="Kyuzo Mifune"

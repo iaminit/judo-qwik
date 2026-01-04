@@ -4,35 +4,11 @@ import { routeLoader$ } from '@builder.io/qwik-city';
 import { pb } from '~/lib/pocketbase';
 import { AppContext } from '~/context/app-context';
 
-interface FijlkamItem {
-  id: string;
-  titolo: string;
-  contenuto: string;
-  categoria_secondaria?: string;
-}
-
 interface TimelineItem {
   id: string;
   anno: number;
   titolo: string;
   contenuto: string;
-}
-
-interface Regulation {
-  id: string;
-  titolo: string;
-  titolo_secondario?: string;
-  contenuto: string;
-  link_esterno?: string;
-}
-
-interface ExamProgram {
-  id: string;
-  livello: number;
-  categoria_secondaria: string;
-  titolo: string;
-  contenuto: string;
-  ordine: number;
 }
 
 export const useFijlkamData = routeLoader$(async () => {
@@ -167,6 +143,7 @@ export default component$(() => {
   const activeDan = useSignal(1);
   const appState = useContext(AppContext);
 
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     appState.sectionTitle = 'FIJLKAM';
     appState.sectionIcon = '🇮🇹';

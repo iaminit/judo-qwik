@@ -1,4 +1,4 @@
-import { component$, useSignal, useVisibleTask$, $, useResource$, Resource } from '@builder.io/qwik';
+import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { pbAdmin } from '~/lib/pocketbase-admin';
 
@@ -52,6 +52,7 @@ export default component$(() => {
     const isLoading = useSignal(true);
 
     // Fetch and split posts on mount and when search term changes
+    // eslint-disable-next-line qwik/no-use-visible-task
     useVisibleTask$(async ({ track }) => {
         track(() => searchTerm.value);
         isLoading.value = true;
@@ -85,18 +86,6 @@ export default component$(() => {
         }
     });
 
-    const getActivityBadgeColor = (activity: string) => {
-        switch (activity?.toUpperCase()) {
-            case 'JUDO':
-                return 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/10';
-            case 'BJJ':
-                return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/10';
-            case 'KRAV MAGA':
-                return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/10';
-            default:
-                return 'bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/10';
-        }
-    };
 
     const Section = ({ title, posts }: { title: string; posts: PostRecord[] }) => (
         <section class="space-y-6">

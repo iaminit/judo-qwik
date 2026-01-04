@@ -7,7 +7,7 @@ export const useItemDetail = routeLoader$(async ({ params, fail }) => {
     try {
         const record = await pbAdmin.collection('fijlkam').getOne(params.id, { requestKey: null });
         return JSON.parse(JSON.stringify(record));
-    } catch (err) {
+    } catch {
         return fail(404, { message: 'Elemento non trovato' });
     }
 });

@@ -9,7 +9,7 @@ export const useDictionaryTerm = routeLoader$(async ({ params, fail }) => {
             requestKey: null
         });
         return JSON.parse(JSON.stringify(record));
-    } catch (err) {
+    } catch {
         return fail(404, { message: 'Termine non trovato' });
     }
 });

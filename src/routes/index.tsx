@@ -1,4 +1,4 @@
-import { component$, useSignal, $ } from '@builder.io/qwik';
+import { component$, useSignal } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
 
@@ -138,6 +138,8 @@ const ListItem = component$<{ item: MenuItem; isNested?: boolean }>(({ item, isN
           <img
             src={item.icon}
             alt={item.title}
+            width="40"
+            height="40"
             class="w-10 h-10 object-contain filter drop-shadow-md transition-transform duration-500 group-hover:scale-110"
             loading="lazy"
           />
