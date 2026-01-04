@@ -6,9 +6,10 @@ export default component$(() => {
     const loc = useLocation();
     const nav = useNavigate();
 
+    // eslint-disable-next-line qwik/no-use-visible-task
     useVisibleTask$(async () => {
         const code = loc.url.searchParams.get('code');
-        const state = loc.url.searchParams.get('state');
+        // const state = loc.url.searchParams.get('state');
 
         const providerJson = localStorage.getItem('oauth_provider');
         if (!providerJson || !code) {

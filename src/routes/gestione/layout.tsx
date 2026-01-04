@@ -1,7 +1,6 @@
-import { component$, Slot, useSignal, useVisibleTask$, $, useContext, useStyles$ } from '@builder.io/qwik';
+import { component$, Slot, useSignal, useVisibleTask$, $, useStyles$ } from '@builder.io/qwik';
 import { useNavigate, useLocation } from '@builder.io/qwik-city';
 import { pbAdmin, logoutAdmin } from '~/lib/pocketbase-admin';
-import { AppContext } from '~/context/app-context';
 
 export default component$(() => {
     useAdminStyles();
@@ -9,7 +8,6 @@ export default component$(() => {
     const loc = useLocation();
     const isExpanded = useSignal(false); // Compact by default on mobile
     const isCheckingAuth = useSignal(true);
-    const appState = useContext(AppContext);
 
     // Auto-expand on large screens
     useVisibleTask$(() => {

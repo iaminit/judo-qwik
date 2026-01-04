@@ -36,6 +36,7 @@ export default component$(() => {
         }
     });
 
+    // eslint-disable-next-line qwik/no-use-visible-task
     useVisibleTask$(({ track }) => {
         track(() => searchTerm.value);
         selectedIds.value = []; // Reset selection on search
@@ -175,7 +176,7 @@ export default component$(() => {
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="flex items-center gap-4">
-                                                <img src={getAvatarUrl(user)} class="w-10 h-10 rounded-xl object-cover shadow-sm bg-gray-200" />
+                                                <img src={getAvatarUrl(user)} width="40" height="40" class="w-10 h-10 rounded-xl object-cover shadow-sm bg-gray-200" />
                                                 <span class="font-black text-gray-900 dark:text-white uppercase tracking-tight">{user.name || 'Senza Nome'}</span>
                                             </div>
                                         </td>
