@@ -4,14 +4,6 @@ import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { pb } from '~/lib/pocketbase';
 import { AppContext } from '~/context/app-context';
 
-interface HistoryItem {
-  id: string;
-  title: string;
-  subtitle?: string;
-  content: string;
-  image?: string;
-}
-
 interface TimelineItem {
   id: string;
   year: string;

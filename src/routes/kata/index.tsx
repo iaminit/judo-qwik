@@ -4,15 +4,6 @@ import { routeLoader$, useLocation, Link } from '@builder.io/qwik-city';
 import { pb } from '~/lib/pocketbase';
 import { AppContext } from '~/context/app-context';
 
-interface Kata {
-  id: string;
-  name: string;
-  japanese_name?: string;
-  description?: string;
-  level?: string;
-  video_url?: string;
-}
-
 export const useKataData = routeLoader$(async () => {
   try {
     console.log('[Kata] Fetching from collection "kata"...');

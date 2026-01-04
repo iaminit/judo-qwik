@@ -54,7 +54,7 @@ export const useTechniquesData = routeLoader$(async () => {
       const techCategory = t.categoria_secondaria || '';
       const techDescription = t.contenuto || '';
       const techVideo = t.video_link || '';
-      const techOrder = t.ordine || 0;
+      // const techOrder = t.ordine || 0;
       const techDanLevel = t.livello || 1;
 
       // 1. Generate slug-based fallback (e.g., "O-Soto-Gari" -> "o-soto-gari.webp")
