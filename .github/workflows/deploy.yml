@@ -1,0 +1,66 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build Static
+        run: npm run build.static
+        env:
+          # BASE_URL is injected into vite config via process.env.BASE_URL
+          # GitHub Pages expects the site to be served from /<repo-name>/ if it's a project site.
+          # actions/configure-pages outputs the correct base path.
+          BASE_URL: ${{ steps.pages.outputs.base_path }}/
+          # Origin is used for sitemap generation.
+          # We can construct it from the pages url, but we might need to remove trailing slash or handle it carefully.
+          # steps.pages.outputs.origin is not standard output, we have base_url and origin is usually implied.
+          # But we can try to guess it or leave it as default if not critical.
+          # Actually, usually origin = protocol + host.
+          # We can use ${{ steps.pages.outputs.base_url }} which includes the path.
+          # Let's rely on manual setting if needed, but for now we set BASE_URL which is the most critical.
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'dist'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

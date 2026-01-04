@@ -4,6 +4,7 @@ import baseConfig from "../../vite.config";
 
 export default extendConfig(baseConfig, () => {
   return {
+    base: process.env.BASE_URL || "/",
     build: {
       ssr: true,
       rollupOptions: {
@@ -12,7 +13,7 @@ export default extendConfig(baseConfig, () => {
     },
     plugins: [
       staticAdapter({
-        origin: "https://judo.1ms.it",
+        origin: process.env.ORIGIN || "https://judo.1ms.it",
       }),
     ],
   };
