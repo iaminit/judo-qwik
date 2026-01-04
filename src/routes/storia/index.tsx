@@ -137,12 +137,14 @@ export default component$(() => {
   const targetId = useSignal<string | null>(null);
   const appState = useContext(AppContext);
 
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     appState.sectionTitle = 'Storia del Judo';
     appState.sectionIcon = '🥋';
   });
 
   // Handle URL params for search and highlight
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => loc.url.searchParams);
 

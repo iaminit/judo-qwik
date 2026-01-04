@@ -169,6 +169,7 @@ export default component$(() => {
   const viewMode = useSignal<'grid' | 'board'>('board');
   const appState = useContext(AppContext);
 
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => modalTechnique.value);
     if (modalTechnique.value) {
@@ -178,6 +179,7 @@ export default component$(() => {
     }
   });
 
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     appState.sectionTitle = 'Tecniche';
     appState.sectionIcon = '🥋';

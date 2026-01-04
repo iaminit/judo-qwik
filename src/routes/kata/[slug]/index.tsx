@@ -71,6 +71,7 @@ export default component$(() => {
   const data = useKataDetail();
   const appState = useContext(AppContext);
 
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     if (data.value.kata) {
       appState.sectionTitle = data.value.kata.name;

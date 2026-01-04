@@ -25,6 +25,7 @@ export default component$(() => {
   const loc = useLocation();
 
   // Reset section title when route changes
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => loc.url.pathname);
     appState.sectionTitle = undefined;

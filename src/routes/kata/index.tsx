@@ -43,12 +43,14 @@ export default component$(() => {
   const searchTerm = useSignal('');
   const appState = useContext(AppContext);
 
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     appState.sectionTitle = 'Kata';
     appState.sectionIcon = '🥋';
   });
 
   // Handle URL params for search
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => loc.url.searchParams);
 
