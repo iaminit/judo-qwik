@@ -19,20 +19,20 @@ export const getPBFileUrl = (collectionId: string, recordId: string, fileName: s
   if (fileName.startsWith('http')) return fileName;
   if (fileName.startsWith('/media')) return fileName;
 
-  // Always prefer absolute URL in development/preview to avoid proxy 404s
-  const isLocal = typeof window !== 'undefined'
-    ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    : true; // Default to true in SSR unless we have a clear production env
-
-  const pbUrl = import.meta.env.VITE_PB_URL || 'http://127.0.0.1:8090';
-
-  // If we are on localhost, or the PB URL is localhost, use the absolute IP/Port
-  if (isLocal || pbUrl.includes('localhost') || pbUrl.includes('127.0.0.1')) {
-    // Ensure we use the full address
-    const absoluteBase = pbUrl.startsWith('http') ? pbUrl : 'http://127.0.0.1:8090';
-    return `${absoluteBase}/api/files/${collectionId}/${recordId}/${fileName}`;
+  // 1. External Static Hosting (e.g. Cloudflare Pages)
+  // Check this FIRST. If set, we want absolute URLs pointing to the live API.
+  if (import.meta.env.VITE_PB_PUBLIC_URL) {
+    return `${import.meta.env.VITE_PB_PUBLIC_URL}/api/files/${collectionId}/${recordId}/${fileName}`;
   }
 
-  // Production: use relative path for the proxy (Express handles it)
-  return `/api/files/${collectionId}/${recordId}/${fileName}`;
+  // 2. Production Cloud Run (Client and SSR)
+  // Use relative path because Express proxies /api to PocketBase internally
+  if (import.meta.env.PROD) {
+    return `/api/files/${collectionId}/${recordId}/${fileName}`;
+  }
+
+  // 3. Development / Localhost
+  const pbUrl = import.meta.env.VITE_PB_URL || 'http://127.0.0.1:8090';
+  const absoluteBase = pbUrl.startsWith('http') ? pbUrl : 'http://127.0.0.1:8090';
+  return `${absoluteBase}/api/files/${collectionId}/${recordId}/${fileName}`;
 };

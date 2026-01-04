@@ -10,9 +10,11 @@
   "scripts": {
     "build": "npm run build.client && npm run build.server && npm run build.copy",
     "build.client": "vite build",
+    "build.copy": "mkdir -p server && cp -r .adapters/express/* server/",
     "build.preview": "vite build --ssr src/entry.preview.tsx",
     "build.server": "vite build -c adapters/express/vite.config.ts",
-    "build.copy": "mkdir -p server && cp -r .adapters/express/* server/",
+    "build.static": "qwik check-client src dist && vite build -c adapters/static/vite.config.ts",
+    "build.cf": "./build-cf.sh",
     "build.types": "tsc --incremental --noEmit",
     "deploy": "node server/entry.express.js",
     "dev": "vite --mode ssr",
