@@ -111,7 +111,7 @@ export default component$(() => {
   ];
 
   return (
-    <div class="min-h-screen bg-gray-50 dark:bg-deep-black font-sans text-gray-900 dark:text-ice-white flex flex-col transition-colors duration-500 relative overflow-hidden">
+    <div class="min-h-screen bg-cream-soft dark:bg-deep-black font-sans text-gray-900 dark:text-ice-white flex flex-col transition-colors duration-500 relative overflow-hidden selection:bg-red-500/20">
       {/* FIJLKAM Background Mesh Gradients - Enhanced */}
       <div class="fixed inset-0 overflow-hidden -z-10 pointer-events-none">
         <div class={`absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full transition-all duration-1000 blur-[120px] ${appState.isDark ? 'bg-red-600/15' : 'bg-red-200/30'}`} />

@@ -8,14 +8,18 @@
   --color-ice-white: oklch(95% 0.01 260);
   --color-ice-gray: oklch(80% 0.02 260);
   --color-deep-surface: oklch(15% 0.02 260);
-  --color-deep-black: oklch(8% 0.01 260);
+  --color-deep-black: oklch(14% 0.02 260);
+  /* Lighter dark, gunmetal/slate tone */
+  /* Warm cream, less bright than pure white */
+  --color-cream-soft: oklch(93% 0.04 95);
+
+  /* Force class-based dark mode */
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
-@layer base {
-  body {
-    @apply bg-gray-50 text-gray-900 transition-colors duration-500 selection:bg-red-500/20;
-  }
-}
+@custom-variant dark (&:where(.dark, .dark *));
+
+
 
 @layer utilities {
   .surface-elevated {
