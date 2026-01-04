@@ -1,5 +1,5 @@
 import type { RequestHandler } from '@builder.io/qwik-city';
-import { sendNewPostNotification } from '~/utils/mailgun';
+import { sendNewPostNotification } from '~/utils/email';
 
 /**
  * Endpoint per inviare notifica nuovo post bacheca

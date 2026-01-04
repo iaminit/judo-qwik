@@ -1,5 +1,5 @@
 import type { RequestHandler } from '@builder.io/qwik-city';
-import { sendReminderEmail } from '~/utils/mailgun';
+import { sendReminderEmail } from '~/utils/email';
 
 /**
  * Endpoint per inviare reminder

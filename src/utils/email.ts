@@ -1,112 +1,90 @@
-import formData from 'form-data';
-import Mailgun from 'mailgun.js';
-
-// Configurazione Mailgun
-// Configurazione Mailgun
-const mailgun = new Mailgun(formData);
-
-// Client Mailgun (lazy initialization)
-let mg: ReturnType<typeof mailgun.client> | null = null;
-
-function getMailgunClient() {
-  if (!mg) {
-    const apiKey = import.meta.env.MAILGUN_API_KEY || process.env.MAILGUN_API_KEY;
-
-    if (!apiKey) {
-      throw new Error('MAILGUN_API_KEY non configurata');
-    }
-
-    mg = mailgun.client({
-      username: 'api',
-      key: apiKey,
-      url: 'https://api.eu.mailgun.net' // Usa 'https://api.mailgun.net' per US
-    });
-  }
-
-  return mg;
-}
+import nodemailer from 'nodemailer';
 
 // Configurazione email
 export const emailConfig = {
-  domain: import.meta.env.MAILGUN_DOMAIN || process.env.MAILGUN_DOMAIN || '',
-  from: {
-    email: import.meta.env.MAILGUN_FROM_EMAIL || process.env.MAILGUN_FROM_EMAIL || '',
-    name: import.meta.env.MAILGUN_FROM_NAME || process.env.MAILGUN_FROM_NAME || 'JudoOK Admin'
-  },
-  adminEmail: import.meta.env.ADMIN_EMAIL || process.env.ADMIN_EMAIL || ''
+    host: import.meta.env.SMTP_HOST || process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(import.meta.env.SMTP_PORT || process.env.SMTP_PORT || '465'),
+    secure: (import.meta.env.SMTP_SECURE || process.env.SMTP_SECURE || 'true') === 'true', // true per 465, false per altri
+    user: import.meta.env.SMTP_USER || process.env.SMTP_USER || '',
+    pass: import.meta.env.SMTP_PASS || process.env.SMTP_PASS || '',
+    from: {
+        email: import.meta.env.SMTP_FROM_EMAIL || process.env.SMTP_FROM_EMAIL || '',
+        name: import.meta.env.SMTP_FROM_NAME || process.env.SMTP_FROM_NAME || 'JudoOK Admin'
+    },
+    adminEmail: import.meta.env.ADMIN_EMAIL || process.env.ADMIN_EMAIL || ''
 };
 
+// Transporter (lazy initialization)
+let transporter: nodemailer.Transporter | null = null;
+
+function getTransporter() {
+    if (!transporter) {
+        if (!emailConfig.user || !emailConfig.pass) {
+            throw new Error('SMTP_USER e SMTP_PASS non configurati');
+        }
+
+        transporter = nodemailer.createTransport({
+            host: emailConfig.host,
+            port: emailConfig.port,
+            secure: emailConfig.secure,
+            auth: {
+                user: emailConfig.user,
+                pass: emailConfig.pass,
+            },
+        });
+    }
+    return transporter;
+}
+
 interface SendEmailParams {
-  to: string | string[];
-  subject: string;
-  html?: string;
-  text?: string;
-  from?: string;
-  cc?: string | string[];
-  bcc?: string | string[];
-  template?: string;
-  variables?: Record<string, any>;
+    to: string | string[];
+    subject: string;
+    html?: string;
+    text?: string;
+    from?: string;
+    cc?: string | string[];
+    bcc?: string | string[];
 }
 
 /**
- * Invia un'email tramite Mailgun
+ * Invia un'email tramite SMTP (Gmail o altro)
  */
 export async function sendEmail(params: SendEmailParams) {
-  try {
-    const client = getMailgunClient();
+    try {
+        const client = getTransporter();
 
-    const fromEmail = params.from || `${emailConfig.from.name} <${emailConfig.from.email}>`;
+        const fromString = params.from || `"${emailConfig.from.name}" <${emailConfig.from.email || emailConfig.user}>`;
 
-    const messageData: any = {
-      from: fromEmail,
-      to: Array.isArray(params.to) ? params.to : [params.to],
-      subject: params.subject,
-    };
+        const mailOptions = {
+            from: fromString,
+            to: params.to,
+            subject: params.subject,
+            html: params.html,
+            text: params.text,
+            cc: params.cc,
+            bcc: params.bcc,
+        };
 
-    // Aggiungi HTML o testo
-    if (params.html) {
-      messageData.html = params.html;
+        const info = await client.sendMail(mailOptions);
+
+        console.log('Email inviata con successo:', info.messageId);
+        return { success: true, data: info };
+    } catch (error) {
+        console.error('Errore invio email:', error);
+        return { success: false, error };
     }
-    if (params.text) {
-      messageData.text = params.text;
-    }
-
-    // CC e BCC opzionali
-    if (params.cc) {
-      messageData.cc = Array.isArray(params.cc) ? params.cc : [params.cc];
-    }
-    if (params.bcc) {
-      messageData.bcc = Array.isArray(params.bcc) ? params.bcc : [params.bcc];
-    }
-
-    // Template Mailgun (opzionale)
-    if (params.template) {
-      messageData.template = params.template;
-      if (params.variables) {
-        messageData['h:X-Mailgun-Variables'] = JSON.stringify(params.variables);
-      }
-    }
-
-    const response = await client.messages.create(emailConfig.domain, messageData);
-
-    console.log('Email inviata con successo:', response);
-    return { success: true, data: response };
-  } catch (error) {
-    console.error('Errore invio email:', error);
-    return { success: false, error };
-  }
 }
 
 /**
  * Invia notifica admin per nuova task
  */
 export async function sendAdminTaskNotification(taskData: {
-  title: string;
-  description: string;
-  priority: string;
-  createdBy: string;
+    title: string;
+    description: string;
+    priority: string;
+    createdBy: string;
 }) {
-  const html = `
+    const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -156,23 +134,23 @@ export async function sendAdminTaskNotification(taskData: {
     </html>
   `;
 
-  return sendEmail({
-    to: emailConfig.adminEmail,
-    subject: `🥋 Nuova Task: ${taskData.title}`,
-    html,
-    text: `Nuova Task: ${taskData.title}\n\nDescrizione: ${taskData.description}\nPriorità: ${taskData.priority}\nCreata da: ${taskData.createdBy}`
-  });
+    return sendEmail({
+        to: emailConfig.adminEmail,
+        subject: `🥋 Nuova Task: ${taskData.title}`,
+        html,
+        text: `Nuova Task: ${taskData.title}\n\nDescrizione: ${taskData.description}\nPriorità: ${taskData.priority}\nCreata da: ${taskData.createdBy}`
+    });
 }
 
 /**
  * Invia notifica per nuovo post bacheca
  */
 export async function sendNewPostNotification(postData: {
-  title: string;
-  author: string;
-  excerpt: string;
+    title: string;
+    author: string;
+    excerpt: string;
 }) {
-  const html = `
+    const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -212,25 +190,25 @@ export async function sendNewPostNotification(postData: {
     </html>
   `;
 
-  return sendEmail({
-    to: emailConfig.adminEmail,
-    subject: `📢 Nuovo Post: ${postData.title}`,
-    html,
-    text: `Nuovo Post nella Bacheca\n\nTitolo: ${postData.title}\nAutore: ${postData.author}\n\n${postData.excerpt}`
-  });
+    return sendEmail({
+        to: emailConfig.adminEmail,
+        subject: `📢 Nuovo Post: ${postData.title}`,
+        html,
+        text: `Nuovo Post nella Bacheca\n\nTitolo: ${postData.title}\nAutore: ${postData.author}\n\n${postData.excerpt}`
+    });
 }
 
 /**
  * Invia reminder generico
  */
 export async function sendReminderEmail(reminderData: {
-  to: string;
-  title: string;
-  message: string;
-  actionUrl?: string;
-  actionLabel?: string;
+    to: string;
+    title: string;
+    message: string;
+    actionUrl?: string;
+    actionLabel?: string;
 }) {
-  const html = `
+    const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -270,18 +248,18 @@ export async function sendReminderEmail(reminderData: {
     </html>
   `;
 
-  return sendEmail({
-    to: reminderData.to,
-    subject: `⏰ ${reminderData.title}`,
-    html,
-    text: `${reminderData.title}\n\n${reminderData.message}`
-  });
+    return sendEmail({
+        to: reminderData.to,
+        subject: `⏰ ${reminderData.title}`,
+        html,
+        text: `${reminderData.title}\n\n${reminderData.message}`
+    });
 }
 
 export default {
-  sendEmail,
-  sendAdminTaskNotification,
-  sendNewPostNotification,
-  sendReminderEmail,
-  config: emailConfig
+    sendEmail,
+    sendAdminTaskNotification,
+    sendNewPostNotification,
+    sendReminderEmail,
+    config: emailConfig
 };

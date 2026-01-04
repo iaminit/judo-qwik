@@ -1,8 +1,8 @@
 import type { RequestHandler } from '@builder.io/qwik-city';
-import { sendEmail } from '~/utils/mailgun';
+import { sendEmail } from '~/utils/email';
 
 /**
- * Endpoint di test per verificare la configurazione Mailgun
+ * Endpoint di test per verificare la configurazione Email (SMTP)
  * POST /api/email/test
  */
 export const onPost: RequestHandler = async ({ json, request }) => {
@@ -27,7 +27,7 @@ export const onPost: RequestHandler = async ({ json, request }) => {
           <p>${message}</p>
           <hr style="margin: 20px 0;">
           <p style="color: #666; font-size: 12px;">
-            Questa è un'email di test inviata da JudoOK usando Mailgun
+            Questa è un'email di test inviata da JudoOK via SMTP
           </p>
         </div>
       `,

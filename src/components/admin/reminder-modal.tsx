@@ -54,7 +54,7 @@ export const ReminderModal = component$<ReminderModalProps>(({ isOpen, task, onC
         isSending.value = true;
 
         try {
-            // Invia email tramite Mailgun
+            // Invia email tramite SMTP
             const response = await fetch('/api/email/reminder', {
                 method: 'POST',
                 headers: {
@@ -89,7 +89,7 @@ export const ReminderModal = component$<ReminderModalProps>(({ isOpen, task, onC
             }
         } catch (e) {
             console.error('Error sending reminder:', e);
-            alert('Errore di connessione. Verifica la configurazione Mailgun.');
+            alert('Errore di connessione. Verifica la configurazione Email.');
         } finally {
             isSending.value = false;
         }

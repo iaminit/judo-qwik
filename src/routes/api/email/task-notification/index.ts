@@ -1,5 +1,5 @@
 import type { RequestHandler } from '@builder.io/qwik-city';
-import { sendAdminTaskNotification } from '~/utils/mailgun';
+import { sendAdminTaskNotification } from '~/utils/email';
 
 /**
  * Endpoint per inviare notifica creazione task

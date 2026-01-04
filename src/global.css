@@ -1,14 +1,10 @@
 @import "tailwindcss";
-
-@variant dark (&:where(.dark, .dark *));
+@source "../src/**/*.{js,ts,jsx,tsx,mdx}";
 
 @theme {
-  /* Color Palette - Fine-tuned for FIJLKAM Premium Aesthetic */
   --color-brand-red: oklch(55% 0.2 25);
   --color-brand-blue: oklch(45% 0.15 250);
   --color-brand-green: oklch(60% 0.15 150);
-
-  /* Text & Surfaces */
   --color-ice-white: oklch(95% 0.01 260);
   --color-ice-gray: oklch(80% 0.02 260);
   --color-deep-surface: oklch(15% 0.02 260);
@@ -19,55 +15,10 @@
   body {
     @apply bg-gray-50 text-gray-900 transition-colors duration-500 selection:bg-red-500/20;
   }
-
-  .dark body {
-    @apply bg-deep-black text-ice-white;
-  }
-
-  * {
-    @apply transition-colors duration-300;
-  }
-}
-
-@keyframes highlight-pulse {
-  0% {
-    border-color: #ef4444;
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.4);
-  }
-
-  100% {
-    border-color: transparent;
-    box-shadow: none;
-  }
-}
-
-.animate-term-highlight {
-  animation: highlight-pulse 2s ease-in-out forwards;
 }
 
 @layer utilities {
-
-  /* The core component style from dizionario_prova/colori.jsx */
   .surface-elevated {
     @apply bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-2xl hover:shadow-red-500/10 transition-all duration-300 rounded-[2rem];
-  }
-
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  /* Modern Typography */
-  .heading-premium {
-    @apply font-black tracking-tighter;
-  }
-
-  /* Fix for white-on-white text visibility in light mode */
-  :root:not(.dark) .prose :is(h1, h2, h3, h4, h5, h6, p, ul, ol, li, span, strong) {
-    color: var(--color-gray-900) !important;
   }
 }

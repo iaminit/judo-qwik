@@ -7,6 +7,7 @@ import { qwikVite } from "@builder.io/qwik/optimizer";
 import { qwikCity } from "@builder.io/qwik-city/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { qwikPwa } from "@qwikdev/pwa";
+import tailwindcss from '@tailwindcss/vite';
 import pkg from "./package.json";
 
 type PkgDep = Record<string, string>;
@@ -30,6 +31,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
       qwikPwa({
         includeWebManifest: true,
       }),
+      tailwindcss(),
     ],
     // This tells Vite which dependencies to pre-build in dev mode.
     optimizeDeps: {

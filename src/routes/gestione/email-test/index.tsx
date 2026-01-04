@@ -4,7 +4,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 export default component$(() => {
   const email = useSignal('');
   const subject = useSignal('Test Email - JudoOK');
-  const message = useSignal('Questa è un\'email di test inviata tramite Mailgun');
+  const message = useSignal('Questa è un\'email di test inviata tramite SMTP');
   const loading = useSignal(false);
   const result = useSignal<any>(null);
 
@@ -103,7 +103,7 @@ export default component$(() => {
       <div class="max-w-4xl mx-auto">
         <div class="bg-white rounded-lg shadow-md p-6">
           <h1 class="text-3xl font-bold text-gray-900 mb-6">
-            Test Integrazione Mailgun
+            Test Integrazione Email (SMTP)
           </h1>
 
           <div class="space-y-6">
@@ -117,9 +117,10 @@ export default component$(() => {
                   <strong>Variabili d'ambiente richieste (.env):</strong>
                 </p>
                 <ul class="text-sm text-blue-800 space-y-1 ml-4">
-                  <li>• MAILGUN_API_KEY - La tua API key di Mailgun</li>
-                  <li>• MAILGUN_DOMAIN - Il dominio configurato su Mailgun</li>
-                  <li>• MAILGUN_FROM_EMAIL - Email mittente</li>
+                  <li>• SMTP_HOST - Server SMTP (es. smtp.gmail.com)</li>
+                  <li>• SMTP_PORT - Porta SMTP (es. 465)</li>
+                  <li>• SMTP_USER - Email utente</li>
+                  <li>• SMTP_PASS - Password (app password per Gmail)</li>
                   <li>• ADMIN_EMAIL - Email admin per le notifiche</li>
                 </ul>
               </div>
@@ -212,8 +213,8 @@ export default component$(() => {
             {/* Risultato */}
             {result.value && (
               <div class={`p-4 rounded-lg ${result.value.success
-                  ? 'bg-green-50 border border-green-200'
-                  : 'bg-red-50 border border-red-200'
+                ? 'bg-green-50 border border-green-200'
+                : 'bg-red-50 border border-red-200'
                 }`}>
                 <h3 class={`font-semibold mb-2 ${result.value.success ? 'text-green-900' : 'text-red-900'
                   }`}>
@@ -238,7 +239,7 @@ export default component$(() => {
             <div>
               <h3 class="font-semibold text-gray-900 mb-2">Esempio 1: Inviare email generica</h3>
               <pre class="bg-gray-50 p-4 rounded-lg overflow-auto">
-                {`import { sendEmail } from '~/utils/mailgun';
+                {`import { sendEmail } from '~/utils/email';
 
 // In una route o action
 const result = await sendEmail({
@@ -253,7 +254,7 @@ const result = await sendEmail({
             <div>
               <h3 class="font-semibold text-gray-900 mb-2">Esempio 2: Notifica task (dal form admin)</h3>
               <pre class="bg-gray-50 p-4 rounded-lg overflow-auto">
-                {`import { sendAdminTaskNotification } from '~/utils/mailgun';
+                {`import { sendAdminTaskNotification } from '~/utils/email';
 
 // Dopo aver creato una task
 await sendAdminTaskNotification({
@@ -268,7 +269,7 @@ await sendAdminTaskNotification({
             <div>
               <h3 class="font-semibold text-gray-900 mb-2">Esempio 3: Inviare reminder</h3>
               <pre class="bg-gray-50 p-4 rounded-lg overflow-auto">
-                {`import { sendReminderEmail } from '~/utils/mailgun';
+                {`import { sendReminderEmail } from '~/utils/email';
 
 await sendReminderEmail({
   to: 'admin@esempio.com',
@@ -287,11 +288,11 @@ await sendReminderEmail({
 });
 
 export const head: DocumentHead = {
-  title: 'Test Mailgun - JudoOK Admin',
+  title: 'Test Email - JudoOK Admin',
   meta: [
     {
       name: 'description',
-      content: 'Pagina di test per verificare l\'integrazione con Mailgun',
+      content: 'Pagina di test per verificare l\'integrazione email SMTP',
     },
   ],
 };

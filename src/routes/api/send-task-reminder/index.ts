@@ -1,8 +1,5 @@
 import type { RequestHandler } from '@builder.io/qwik-city';
-import formData from 'form-data';
-import Mailgun from 'mailgun.js';
-
-const mailgun = new Mailgun(formData);
+import { sendEmail } from '~/utils/email';
 
 export const onPost: RequestHandler = async ({ json, request, env }) => {
     try {
@@ -13,25 +10,6 @@ export const onPost: RequestHandler = async ({ json, request, env }) => {
             json(400, { error: 'Missing required fields' });
             return;
         }
-
-        // Get Mailgun credentials from environment
-        const apiKey = env.get('MAILGUN_API_KEY') || import.meta.env.MAILGUN_API_KEY;
-        const domain = env.get('MAILGUN_DOMAIN') || import.meta.env.MAILGUN_DOMAIN;
-        const fromEmail = env.get('MAILGUN_FROM_EMAIL') || import.meta.env.MAILGUN_FROM_EMAIL || 'noreply@judook.com';
-        const fromName = env.get('MAILGUN_FROM_NAME') || import.meta.env.MAILGUN_FROM_NAME || 'JudoOK Admin';
-
-        if (!apiKey || !domain) {
-            console.warn('[Email API] Mailgun not configured, email will be simulated');
-            json(200, {
-                success: true,
-                message: 'Email reminder logged (Mailgun not configured)',
-                simulated: true
-            });
-            return;
-        }
-
-        // Initialize Mailgun client
-        const mg = mailgun.client({ username: 'api', key: apiKey });
 
         // Map Italian priority to config (supporta sia inglese che italiano per retro-compatibilità)
         const priorityConfig = {
@@ -54,12 +32,8 @@ export const onPost: RequestHandler = async ({ json, request, env }) => {
         const taskTitle = task.titolo || task.title || 'Task senza titolo';
         const taskContent = task.contenuto || task.description || '';
 
-        // Send email via Mailgun
-        const emailData = {
-            from: `${fromName} <${fromEmail}>`,
-            to: [to],
-            subject: `${priority.emoji} [JudoOK] Task: ${taskTitle}`,
-            html: `
+        // Generate HTML
+        const html = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -106,18 +80,26 @@ export const onPost: RequestHandler = async ({ json, request, env }) => {
     </table>
 </body>
 </html>
-            `,
-            text: `[JudoOK Admin] ${priority.emoji} Task: ${taskTitle}\n\nPRIORITÀ: ${priority.label}\n\n${taskContent || 'Nessuna descrizione fornita.'}\n\nAccedi: ${env.get('VITE_PB_URL')?.replace(':8090', ':5173') || 'http://localhost:5173'}/gestione`
-        };
+            `;
 
-        await mg.messages.create(domain, emailData);
+        const text = `[JudoOK Admin] ${priority.emoji} Task: ${taskTitle}\n\nPRIORITÀ: ${priority.label}\n\n${taskContent || 'Nessuna descrizione fornita.'}\n\nAccedi: ${env.get('VITE_PB_URL')?.replace(':8090', ':5173') || 'http://localhost:5173'}/gestione`;
 
-        console.log('[Email API] ✅ Email sent successfully to:', to);
-
-        json(200, {
-            success: true,
-            message: 'Email reminder sent successfully'
+        const result = await sendEmail({
+            to,
+            subject: `${priority.emoji} [JudoOK] Task: ${taskTitle}`,
+            html,
+            text
         });
+
+        if (result.success) {
+            console.log('[Email API] ✅ Email sent successfully to:', to);
+            json(200, {
+                success: true,
+                message: 'Email reminder sent successfully'
+            });
+        } else {
+            throw result.error;
+        }
 
     } catch (e: any) {
         console.error('[Email API] ❌ Error:', e);
