@@ -74,9 +74,30 @@ export default component$<TechniqueCardProps>(({ technique, onOpenModal, isTarge
           class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-700 mix-blend-multiply"
           onError$={(e) => {
             const target = e.target as HTMLImageElement;
-            if (target.src.indexOf('kano_non_sa.webp') === -1) {
+            // Prevent infinite loops if fallback also fails
+            const fallbackPlaceholder = '/media/kano_non_sa.webp';
+
+            // Generate local fallback path based on technique name
+            const slug = technique.nome.toLowerCase().replace(/ /g, '-').replace(/'/g, '');
+            const localFallback = `/media/${slug}.webp`;
+
+            // State tracking using dataset (simpler than Qwik signal for this DOM-local logic)
+            const currentSrc = target.src;
+            const attempts = parseInt(target.dataset.attempts || '0');
+
+            if (attempts === 0) {
+              // First failure: Try local match
+              target.dataset.attempts = '1';
+              target.src = localFallback;
+            } else if (attempts === 1) {
+              // Second failure (local match failed): Show placeholder
+              target.dataset.attempts = '2';
+              if (currentSrc.indexOf('kano_non_sa.webp') === -1) {
+                target.src = fallbackPlaceholder;
+              }
+            } else {
+              // Placeholder failed or loop detected
               target.onerror = null;
-              target.src = '/media/kano_non_sa.webp';
             }
           }}
         />

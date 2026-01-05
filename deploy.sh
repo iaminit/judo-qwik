@@ -1,51 +1,65 @@
 #!/bin/bash
+set -e
 
-# --- CONFIGURAZIONE ---
-PROJECT_ID="judo-qwik-app"
-SERVICE_NAME="judo-app"
-REGION="europe-west1"
-BUCKET_NAME="judofeltre"
-
-# Colori per l'output
+# Colori per output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🚀 Inizio processo di deployment per ${SERVICE_NAME}...${NC}"
+echo -e "${BLUE}=========================================${NC}"
+echo -e "${BLUE}   🥋 Judo Qwik - Deployment Manager     ${NC}"
+echo -e "${BLUE}=========================================${NC}"
+echo ""
+echo "Seleziona l'operazione da eseguire:"
+echo ""
+echo -e "1) ${GREEN}Deploy su GitHub Pages${NC} (Static Site)"
+echo -e "2) ${GREEN}Deploy su Google Cloud Run${NC} (Container)"
+echo -e "3) ${GREEN}Build per Cloudflare${NC}"
+echo -e "4) ${YELLOW}Sync Dati (Pull Data)${NC}"
+echo -e "5) ${YELLOW}Ottimizza .git (Reduce Size)${NC}"
+echo -e "6) ${YELLOW}Pulizia Progetto (Clean Up)${NC}"
+echo -e "q) Esci"
+echo ""
+read -p "Scelta: " choice
 
-# 1. Sincronizzazione Intelligente Database e Media (Solo differenze)
-echo -e "${YELLOW}📦 1/3 Sincronizzazione (rsync) di pb_data con il bucket...${NC}"
-gsutil -m rsync -r pb_data gs://${BUCKET_NAME}
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ Sincronizzazione completata.${NC}"
-else
-    echo -e "⚠️ Errore durante rsync, procedo comunque con la build..."
-fi
-
-# 2. Build dell'immagine Docker
-echo -e "${YELLOW}🏗️ 2/3 Build e push dell'immagine con Cloud Build...${NC}"
-gcloud builds submit --config=cloudbuild.yaml
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ Build completata con successo.${NC}"
-else
-    echo -e "❌ Errore durante la build. Operazione annullata."
-    exit 1
-fi
-
-# 3. Deploy su Cloud Run
-echo -e "${YELLOW}🚀 3/3 Deploy del nuovo servizio su Cloud Run...${NC}"
-gcloud run deploy ${SERVICE_NAME} \
-  --image gcr.io/${PROJECT_ID}/judo-app \
-  --platform managed \
-  --region ${REGION} \
-  --allow-unauthenticated
-  
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✨ DEPLOY COMPLETATO CON SUCCESSO!${NC}"
-    SERVICE_URL=$(gcloud run services describe ${SERVICE_NAME} --region ${REGION} --format='value(status.url)')
-    echo -e "${BLUE}🔗 URL: ${SERVICE_URL}${NC}"
-else
-    echo -e "❌ Errore durante il deploy su Cloud Run."
-    exit 1
-fi
+case $choice in
+    1)
+        echo ""
+        echo -e "${GREEN}🚀 Avvio deploy su GitHub Pages...${NC}"
+        ./deploy-github-pages.sh
+        ;;
+    2)
+        echo ""
+        echo -e "${GREEN}🚀 Avvio deploy su Google Cloud Run...${NC}"
+        ./deploy-gcloude.sh
+        ;;
+    3)
+        echo ""
+        echo -e "${GREEN}🏗️  Avvio build Cloudflare...${NC}"
+        ./build-cloudeflare.sh
+        ;;
+    4)
+        echo ""
+        echo -e "${YELLOW}🔄 Avvio sincronizzazione dati...${NC}"
+        ./pull-data.sh
+        ;;
+    5)
+        echo ""
+        echo -e "${YELLOW}🧹 Avvio ottimizzazione Git...${NC}"
+        ./git-optimize.sh
+        ;;
+    6)
+        echo ""
+        echo -e "${YELLOW}🧹 Avvio pulizia progetto...${NC}"
+        ./clean-project.sh
+        ;;
+    q|Q)
+        echo "Uscita."
+        exit 0
+        ;;
+    *)
+        echo "❌ Scelta non valida."
+        exit 1
+        ;;
+esac

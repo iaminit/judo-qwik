@@ -6,6 +6,9 @@ rm -rf github-pages
 rm -rf dist
 
 # 2. Build for Static
+# Set API URL for static build (GitHub Pages cannot proxy /api)
+export VITE_PB_PUBLIC_URL="https://judo-app-4hhblbuynq-ew.a.run.app"
+
 # Using the existing static adapter
 echo "Building client..."
 npm run build.client
