@@ -24,6 +24,7 @@ interface Technique {
 
 interface TechniquesData {
   techniques: Technique[];
+  error?: string;
 }
 
 // Sound Engine
@@ -180,8 +181,71 @@ export const useTechniquesData = routeLoader$<TechniquesData>(async () => {
     console.error('[GokyoTris] Error loading techniques:', err);
     return {
       techniques: [],
+      error: 'Impossibile caricare il gioco. Assicurati che il database sia attivo.',
     };
   }
+});
+
+const Joystick = component$<{
+  onLeft: QRL<() => void>;
+  onRight: QRL<() => void>;
+  onUp?: QRL<() => void>;
+  onDown?: QRL<() => void>;
+  label: string;
+}>(({ onLeft, onRight, onUp, onDown, label }) => {
+  return (
+    <div class="flex gap-2 select-none touch-none scale-90 sm:scale-100">
+      <div class="bg-gray-800/60 rounded-full w-28 h-28 relative backdrop-blur border border-white/20">
+        {onUp && (
+          <button
+            class="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center active:bg-white/20 rounded-full"
+            onTouchStart$={(e) => {
+              e.preventDefault();
+              onUp();
+            }}
+            onClick$={onUp}
+          >
+            ▲
+          </button>
+        )}
+        {onDown && (
+          <button
+            class="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center active:bg-white/20 rounded-full"
+            onTouchStart$={(e) => {
+              e.preventDefault();
+              onDown();
+            }}
+            onClick$={onDown}
+          >
+            ▼
+          </button>
+        )}
+        <button
+          class="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center active:bg-white/20 rounded-full"
+          onTouchStart$={(e) => {
+            e.preventDefault();
+            onLeft();
+          }}
+          onClick$={onLeft}
+        >
+          ◀
+        </button>
+        <button
+          class="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center active:bg-white/20 rounded-full"
+          onTouchStart$={(e) => {
+            e.preventDefault();
+            onRight();
+          }}
+          onClick$={onRight}
+        >
+          ▶
+        </button>
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span class="text-white/40 text-[10px] font-bold tracking-tighter">{label}</span>
+        </div>
+      </div>
+    </div>
+  );
 });
 
 export default component$(() => {
@@ -452,33 +516,6 @@ export default component$(() => {
     }
   });
 
-  const loop = $(async (time: number) => {
-    if (!isPlaying.value) return;
-
-    gameState.requestId = requestAnimationFrame((t) => loop(t));
-
-    gameState.count++;
-
-    if (gameState.count >= gameState.gameSpeed) {
-      gameState.count = 0;
-
-      const row = gameState.currentTetromino.row + 1;
-      if (
-        await isValidMove(
-          gameState.currentTetromino.matrix,
-          row,
-          gameState.currentTetromino.col,
-          gameState.playfield
-        )
-      ) {
-        gameState.currentTetromino.row = row;
-      } else {
-        await placeTetromino();
-      }
-    }
-
-    await draw();
-  });
 
   const handleLeft = $(async () => {
     const col = gameState.currentTetromino.col - 1;
@@ -571,8 +608,35 @@ export default component$(() => {
   useVisibleTask$(({ track, cleanup }) => {
     track(() => isPlaying.value);
 
+    const updateGame = async () => {
+      if (!isPlaying.value) return;
+
+      gameState.count++;
+
+      if (gameState.count >= gameState.gameSpeed) {
+        gameState.count = 0;
+
+        const row = gameState.currentTetromino.row + 1;
+        if (
+          await isValidMove(
+            gameState.currentTetromino.matrix,
+            row,
+            gameState.currentTetromino.col,
+            gameState.playfield
+          )
+        ) {
+          gameState.currentTetromino.row = row;
+        } else {
+          await placeTetromino();
+        }
+      }
+
+      await draw();
+      gameState.requestId = requestAnimationFrame(updateGame);
+    };
+
     if (isPlaying.value) {
-      gameState.requestId = requestAnimationFrame((t) => loop(t));
+      gameState.requestId = requestAnimationFrame(updateGame);
     }
 
     cleanup(() => {
@@ -599,67 +663,29 @@ export default component$(() => {
     cleanup(() => window.removeEventListener('keydown', handleKeyDown));
   });
 
-  const Joystick = component$<{
-    onLeft: QRL<() => void>;
-    onRight: QRL<() => void>;
-    onUp?: QRL<() => void>;
-    onDown?: QRL<() => void>;
-    label: string;
-  }>(({ onLeft, onRight, onUp, onDown, label }) => {
+  if (data.value.techniques.length === 0) {
     return (
-      <div class="flex gap-2 select-none touch-none scale-90 sm:scale-100">
-        <div class="bg-gray-800/60 rounded-full w-28 h-28 relative backdrop-blur border border-white/20">
-          {onUp && (
-            <button
-              class="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center active:bg-white/20 rounded-full"
-              onTouchStart$={(e) => {
-                e.preventDefault();
-                onUp();
-              }}
-              onClick$={onUp}
-            >
-              ▲
-            </button>
-          )}
-          {onDown && (
-            <button
-              class="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center active:bg-white/20 rounded-full"
-              onTouchStart$={(e) => {
-                e.preventDefault();
-                onDown();
-              }}
-              onClick$={onDown}
-            >
-              ▼
-            </button>
-          )}
+      <div class="fixed inset-0 z-[9999] bg-black flex items-center justify-center p-4 font-sans">
+        <div class="max-w-md text-center bg-gray-900/50 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-2xl">
+          <div class="text-6xl mb-6">⚠️</div>
+          <h2 class="text-2xl font-black text-white italic tracking-tighter mb-4">
+            GIOCO NON DISPONIBILE
+          </h2>
+          <p class="text-gray-400 mb-8 font-medium">
+            {data.value.error || 'Nessuna tecnica trovata. Assicurati che il database sia attivo.'}
+          </p>
           <button
-            class="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center active:bg-white/20 rounded-full"
-            onTouchStart$={(e) => {
-              e.preventDefault();
-              onLeft();
-            }}
-            onClick$={onLeft}
+            onClick$={() => nav('/')}
+            class="px-8 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all hover:scale-105 active:scale-95 uppercase tracking-wider"
           >
-            ◀
+            Torna alla Home
           </button>
-          <button
-            class="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center active:bg-white/20 rounded-full"
-            onTouchStart$={(e) => {
-              e.preventDefault();
-              onRight();
-            }}
-            onClick$={onRight}
-          >
-            ▶
-          </button>
-          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span class="text-white/40 text-[10px] font-bold tracking-tighter">{label}</span>
-          </div>
         </div>
       </div>
     );
-  });
+  }
+
+
 
   return (
     <div class="fixed inset-0 z-[9999] bg-black text-white overflow-hidden font-sans">
