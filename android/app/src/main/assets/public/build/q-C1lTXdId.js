@@ -1,0 +1,1 @@
+import{_ as t}from"./q-DoNi8vyY.js";import{b as e,q as o}from"./q-GWx3MS6J.js";const n=e(o(()=>t(()=>import("./q-CEIUw3d6.js").then(i=>i.i),[]),"s_0V2b370JR7U")),l={title:"Quiz Esame - JudoOK",meta:[{name:"description",content:"Mettiti alla prova con il quiz di preparazione agli esami di judo. Domande per tutti i livelli Dan."}]};export{n as default,l as head};

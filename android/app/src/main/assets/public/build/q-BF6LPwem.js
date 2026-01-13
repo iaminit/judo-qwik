@@ -1,0 +1,1 @@
+import{_ as o}from"./q-DoNi8vyY.js";import{b as e,q as t}from"./q-GWx3MS6J.js";const s=e(t(()=>o(()=>import("./q-B4pKhlUe.js"),[]),"s_riknUMIK5Ss")),_={title:"Nuovo Termine - JudoOK Gestione"};export{s as default,_ as head};

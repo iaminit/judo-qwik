@@ -1,0 +1,13 @@
+{
+	"appId": "it.judo1ms.app",
+	"appName": "Judo App",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	},
+	"plugins": {
+		"StatusBar": {
+			"overlaysWebView": true
+		}
+	}
+}

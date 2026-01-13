@@ -1,0 +1,1 @@
+import{_ as t}from"./q-DoNi8vyY.js";import{b as e,q as i}from"./q-GWx3MS6J.js";const a=e(i(()=>t(()=>import("./q-Dx2w1gO9.js").then(o=>o.i),[]),"s_OzWG6SAdgzM")),n={title:"Gestione Dizionario - JudoOK"};export{a as default,n as head};

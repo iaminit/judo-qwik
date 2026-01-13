@@ -1,0 +1,1 @@
+import{_ as t}from"./q-DoNi8vyY.js";import{b as e,q as i}from"./q-GWx3MS6J.js";const a=e(i(()=>t(()=>import("./q-Dv5X5Esn.js").then(o=>o.i),[]),"s_TwvIS0uIMOg")),s={title:"Accedi - JudoOK Gestione",meta:[{name:"description",content:"Accesso riservato agli amministratori di JudoOK"},{name:"robots",content:"noindex, nofollow"}]};export{a as default,s as head};
