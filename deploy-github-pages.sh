@@ -6,8 +6,9 @@ rm -rf github-pages
 rm -rf dist
 
 # 2. Build for Static
+# 2. Build for Static
 # Set API URL for static build (GitHub Pages cannot proxy /api)
-export VITE_PB_PUBLIC_URL="https://judo-app-4hhblbuynq-ew.a.run.app"
+export VITE_PB_PUBLIC_URL="https://judo.1ms.it"
 
 # Using the existing static adapter
 echo "Building client..."
@@ -15,6 +16,10 @@ npm run build.client
 
 echo "Building static site..."
 npm run build.static
+
+# Remove Admin Section for public static host
+echo "Removing admin section..."
+rm -rf dist/gestione
 
 # 3. Prepare github-pages directory
 echo "Moving files to github-pages folder..."

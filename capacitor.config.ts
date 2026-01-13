@@ -5,7 +5,11 @@ const config: CapacitorConfig = {
     appName: 'Judo App',
     webDir: 'dist',
     server: {
-        androidScheme: 'https'
+        androidScheme: 'https',
+        allowNavigation: ['judo.1ms.it']
+    },
+    android: {
+        allowMixedContent: true
     },
     plugins: {
         StatusBar: {

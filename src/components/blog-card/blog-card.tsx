@@ -1,5 +1,5 @@
 import { component$, type QRL, useStyles$ } from '@builder.io/qwik';
-import { getPBFileUrl } from '~/lib/pocketbase';
+import { getPBFileUrl, getMediaUrl } from '~/lib/pocketbase';
 
 export interface Post {
   id: string;
@@ -41,10 +41,11 @@ export default component$<BlogCardProps>(({ post, onClick, viewMode = 'grid' }) 
     });
   };
 
-  // Genera URL per l'immagine di copertina
+  // Genera URL per l'immagine di copertina - uses getMediaUrl for APK compatibility
   const getImageUrl = (post: Post): string => {
-    if (!post.cover_image) return '/media/blog/default.webp';
-    if (post.cover_image.startsWith('media/')) return '/' + post.cover_image;
+    if (!post.cover_image) return getMediaUrl('/media/blog/default.webp');
+    if (post.cover_image.startsWith('media/')) return getMediaUrl('/' + post.cover_image);
+    if (post.cover_image.startsWith('/media')) return getMediaUrl(post.cover_image);
 
     return getPBFileUrl(post.collectionId!, post.id, post.cover_image);
   };

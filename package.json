@@ -26,7 +26,7 @@
     "serve": "node server/entry.express.js",
     "start": "vite --open --mode ssr",
     "qwik": "qwik",
-    "build:apk": "VITE_PB_PUBLIC_URL=https://judo.1ms.it npm run build.static && npx cap sync"
+    "build:apk": "VITE_PB_PUBLIC_URL=https://judo.1ms.it npm run build.client && VITE_PB_PUBLIC_URL=https://judo.1ms.it npm run build.static && rm -rf dist/gestione && mkdir -p dist/media && cp -R public/media/* dist/media/ && npx cap sync"
   },
   "devDependencies": {
     "@builder.io/qwik": "^1.18.0",
@@ -51,6 +51,10 @@
     "vite-tsconfig-paths": "^4.2.1"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.1",
+    "@capacitor/cli": "^8.0.1",
+    "@capacitor/core": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.0",
     "@tailwindcss/vite": "^4.1.18",
     "@types/compression": "^1.8.1",
     "@types/express": "^5.0.6",

@@ -28,9 +28,9 @@ export default defineConfig(({ command, mode }): UserConfig => {
       qwikCity({}),
       qwikVite({}),
       tsconfigPaths({ root: "." }),
-      qwikPwa({
-        includeWebManifest: true,
-      }),
+      // qwikPwa({
+      //   includeWebManifest: true,
+      // }),
       tailwindcss(),
     ],
     // This tells Vite which dependencies to pre-build in dev mode.

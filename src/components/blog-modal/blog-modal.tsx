@@ -1,5 +1,5 @@
 import { component$, type QRL, useStyles$, useVisibleTask$ } from '@builder.io/qwik';
-import { getPBFileUrl } from '~/lib/pocketbase';
+import { getPBFileUrl, getMediaUrl } from '~/lib/pocketbase';
 import type { Post } from '../blog-card/blog-card';
 
 interface BlogModalProps {
@@ -84,8 +84,9 @@ export default component$<BlogModalProps>(({ post, isOpen, onClose }) => {
 
   // Genera URL per l'immagine di copertina
   const getImageUrl = (post: Post): string => {
-    if (!post.cover_image) return '/media/blog/default.webp';
-    if (post.cover_image.startsWith('media/')) return '/' + post.cover_image;
+    if (!post.cover_image) return getMediaUrl('/media/blog/default.webp');
+    if (post.cover_image.startsWith('media/')) return getMediaUrl('/' + post.cover_image);
+    if (post.cover_image.startsWith('/media')) return getMediaUrl(post.cover_image);
 
     return getPBFileUrl(post.collectionId!, post.id, post.cover_image);
   };

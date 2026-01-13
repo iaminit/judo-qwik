@@ -94,6 +94,18 @@ export default component$<SearchModalProps>(({ isOpen, onClose }) => {
     }
 
     searchTimerRef.value = window.setTimeout(async () => {
+      const cacheKey = `search_cache_${searchQuery.value.trim().toLowerCase()}`;
+
+      // Check Cache
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          results.value = JSON.parse(cached);
+          loading.value = false;
+          return;
+        }
+      } catch (e) { /* ignore */ }
+
       loading.value = true;
       const allResults: SearchResult[] = [];
       const searchTerms = generateVariations(searchQuery.value);
@@ -129,8 +141,18 @@ export default component$<SearchModalProps>(({ isOpen, onClose }) => {
         resultsArrays.forEach(arr => allResults.push(...arr));
 
         results.value = allResults;
-      } catch (err) {
+
+        // Save to Cache (limit size? for now simple set)
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify(allResults));
+        } catch (e) { /* quota exceeded? clear? */ }
+
+      } catch (err: any) {
         console.error('Search error:', err);
+        // Debug for APK: Show error to user
+        if (typeof window !== 'undefined') {
+          window.alert('Search Error: ' + (err.message || String(err)));
+        }
       } finally {
         loading.value = false;
       }

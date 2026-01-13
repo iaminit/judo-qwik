@@ -3,6 +3,9 @@ import { Link, useLocation } from '@builder.io/qwik-city';
 import type { RequestHandler } from '@builder.io/qwik-city';
 import { AppContext, type AppState } from '~/context/app-context';
 import SearchModal from '~/components/search-modal/search-modal';
+import { StatusBar } from '@capacitor/status-bar';
+import { Capacitor } from '@capacitor/core';
+import { getMediaUrl } from '~/lib/pocketbase';
 
 export const onGet: RequestHandler = async ({ cacheControl }) => {
   cacheControl({
@@ -49,6 +52,11 @@ export default component$(() => {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
+    }
+
+    // Hide status bar on native platforms
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.hide().catch(() => { });
     }
   });
 
