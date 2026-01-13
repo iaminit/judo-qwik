@@ -4,10 +4,14 @@ import PocketBase from 'pocketbase';
 const isServer = import.meta.env.SSR;
 const isProd = import.meta.env.PROD;
 
-// Prioritize PUBLIC_URL for static builds (Cloudflare), then standard env, then auto-detection
+// FORCED URL for APK/production - always use remote server
+const FORCED_URL = 'https://judo.1ms.it';
+
+// Prioritize PUBLIC_URL for static builds, then forced URL for production
 const url = import.meta.env.VITE_PB_PUBLIC_URL ||
   import.meta.env.VITE_PB_URL ||
-  (isServer ? 'http://127.0.0.1:8090' : (isProd ? '/' : 'http://127.0.0.1:8090'));
+  (isProd ? FORCED_URL : 'http://127.0.0.1:8090');
+
 export const pb = new PocketBase(url);
 
 // Log for debugging
@@ -21,22 +25,26 @@ if (typeof console !== 'undefined') {
 export const getPBFileUrl = (collectionId: string, recordId: string, fileName: string) => {
   if (!fileName) return '';
   if (fileName.startsWith('http')) return fileName;
-  if (fileName.startsWith('/media')) return fileName;
+  if (fileName.startsWith('/media')) return isProd ? `${FORCED_URL}${fileName}` : fileName;
 
-  // 1. External Static Hosting (e.g. Cloudflare Pages)
-  // Check this FIRST. If set, we want absolute URLs pointing to the live API.
-  if (import.meta.env.VITE_PB_PUBLIC_URL) {
-    return `${import.meta.env.VITE_PB_PUBLIC_URL}/api/files/${collectionId}/${recordId}/${fileName}`;
+  // Always use absolute URL for APK/production builds
+  if (isProd) {
+    return `${FORCED_URL}/api/files/${collectionId}/${recordId}/${fileName}`;
   }
 
-  // 2. Production Cloud Run (Client and SSR)
-  // Use relative path because Express proxies /api to PocketBase internally
-  if (import.meta.env.PROD) {
-    return `/api/files/${collectionId}/${recordId}/${fileName}`;
-  }
-
-  // 3. Development / Localhost
+  // Development / Localhost
   const pbUrl = import.meta.env.VITE_PB_URL || 'http://127.0.0.1:8090';
-  const absoluteBase = pbUrl.startsWith('http') ? pbUrl : 'http://127.0.0.1:8090';
-  return `${absoluteBase}/api/files/${collectionId}/${recordId}/${fileName}`;
+  return `${pbUrl}/api/files/${collectionId}/${recordId}/${fileName}`;
+};
+
+/**
+ * Utility to convert local /media paths to absolute URLs for APK
+ */
+export const getMediaUrl = (path: string) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  if (isProd) {
+    return path.startsWith('/') ? `${FORCED_URL}${path}` : `${FORCED_URL}/${path}`;
+  }
+  return path;
 };

@@ -25,7 +25,8 @@
     "preview": "qwik build preview && vite preview --open",
     "serve": "node server/entry.express.js",
     "start": "vite --open --mode ssr",
-    "qwik": "qwik"
+    "qwik": "qwik",
+    "build:apk": "VITE_PB_PUBLIC_URL=https://judo.1ms.it npm run build.static && npx cap sync"
   },
   "devDependencies": {
     "@builder.io/qwik": "^1.18.0",

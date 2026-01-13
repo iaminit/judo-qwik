@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Judo App</string>
+    <string name="title_activity_main">Judo App</string>
+    <string name="package_name">it.judo1ms.app</string>
+    <string name="custom_url_scheme">it.judo1ms.app</string>
+</resources>

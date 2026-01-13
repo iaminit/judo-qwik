@@ -1,1 +1,0 @@
-import{_ as o}from"./q-DoNi8vyY.js";import{b as t,q as e}from"./q-GWx3MS6J.js";const i=t(e(()=>o(()=>import("./q-CdYiIhUm.js"),[]),"s_sE07k1aF5PA")),s={title:"Nuova Tecnica - JudoOK Gestione"};export{i as default,s as head};
