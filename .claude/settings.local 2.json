@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(chmod:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(mkdir:*)",
+      "Bash(curl:*)",
+      "Bash(node import_quiz.mjs:*)",
+      "Bash(node import_fijlkam_news.mjs:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run qwik:*)",
+      "Bash(npx @builder.io/qwik add:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build.client:*)",
+      "Bash(npm run build.server:*)",
+      "Bash(docker build:*)",
+      "Bash(gcloud --version:*)",
+      "Bash(gcloud auth login:*)",
+      "Bash(gcloud auth list:*)",
+      "Bash(gcloud projects list:*)",
+      "Bash(gcloud config set:*)",
+      "Bash(gcloud config get-value:*)",
+      "Bash(gcloud billing accounts list:*)",
+      "Bash(gcloud billing projects describe:*)",
+      "Bash(gcloud services enable:*)",
+      "Bash(gcloud services list:*)",
+      "Bash(gcloud builds submit:*)",
+      "Bash(gcloud run deploy:*)",
+      "Bash(gcloud run services logs read:*)",
+      "Bash(cat:*)",
+      "Bash(docker compose:*)",
+      "Bash(unzip:*)",
+      "Bash(./pocketbase serve:*)",
+      "Bash(gh:*)",
+      "Bash(git remote set-head:*)",
+      "Bash(git fetch:*)",
+      "Bash(claude-code --version:*)"
+    ]
+  }
+}
