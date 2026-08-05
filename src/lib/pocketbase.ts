@@ -1,24 +1,38 @@
 import PocketBase from 'pocketbase';
 
-// Use environment variable if available, fallback to local
-const isServer = import.meta.env.SSR;
 // Force production mode if we are in search-modal/browser environment with Capacitor
 const isCapacitor = typeof window !== 'undefined' && 'Capacitor' in window;
 const isProd = import.meta.env.PROD || isCapacitor;
 
 // FORCED URL for APK/production - always use remote server
 const FORCED_URL = 'https://judo.1ms.it';
+const LOCAL_URL = 'http://127.0.0.1:8090';
 
-// Base URL for API
-const url = import.meta.env.VITE_PB_PUBLIC_URL ||
+const getBrowserPocketBaseUrl = () => {
+  if (typeof window === 'undefined') return '';
+  if (isCapacitor) return FORCED_URL;
+
+  const isLocalDevelopment =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
+
+  return isLocalDevelopment
+    ? import.meta.env.VITE_PB_URL || LOCAL_URL
+    : window.location.origin;
+};
+
+// A local VITE_PB_URL may be embedded at build time, but it must never send a
+// visitor's browser to localhost. Public web builds use their own origin.
+export const PB_BASE_URL = import.meta.env.VITE_PB_PUBLIC_URL ||
+  getBrowserPocketBaseUrl() ||
   import.meta.env.VITE_PB_URL ||
-  (isProd ? FORCED_URL : 'http://127.0.0.1:8090');
+  (isProd ? FORCED_URL : LOCAL_URL);
 
-export const pb = new PocketBase(url);
+export const pb = new PocketBase(PB_BASE_URL);
 
 // Log for debugging
 if (typeof console !== 'undefined') {
-  console.log('[PocketBase] Initialized with URL:', url);
+  console.log('[PocketBase] Initialized with URL:', PB_BASE_URL);
 }
 
 // Utility to get correct URL for PocketBase files
@@ -35,7 +49,7 @@ export const getPBFileUrl = (collectionId: string, recordId: string, fileName: s
   }
 
   // Development / Localhost
-  const pbUrl = import.meta.env.VITE_PB_URL || 'http://127.0.0.1:8090';
+  const pbUrl = import.meta.env.VITE_PB_URL || LOCAL_URL;
   return `${pbUrl}/api/files/${collectionId}/${recordId}/${fileName}`;
 };
 

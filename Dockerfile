@@ -1,20 +1,22 @@
 # Stage 1: Build dell'applicazione
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
 # Copia i file di package e installa dipendenze
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copia tutto il codice sorgente
 COPY . .
 
 # Build dell'applicazione Qwik
+ARG VITE_PB_PUBLIC_URL=https://judo.1ms.it
+ENV VITE_PB_PUBLIC_URL=${VITE_PB_PUBLIC_URL}
 RUN npm run build
 
 # Stage 2: Runtime production
-FROM node:20-alpine
+FROM node:22-alpine
 
 # Installa dipendenze necessarie (curl per health check, unzip per scaricare PB)
 RUN apk add --no-cache curl unzip

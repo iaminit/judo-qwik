@@ -15,7 +15,7 @@ export default component$(() => {
         }
     });
 
-    const handleSubmit = $((e: Event) => {
+    const handleSubmit = $(async (e: Event) => {
         e.preventDefault();
         const form = e.target as HTMLFormElement;
         const formData = new FormData(form);
@@ -25,20 +25,18 @@ export default component$(() => {
         loading.value = true;
         error.value = null;
 
-        setTimeout(async () => {
-            try {
-                const result = await loginAdmin(email, password);
-                if (result.success) {
-                    nav('/gestione');
-                } else {
-                    error.value = result.error || 'Credenziali non valide';
-                }
-            } catch (err: any) {
-                error.value = err.message || 'Errore di connessione';
-            } finally {
+        try {
+            const result = await loginAdmin(email, password);
+            if (result.success) {
+                window.location.href = '/gestione';
+            } else {
+                error.value = result.error || 'Credenziali non valide';
                 loading.value = false;
             }
-        }, 500); // Small delay for UX feel
+        } catch (err: any) {
+            error.value = err.message || 'Errore di connessione';
+            loading.value = false;
+        }
     });
 
     return (

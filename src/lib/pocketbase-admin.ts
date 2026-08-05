@@ -1,24 +1,29 @@
 import PocketBase from 'pocketbase';
+import { PB_BASE_URL } from './pocketbase';
 
 // In Qwik, we should be careful with global instances if they hold state.
 // But for the client-side/browser usage, a single instance is usually fine.
 // For SSR, we might need a fresh instance per request.
 
-const isServer = import.meta.env.SSR;
-const isProd = import.meta.env.PROD;
-const FORCED_URL = 'https://judo.1ms.it';
-const PB_URL = import.meta.env.VITE_PB_PUBLIC_URL || import.meta.env.VITE_PB_URL || (isProd ? FORCED_URL : 'http://127.0.0.1:8090');
-
-export const pbAdmin = new PocketBase(PB_URL);
+export const pbAdmin = new PocketBase(PB_BASE_URL);
 
 // Traditional Email/Password Login for Admins
 export const loginAdmin = async (email: string, password: string) => {
     try {
-        // Note: pb.admins is for PocketBase system admins.
-        // If we use the 'users' collection with a 'role' field, we use pb.collection('users').
-        // The POC suggests using pbAdmin.admins.authWithPassword for system admins.
-        const authData = await pbAdmin.admins.authWithPassword(email, password);
-        return { success: true, admin: (authData as any).admin };
+        let authData: any;
+        try {
+            // PocketBase 0.23+ superusers collection
+            authData = await pbAdmin.collection('_superusers').authWithPassword(email, password);
+        } catch (e1) {
+            try {
+                // Legacy PocketBase admins
+                authData = await pbAdmin.admins.authWithPassword(email, password);
+            } catch (e2) {
+                // Users collection fallback
+                authData = await pbAdmin.collection('users').authWithPassword(email, password);
+            }
+        }
+        return { success: true, admin: authData.record || authData.admin || authData.model };
     } catch (err: any) {
         return { success: false, error: err.message || 'Errore durante il login' };
     }

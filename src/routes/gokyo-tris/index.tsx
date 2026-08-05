@@ -13,6 +13,7 @@ import { routeLoader$ } from '@builder.io/qwik-city';
 import { pb } from '~/lib/pocketbase';
 import { AppContext } from '~/context/app-context';
 import { useNavigate } from '@builder.io/qwik-city';
+import { ImageZoomModal } from '~/components/image-zoom-modal/image-zoom-modal';
 
 interface Technique {
   id: string;
@@ -262,6 +263,9 @@ export default component$(() => {
   const level = useSignal(1);
   const currentTechInfo = useStore({ name: '', kanji: '', image: '' });
   const imageError = useSignal(false);
+  const isZoomOpen = useSignal(false);
+  const zoomSrc = useSignal('');
+  const zoomAlt = useSignal('');
 
   useVisibleTask$(() => {
     appState.sectionTitle = 'Gokyo-Tris';
@@ -743,10 +747,23 @@ export default component$(() => {
 
           <div class="flex flex-col items-center justify-center text-center">
             <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Tecnica</div>
-            <div class="mt-1 font-bold text-xs line-clamp-2 leading-tight h-8 flex items-center">
-              {currentTechInfo.name || '---'}
+            <div class="mt-1 font-bold text-xs line-clamp-2 leading-tight flex items-center justify-center gap-1.5 min-h-[32px]">
+              {currentTechInfo.image && (
+                <img
+                  src={currentTechInfo.image}
+                  alt={currentTechInfo.name}
+                  class="w-7 h-7 rounded object-cover cursor-pointer hover:scale-110 transition-transform border border-white/40 shadow-xs shrink-0"
+                  onClick$={() => {
+                    zoomSrc.value = currentTechInfo.image;
+                    zoomAlt.value = currentTechInfo.name;
+                    isZoomOpen.value = true;
+                  }}
+                  title="Clicca per ingrandire l'immagine della tecnica"
+                />
+              )}
+              <span>{currentTechInfo.name || '---'}</span>
             </div>
-            <div class="text-lg text-red-500 font-serif leading-none mt-1">
+            <div class="text-lg text-red-500 font-serif leading-none mt-0.5">
               {currentTechInfo.kanji}
             </div>
           </div>
@@ -857,6 +874,9 @@ export default component$(() => {
           * { -webkit-tap-highlight-color: transparent; }
         `}
       />
+
+      {/* Fullscreen Image Zoom Modal */}
+      <ImageZoomModal isOpen={isZoomOpen} src={zoomSrc} alt={zoomAlt} />
     </div>
   );
 });

@@ -361,8 +361,8 @@ export default component$<PostFormProps>(({ post, isNew }) => {
 
             <MediaBrowserModal
                 isOpen={isMediaModalOpen.value}
-                onClose={$(() => { isMediaModalOpen.value = false; })}
-                onSelect={handleMediaSelect}
+                onClose$={$(() => { isMediaModalOpen.value = false; })}
+                onSelect$={handleMediaSelect}
             />
         </div>
     );

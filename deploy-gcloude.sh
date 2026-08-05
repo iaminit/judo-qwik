@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# --- PATH GOOGLE CLOUD SDK ---
+export PATH="/opt/homebrew/share/google-cloud-sdk/bin:$PATH"
+
 # --- CONFIGURAZIONE ---
 PROJECT_ID="judo-qwik-app"
 SERVICE_NAME="judo-app"

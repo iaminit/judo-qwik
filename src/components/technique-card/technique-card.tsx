@@ -63,7 +63,11 @@ export default component$<TechniqueCardProps>(({ technique, onOpenModal, isTarge
 
   return (
     <div
-      class={`bg-white dark:bg-gray-900 rounded-3xl overflow-hidden shadow-xl border border-gray-100 dark:border-gray-800 hover:shadow-2xl hover:scale-[1.03] transition-all duration-500 cursor-pointer group flex flex-col ${isTarget ? 'animate-term-highlight ring-4 ring-red-500/20' : ''}`}
+      class={`rounded-2xl overflow-hidden shadow-md border hover:shadow-xl transition-all duration-300 pressable cursor-pointer group flex flex-col ${isTarget ? 'animate-term-highlight ring-4 ring-red-500/20' : ''}`}
+      style={{
+        backgroundColor: 'var(--color-surface)',
+        borderColor: 'var(--color-border)',
+      }}
       onClick$={handleCardClick}
     >
       {/* Image Container - White background like in the physical cards */}
@@ -82,7 +86,6 @@ export default component$<TechniqueCardProps>(({ technique, onOpenModal, isTarge
             const localFallback = `/media/${slug}.webp`;
 
             // State tracking using dataset (simpler than Qwik signal for this DOM-local logic)
-            const currentSrc = target.src;
             const attempts = parseInt(target.dataset.attempts || '0');
 
             if (attempts === 0) {
@@ -90,9 +93,21 @@ export default component$<TechniqueCardProps>(({ technique, onOpenModal, isTarge
               target.dataset.attempts = '1';
               target.src = localFallback;
             } else if (attempts === 1) {
-              // Second failure (local match failed): Show placeholder
+              // Second: try kata_thumbs with katame- prefix
               target.dataset.attempts = '2';
-              if (currentSrc.indexOf('kano_non_sa.webp') === -1) {
+              target.src = `/media/kata_thumbs/katame-${slug}.webp`;
+            } else if (attempts === 2) {
+              // Third: try kata_thumbs with goshin- prefix
+              target.dataset.attempts = '3';
+              target.src = `/media/kata_thumbs/goshin-${slug}.webp`;
+            } else if (attempts === 3) {
+              // Fourth: try kata_thumbs with ju-no-kata- prefix
+              target.dataset.attempts = '4';
+              target.src = `/media/kata_thumbs/ju-no-kata-${slug}.webp`;
+            } else if (attempts === 4) {
+              // Fifth: Show placeholder
+              target.dataset.attempts = '5';
+              if (target.src.indexOf('kano_non_sa.webp') === -1) {
                 target.src = fallbackPlaceholder;
               }
             } else {

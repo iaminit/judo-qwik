@@ -3,9 +3,10 @@ import { Link, useLocation } from '@builder.io/qwik-city';
 import type { RequestHandler } from '@builder.io/qwik-city';
 import { AppContext, type AppState } from '~/context/app-context';
 import SearchModal from '~/components/search-modal/search-modal';
+import { ThemeToggle } from '~/components/theme-toggle/theme-toggle';
+import { BottomNav } from '~/components/bottom-nav/bottom-nav';
 import { StatusBar } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
-import { getMediaUrl } from '~/lib/pocketbase';
 
 export const onGet: RequestHandler = async ({ cacheControl }) => {
   cacheControl({
@@ -34,40 +35,44 @@ export default component$(() => {
     appState.sectionIcon = undefined;
   });
 
-  // Initialize dark mode from localStorage (client-side only)
+  // Initialize theme from cookie/localStorage on mount
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     if (initialized.value) return;
     initialized.value = true;
 
     const saved = localStorage.getItem('theme');
+    let isNight = false;
+
     if (saved) {
-      appState.isDark = saved === 'dark';
+      isNight = saved === 'night' || saved === 'dark';
     } else {
-      appState.isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      isNight = window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
 
-    // Apply initial theme
-    if (appState.isDark) {
+    appState.isDark = isNight;
+    document.documentElement.dataset.theme = isNight ? 'night' : 'light';
+    if (isNight) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
 
-    // Hide status bar on native platforms
     if (Capacitor.isNativePlatform()) {
       StatusBar.hide().catch(() => { });
     }
   });
 
-  // Sync theme changes with DOM and localStorage
+  // Sync theme state changes with DOM & localStorage
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => appState.isDark);
 
+    const themeName = appState.isDark ? 'night' : 'light';
+    document.documentElement.dataset.theme = themeName;
     if (appState.isDark) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+      localStorage.setItem('theme', 'night');
     } else {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
@@ -80,10 +85,6 @@ export default component$(() => {
 
   const closeMenu = $(() => {
     appState.isMenuOpen = false;
-  });
-
-  const toggleTheme = $(() => {
-    appState.isDark = !appState.isDark;
   });
 
   const openSearch = $(() => {
@@ -104,7 +105,7 @@ export default component$(() => {
     { title: 'Kata', href: '/kata' },
     { title: 'Dizionario', href: '/dizionario' },
     {
-      title: 'Giochi',
+      title: 'Quiz Test Giochi',
       isSubmenu: true,
       items: [
         { title: 'Quiz Esame', href: '/quiz' },
@@ -115,205 +116,275 @@ export default component$(() => {
     },
     { title: 'Storia', href: '/storia' },
     { title: 'FIJLKAM', href: '/fijlkam' },
-    { title: 'Bacheca', href: '/bacheca' },
+    { title: 'Bacheca & Archivio', href: '/bacheca' },
   ];
 
   return (
-    <div class="min-h-screen bg-cream-soft dark:bg-deep-black font-sans text-gray-900 dark:text-ice-white flex flex-col transition-colors duration-500 relative overflow-hidden selection:bg-red-500/20">
-      {/* FIJLKAM Background Mesh Gradients - Enhanced */}
-      <div class="fixed inset-0 overflow-hidden -z-10 pointer-events-none">
-        <div class={`absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full transition-all duration-1000 blur-[120px] ${appState.isDark ? 'bg-red-600/15' : 'bg-red-200/30'}`} />
-        <div class={`absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full transition-all duration-1000 blur-[120px] ${appState.isDark ? 'bg-blue-600/10' : 'bg-blue-100/20'}`} />
-        <div class={`absolute top-[20%] right-[10%] w-[40%] h-[40%] rounded-full transition-all duration-1000 blur-[100px] ${appState.isDark ? 'bg-emerald-600/5' : 'bg-emerald-50/20'}`} />
-      </div>
-
-      {/* Header */}
-      <header class="sticky top-0 z-50 bg-white/80 dark:bg-deep-black/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 shadow-sm">
-        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
-
-          {/* Left: Logo/Title */}
-          <div class="flex items-center">
-            <Link href="/" class="text-xl font-bold text-gray-900 dark:text-ice-white flex items-center gap-3 no-underline hover:opacity-80 transition-opacity">
-              <img src="/media/icons/apple-touch-icon.png" alt="Judo Logo" class="h-10 w-auto rounded-lg shadow-lg" width={40} height={40} />
-              <span class="tracking-tighter font-black">JudoOK</span>
-            </Link>
-
-            {loc.url.pathname.startsWith('/gestione') ? (
-              <div class="flex items-center gap-2 border-l border-gray-200 dark:border-white/10 ml-4 pl-4">
-                <span class="text-xl">🛠️</span>
-                <span class="text-base font-black text-red-600 dark:text-red-500 uppercase tracking-widest text-[13px]">
-                  Gestione
+    <div
+      class="min-h-screen font-sans flex flex-col relative transition-colors duration-200"
+      style={{
+        backgroundColor: 'var(--color-bg)',
+        color: 'var(--color-text)',
+      }}
+    >
+      {/* App Header (Sticky 72px) */}
+      {!appState.hideNav && (
+        <header
+          class="sticky top-0 z-50 h-[72px] border-b backdrop-blur-lg transition-colors duration-200"
+          style={{
+            backgroundColor: 'var(--color-surface)',
+            borderColor: 'var(--color-border)',
+            boxShadow: 'var(--shadow-sticky)',
+          }}
+        >
+          <div class="max-w-6xl mx-auto px-4 md:px-6 h-full flex items-center justify-between">
+            {/* Left: Logo/Title */}
+            <div class="flex items-center gap-3">
+              <Link href="/" class="flex items-center gap-3 no-underline hover:opacity-90 transition-opacity">
+                <img
+                  src="/media/icons/apple-touch-icon.png"
+                  alt="JudoOK Logo"
+                  class="h-10 w-10 rounded-xl object-cover shadow-sm"
+                  width={40}
+                  height={40}
+                />
+                <span class="text-xl md:text-2xl font-black tracking-tight" style={{ color: 'var(--color-text)' }}>
+                  Judo<span style={{ color: 'var(--color-action)' }}>OK</span>
                 </span>
-              </div>
-            ) : appState.sectionTitle && (
-              <div class="flex items-center gap-2 border-l border-gray-200 dark:border-white/10 ml-4 pl-4 animate-in fade-in slide-in-from-left duration-500">
-                <span class="text-xl filter drop-shadow-sm">{appState.sectionIcon}</span>
-                <span class="text-base font-black text-gray-600 dark:text-ice-gray hidden sm:inline uppercase tracking-widest text-[10px]">
-                  {appState.sectionTitle}
-                </span>
-              </div>
-            )}
-          </div>
+              </Link>
 
-          {/* Right: Actions */}
-          <div class="flex items-center gap-3">
-            {/* Theme Toggle */}
-            <button
-              onClick$={toggleTheme}
-              class="relative p-2.5 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-yellow-400 hover:scale-110 active:scale-95 transition-all duration-300 shadow-sm border border-transparent dark:border-white/10 group overflow-hidden"
-              aria-label="Cambia tema"
-            >
-              <div class="relative w-5 h-5 flex items-center justify-center">
-                {/* Sun Icon */}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class={`absolute inset-0 w-5 h-5 transition-all duration-500 transform ${appState.isDark ? 'rotate-0 opacity-100 scale-100' : 'rotate-90 opacity-0 scale-50'}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+              {loc.url.pathname.startsWith('/gestione') ? (
+                <div class="flex items-center gap-1.5 border-l ml-3 pl-3 text-xs font-bold uppercase tracking-wider overflow-x-auto custom-scrollbar" style={{ borderColor: 'var(--color-border)' }}>
+                  {(() => {
+                    const parts = loc.url.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+                    const items: { label: string; href: string; isCurrent: boolean }[] = [];
+                    items.push({ label: 'Gestione', href: '/gestione', isCurrent: parts.length <= 1 });
+                    if (parts.length >= 2) {
+                      const section = parts[1];
+                      const names: Record<string, string> = {
+                        bacheca: 'Bacheca',
+                        tecniche: 'Tecniche',
+                        kata: 'Kata',
+                        dizionario: 'Dizionario',
+                        programma: 'Programma Esami',
+                        storia: 'Storia',
+                        fijlkam: 'FIJLKAM',
+                        gallery: 'Galleria',
+                        community: 'Community',
+                        media: 'Media',
+                        login: 'Login',
+                      };
+                      const label = names[section] || (section.charAt(0).toUpperCase() + section.slice(1));
+                      const href = `/gestione/${section}`;
+                      items.push({ label, href, isCurrent: parts.length === 2 });
+
+                      if (parts.length >= 3) {
+                        const actionLabel = parts[2] === 'new' ? 'Nuovo' : 'Modifica';
+                        items.push({ label: actionLabel, href: loc.url.pathname, isCurrent: true });
+                      }
+                    }
+
+                    return items.map((crumb, idx) => (
+                      <div key={crumb.href + idx} class="flex items-center gap-1.5 shrink-0">
+                        {idx > 0 && <span class="opacity-40 text-[10px]">/</span>}
+                        {crumb.isCurrent ? (
+                          <span style={{ color: 'var(--color-action)' }}>{crumb.label}</span>
+                        ) : (
+                          <Link
+                            href={crumb.href}
+                            class="hover:underline opacity-70 hover:opacity-100 transition-opacity"
+                            style={{ color: 'var(--color-text)' }}
+                          >
+                            {crumb.label}
+                          </Link>
+                        )}
+                      </div>
+                    ));
+                  })()}
+                </div>
+              ) : appState.sectionTitle && (
+                <div class="hidden sm:flex items-center gap-2 border-l ml-3 pl-3" style={{ borderColor: 'var(--color-border)' }}>
+                  <span class="text-lg">{appState.sectionIcon}</span>
+                  <span class="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                    {appState.sectionTitle}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Right: Controls */}
+            <div class="flex items-center gap-2 md:gap-3">
+              {appState.isQuizPlaying && loc.url.pathname.includes('/quiz') ? (
+                /* During Active Quiz: Full Aiuto Kano! button, dynamically styled by kanoHelpStep */
+                <button
+                  onClick$={$(() => {
+                    if (typeof window !== 'undefined') {
+                      window.dispatchEvent(new CustomEvent('open-kano-help'));
+                    }
+                  })}
+                  class={`h-11 px-3.5 rounded-full font-extrabold flex items-center gap-2 border-2 pressable shadow-md cursor-pointer shrink-0 transition-all duration-300 ${
+                    appState.kanoHelpStep === 1
+                      ? 'bg-red-600 hover:bg-red-500 text-white border-red-300 shadow-red-600/40 animate-pulse scale-105'
+                      : appState.kanoHelpStep === 2
+                      ? 'bg-purple-600 hover:bg-purple-500 text-white border-purple-300 shadow-purple-600/40 scale-105'
+                      : 'bg-black hover:bg-black/90 text-white border-white'
+                  }`}
+                  title={
+                    appState.kanoHelpStep === 1
+                      ? '1° Tocco (ROSSO): Kano Tips! attivo'
+                      : appState.kanoHelpStep === 2
+                      ? '2° Tocco (VIOLA): Apri Ricerca'
+                      : 'Clicca per attivare l\'Aiuto Kano'
+                  }
                 >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
-                </svg>
-                {/* Moon Icon */}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class={`absolute inset-0 w-5 h-5 transition-all duration-500 transform ${!appState.isDark ? 'rotate-0 opacity-100 scale-100' : '-rotate-90 opacity-0 scale-50'}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-              </div>
-            </button>
+                  <img
+                    src="/media/kano_i.webp"
+                    alt="Jigoro Kano"
+                    class="w-7 h-7 rounded-full object-cover shrink-0 border border-white/60"
+                    width={28}
+                    height={28}
+                  />
+                  <div class="text-[11px] uppercase font-black tracking-tight leading-none text-left">
+                    <div>{appState.kanoHelpStep === 1 ? 'KANO' : appState.kanoHelpStep === 2 ? 'CERCA' : 'AIUTO'}</div>
+                    <div>{appState.kanoHelpStep === 1 ? 'TIPS!' : appState.kanoHelpStep === 2 ? 'KANO' : 'KANO!'}</div>
+                  </div>
+                </button>
+              ) : (
+                /* Standard Header Controls */
+                <>
+                  <ThemeToggle />
 
-            {/* Search Icon (Desktop) */}
-            <button
-              onClick$={openSearch}
-              class="hidden md:flex p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              aria-label="Cerca"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </button>
+                  {/* Search Button */}
+                  <button
+                    onClick$={openSearch}
+                    class="w-12 h-12 rounded-2xl flex items-center justify-center pressable border transition-colors"
+                    style={{
+                      backgroundColor: 'var(--color-surface-alt)',
+                      borderColor: 'var(--color-border)',
+                      color: 'var(--color-text)',
+                    }}
+                    aria-label="Cerca nel portale"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </button>
+                </>
+              )}
 
-            {/* Hamburger Menu Button */}
-            <button
-              onClick$={toggleMenu}
-              class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors focus:outline-none"
-              aria-label="Menu"
-            >
-              <div class="w-6 h-5 flex flex-col justify-between">
-                <span class={`block h-0.5 w-full bg-current transform transition-transform duration-300 ${appState.isMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
-                <span class={`block h-0.5 w-full bg-current transition-opacity duration-300 ${appState.isMenuOpen ? 'opacity-0' : ''}`}></span>
-                <span class={`block h-0.5 w-full bg-current transform transition-transform duration-300 ${appState.isMenuOpen ? '-rotate-45 -translate-y-2.5' : ''}`}></span>
-              </div>
-            </button>
+              {/* Side Drawer Toggle */}
+              <button
+                onClick$={toggleMenu}
+                class="w-12 h-12 rounded-2xl flex items-center justify-center pressable border transition-colors"
+                style={{
+                  backgroundColor: 'var(--color-surface-alt)',
+                  borderColor: 'var(--color-border)',
+                  color: 'var(--color-text)',
+                }}
+                aria-label="Menu di navigazione"
+              >
+                <div class="w-5 h-4 flex flex-col justify-between">
+                  <span class={`block h-0.5 w-full bg-current transition-transform duration-200 ${appState.isMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></span>
+                  <span class={`block h-0.5 w-full bg-current transition-opacity duration-200 ${appState.isMenuOpen ? 'opacity-0' : ''}`}></span>
+                  <span class={`block h-0.5 w-full bg-current transition-transform duration-200 ${appState.isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+                </div>
+              </button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* Side Menu Drawer */}
-      <div class={`fixed inset-0 z-40 transition-opacity duration-300 ${appState.isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-        {/* Overlay */}
+      <div class={`fixed inset-0 z-50 transition-opacity duration-300 ${appState.isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick$={closeMenu}></div>
         <div
-          class="absolute inset-0 bg-black/50 backdrop-blur-sm"
-          onClick$={closeMenu}
-        ></div>
+          class={`absolute top-0 right-0 w-80 h-full shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${
+            appState.isMenuOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
+          style={{
+            backgroundColor: 'var(--color-surface)',
+            color: 'var(--color-text)',
+          }}
+        >
+          <div class="p-6 border-b flex justify-between items-center" style={{ borderColor: 'var(--color-border)' }}>
+            <span class="font-bold text-xl">Menu</span>
+            <button onClick$={closeMenu} class="text-2xl leading-none pressable" style={{ color: 'var(--color-text-muted)' }}>&times;</button>
+          </div>
 
-        {/* Drawer Content */}
-        <div class={`absolute top-0 right-0 w-72 h-full bg-white dark:bg-gray-800 shadow-2xl transform transition-transform duration-300 ease-out ${appState.isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-          <div class="flex flex-col h-full">
-            <div class="p-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-750">
-              <span class="font-bold text-lg text-gray-800 dark:text-white">Menu</span>
-              <button onClick$={closeMenu} class="text-gray-500 hover:text-red-500 text-2xl leading-none">&times;</button>
-            </div>
-            <nav class="flex-1 overflow-y-auto py-4">
-              <ul class="space-y-1">
-                {navLinks.map((link) => (
-                  <li key={link.title}>
-                    {link.isSubmenu ? (
-                      <div>
-                        <button
-                          onClick$={() => toggleSubmenu(link.title)}
-                          class="w-full flex justify-between items-center px-6 py-3 text-gray-700 dark:text-gray-200 hover:bg-red-50 dark:hover:bg-gray-700 hover:text-red-600 dark:hover:text-red-400 transition-colors font-medium border-l-4 border-transparent"
+          <nav class="flex-1 overflow-y-auto p-4 space-y-1">
+            {navLinks.map((link) => (
+              <div key={link.title}>
+                {link.isSubmenu ? (
+                  <div>
+                    <button
+                      onClick$={() => toggleSubmenu(link.title)}
+                      class="w-full flex justify-between items-center px-4 py-3.5 rounded-xl font-semibold transition-colors text-left"
+                      style={{ color: 'var(--color-text)' }}
+                    >
+                      <span>{link.title}</span>
+                      <span class={`text-xs transition-transform duration-200 ${appState.expandedMenus[link.title] ? 'rotate-180' : ''}`}>▼</span>
+                    </button>
+                    <div class={`overflow-hidden transition-all duration-300 pl-4 ${appState.expandedMenus[link.title] ? 'max-h-64 mt-1' : 'max-h-0'}`}>
+                      {link.items?.map((subItem) => (
+                        <Link
+                          key={subItem.href}
+                          href={subItem.href}
+                          onClick$={closeMenu}
+                          class="block px-4 py-2.5 rounded-lg text-sm font-medium no-underline transition-colors mb-1"
+                          style={{ color: 'var(--color-text-muted)' }}
                         >
-                          <span>{link.title}</span>
-                          <span class={`text-xs transition-transform duration-200 ${appState.expandedMenus[link.title] ? 'rotate-180' : ''}`}>▼</span>
-                        </button>
-                        <div class={`bg-gray-50 dark:bg-gray-850 overflow-hidden transition-all duration-300 ${appState.expandedMenus[link.title] ? 'max-h-64' : 'max-h-0'}`}>
-                          {link.items?.map(subItem => (
-                            <Link
-                              key={subItem.href}
-                              href={subItem.href}
-                              onClick$={closeMenu}
-                              class="block px-10 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                            >
-                              • {subItem.title}
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <Link
-                        href={link.href}
-                        onClick$={closeMenu}
-                        class="block px-6 py-3 text-gray-700 dark:text-gray-200 hover:bg-red-50 dark:hover:bg-gray-700 hover:text-red-600 dark:hover:text-red-400 transition-colors font-medium border-l-4 border-transparent hover:border-red-500"
-                      >
-                        {link.title}
-                      </Link>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </nav>
-            <div class="p-4 border-t border-gray-100 dark:border-gray-700 text-center text-xs text-gray-400">
-              JudoOK App v1.0
+                          • {subItem.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <Link
+                    href={link.href}
+                    onClick$={closeMenu}
+                    class="block px-4 py-3.5 rounded-xl font-semibold no-underline transition-colors hover:bg-[var(--color-surface-alt)]"
+                    style={{ color: 'var(--color-text)' }}
+                  >
+                    {link.title}
+                  </Link>
+                )}
+              </div>
+            ))}
+
+            {/* Android App Download Banner */}
+            <div class="mt-6 p-4 rounded-2xl bg-gradient-to-br from-red-600 to-orange-600 text-white shadow-xl border border-white/20">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-2xl">📱</span>
+                <div>
+                  <div class="font-extrabold text-sm leading-tight">App Android JudoOK</div>
+                  <div class="text-[11px] text-white/80 font-medium">Installa l'applicazione nativa APK</div>
+                </div>
+              </div>
+              <a
+                href="https://storage.googleapis.com/judo-qwik-downloads-238185604112/judo-app.apk"
+                download="judo-app.apk"
+                class="w-full py-2.5 px-3 mt-1 bg-white text-red-600 hover:bg-gray-100 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 shadow transition-all no-underline"
+              >
+                <span>⬇️</span> Scarica APK Android
+              </a>
             </div>
+          </nav>
+
+          <div class="p-4 border-t text-center text-xs" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}>
+            JudoOK App • Motion & Design System v2.0
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <main class={loc.url.pathname.startsWith('/gestione') ? "flex-grow flex flex-col" : "container mx-auto px-4 py-6 pb-24 flex-grow"}>
+      {/* Main Page Body */}
+      <main class={loc.url.pathname.startsWith('/gestione') ? "flex-grow flex flex-col" : "flex-grow pb-24 md:pb-12"}>
         <Slot />
       </main>
 
-      {/* Bottom Navigation (Mobile) */}
-      {!loc.url.pathname.startsWith('/gestione') && (
-        <nav class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 pb-safe z-30 md:hidden">
-          <div class="flex justify-around items-center h-16">
-            <Link href="/" class="flex flex-col items-center justify-center w-full h-full text-red-600 dark:text-red-500">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              <span class="text-xs font-medium mt-1">Home</span>
-            </Link>
+      {/* Bottom Navigation (Mobile <1024px) */}
+      {!loc.url.pathname.startsWith('/gestione') && !appState.hideNav && <BottomNav />}
 
-            <button
-              onClick$={openSearch}
-              class="flex flex-col items-center justify-center w-full h-full text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-            >
-              <div class="bg-red-600 text-white rounded-full p-3 -mt-6 shadow-lg border-4 border-white dark:border-gray-800">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <span class="text-xs font-medium mt-1">Cerca</span>
-            </button>
-
-            <Link href="/tecniche" class="flex flex-col items-center justify-center w-full h-full text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              <span class="text-xs font-medium mt-1">Tecniche</span>
-            </Link>
-          </div>
-        </nav>
-      )}
-
-      {/* Search Modal */}
+      {/* Global Search Modal */}
       <SearchModal isOpen={appState.isSearchOpen} onClose={closeSearch} />
     </div>
   );

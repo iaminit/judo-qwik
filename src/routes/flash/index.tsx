@@ -3,6 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { pb } from '~/lib/pocketbase';
 import { AppContext } from '~/context/app-context';
+import { ImageZoomModal } from '~/components/image-zoom-modal/image-zoom-modal';
 
 interface FlashCard {
   id: string;
@@ -53,6 +54,9 @@ export default component$(() => {
 
   const currentIndex = useSignal(0);
   const isFlipped = useSignal(false);
+  const isZoomOpen = useSignal(false);
+  const zoomSrc = useSignal('');
+  const zoomAlt = useSignal('');
 
   useVisibleTask$(() => {
     appState.sectionTitle = 'Flash Cards';
@@ -94,11 +98,15 @@ export default component$(() => {
   const currentCard = data.value.cards[currentIndex.value];
 
   return (
-    <div class="max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[60vh] px-4">
+    <div class="max-w-2xl mx-auto flex flex-col items-center justify-center pt-4 md:pt-6 pb-8 px-4">
       {/* Header */}
-      <div class="mb-8 text-center">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Flash Cards</h1>
-        <p class="text-gray-500 dark:text-gray-400">Clicca sulla carta per girarla</p>
+      <div class="mb-4 text-center">
+        <h1 class="text-xl sm:text-2xl font-black tracking-tight mb-1" style={{ color: 'var(--color-text)' }}>
+          Flash Cards
+        </h1>
+        <p class="text-xs sm:text-sm m-0" style={{ color: 'var(--color-text-muted)' }}>
+          Clicca sulla carta per girarla
+        </p>
       </div>
 
       {/* Card Container */}
@@ -117,13 +125,33 @@ export default component$(() => {
             class="absolute w-full h-full bg-white dark:bg-gray-800 rounded-3xl shadow-xl flex flex-col items-center justify-center p-8 border-2 border-green-500"
             style="backface-visibility: hidden;"
           >
-            <span class="text-6xl mb-6">🇯🇵</span>
-            <h2 class="text-4xl font-black text-gray-900 dark:text-white mb-2">
+            <span class="text-5xl mb-3">🇯🇵</span>
+            <h2 class="text-3xl font-black text-gray-900 dark:text-white mb-1">
               {currentCard.term}
             </h2>
             {currentCard.kanji && (
-              <p class="text-2xl text-gray-400">{currentCard.kanji}</p>
+              <p class="text-xl text-gray-400 mb-2">{currentCard.kanji}</p>
             )}
+
+            {/* Thumbnail Visual Hint */}
+            {(() => {
+              const slug = currentCard.term.toLowerCase().replace(/ /g, '-').replace(/'/g, '');
+              const thumbSrc = `/media/${slug}.webp`;
+              return (
+                <div
+                  onClick$={(e) => {
+                    e.stopPropagation();
+                    zoomSrc.value = thumbSrc;
+                    zoomAlt.value = `Suggerimento: ${currentCard.term}`;
+                    isZoomOpen.value = true;
+                  }}
+                  class="mt-2 flex items-center gap-1.5 px-3 py-1 bg-gray-100 dark:bg-gray-700/60 hover:bg-green-100 dark:hover:bg-green-900/40 text-gray-700 dark:text-gray-300 rounded-full border border-gray-200 dark:border-gray-600 text-xs font-extrabold cursor-pointer transition-all shadow-xs"
+                  title="Clicca per ingrandire il suggerimento visivo"
+                >
+                  <span>🖼️</span> Suggerimento Visivo 🔍
+                </div>
+              );
+            })()}
           </div>
 
           {/* Back */}
@@ -167,6 +195,8 @@ export default component$(() => {
           }
         `}
       </style>
+      {/* Fullscreen Image Zoom Modal */}
+      <ImageZoomModal isOpen={isZoomOpen} src={zoomSrc} alt={zoomAlt} />
     </div>
   );
 });

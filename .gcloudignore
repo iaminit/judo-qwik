@@ -8,6 +8,10 @@ server/
 .adapters/
 *.log
 .DS_Store
+.audit-backups/
+.audit-quarantine/
+.playwright-cli/
+android/
 
 # Includiamo pb_data per il deploy (sovrascriviamo l'esclusione del .gitignore)
 !pb_data/

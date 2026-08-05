@@ -1,7 +1,7 @@
 import { component$, useSignal, $, useContext, useVisibleTask$, useComputed$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
-import { pb } from '~/lib/pocketbase';
+import { getPBFileUrl, pb } from '~/lib/pocketbase';
 import { AppContext } from '~/context/app-context';
 
 interface FijlkamItem {
@@ -9,6 +9,7 @@ interface FijlkamItem {
   titolo: string;
   contenuto: string;
   categoria_secondaria?: string;
+  imageUrl?: string;
 }
 
 interface TimelineItem {
@@ -16,6 +17,7 @@ interface TimelineItem {
   anno: number;
   titolo: string;
   contenuto: string;
+  imageUrl?: string;
 }
 
 interface Regulation {
@@ -24,6 +26,7 @@ interface Regulation {
   titolo_secondario?: string;
   contenuto: string;
   link_esterno?: string;
+  imageUrl?: string;
 }
 
 interface ExamProgram {
@@ -33,7 +36,40 @@ interface ExamProgram {
   titolo: string;
   contenuto: string;
   ordine: number;
+  imageUrl?: string;
 }
+
+const getRecordImageUrl = (record: Record<string, any>) => {
+  const image = String(record.immagine_principale || '');
+  if (!image) return '';
+  if (image.startsWith('http')) return image;
+  if (image.startsWith('/media/')) return image;
+  if (image.startsWith('media/')) return `/${image}`;
+  return getPBFileUrl(record.collectionId, record.id, image);
+};
+
+const withImageUrl = <T extends Record<string, any>>(record: T): T & { imageUrl: string } => ({
+  ...record,
+  imageUrl: getRecordImageUrl(record),
+});
+
+const FijlkamImage = component$<{ src?: string; alt: string; compact?: boolean }>(
+  ({ src, alt, compact }) => {
+    if (!src) return null;
+    return (
+      <img
+        src={src}
+        alt={alt}
+        class={`w-full object-cover rounded-2xl border border-gray-100 dark:border-gray-700 ${
+          compact ? 'max-h-64 mb-4' : 'max-h-96 mb-7'
+        }`}
+        onError$={(event) => {
+          (event.target as HTMLImageElement).style.display = 'none';
+        }}
+      />
+    );
+  }
+);
 
 export const useFijlkamData = routeLoader$(async () => {
   try {
@@ -47,7 +83,7 @@ export const useFijlkamData = routeLoader$(async () => {
         requestKey: null
       }),
       pb.collection('fijlkam').getFullList({
-        filter: 'anno != null',
+        filter: 'tags ~ "timeline"',
         sort: 'anno',
         requestKey: null
       }),
@@ -63,10 +99,22 @@ export const useFijlkamData = routeLoader$(async () => {
       }),
     ]);
 
-    const items = infoResult.status === 'fulfilled' ? (infoResult.value as any[]) : [];
-    const timelineItems = tlResult.status === 'fulfilled' ? (tlResult.value as any[]) : [];
-    const regulations = regResult.status === 'fulfilled' ? (regResult.value as any[]) : [];
-    const programs = programsResult.status === 'fulfilled' ? (programsResult.value as any[]) : [];
+    const items =
+      infoResult.status === 'fulfilled'
+        ? (infoResult.value as any[]).map(withImageUrl)
+        : [];
+    const timelineItems =
+      tlResult.status === 'fulfilled'
+        ? (tlResult.value as any[]).map(withImageUrl)
+        : [];
+    const regulations =
+      regResult.status === 'fulfilled'
+        ? (regResult.value as any[]).map(withImageUrl)
+        : [];
+    const programs =
+      programsResult.status === 'fulfilled'
+        ? (programsResult.value as any[]).map(withImageUrl)
+        : [];
 
     return {
       items,
@@ -117,6 +165,7 @@ const FijlkamTimeline = component$<FijlkamTimelineProps>(({ items }) => {
                   {item.anno}
                 </span>
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{item.titolo}</h3>
+                <FijlkamImage src={item.imageUrl} alt={item.titolo} compact />
                 <div
                   class="prose prose-sm dark:prose-invert text-gray-600 dark:text-gray-400 leading-relaxed"
                   dangerouslySetInnerHTML={item.contenuto}
@@ -291,6 +340,7 @@ export default component$(() => {
         <div class="space-y-8">
           {infoItem && (
             <article class="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700">
+              <FijlkamImage src={infoItem.imageUrl} alt={infoItem.titolo} />
               <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">
                 {infoItem.titolo}
               </h2>
@@ -303,6 +353,7 @@ export default component$(() => {
 
           {structureItem && (
             <article class="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700">
+              <FijlkamImage src={structureItem.imageUrl} alt={structureItem.titolo} />
               <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">
                 {structureItem.titolo}
               </h2>
@@ -317,6 +368,7 @@ export default component$(() => {
 
       {activeTab.value === 'champions' && championsItem && (
         <article class="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700">
+          <FijlkamImage src={championsItem.imageUrl} alt={championsItem.titolo} />
           <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">
             {championsItem.titolo}
           </h2>
@@ -329,6 +381,7 @@ export default component$(() => {
 
       {activeTab.value === 'belts' && beltsItem && (
         <article class="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700">
+          <FijlkamImage src={beltsItem.imageUrl} alt={beltsItem.titolo} />
           <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">{beltsItem.titolo}</h2>
           <div
             class="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300"
@@ -339,6 +392,7 @@ export default component$(() => {
 
       {activeTab.value === 'comitato' && comitatoItem && (
         <article class="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700">
+          <FijlkamImage src={comitatoItem.imageUrl} alt={comitatoItem.titolo} />
           <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">
             {comitatoItem.titolo}
           </h2>
@@ -363,6 +417,7 @@ export default component$(() => {
               key={item.id}
               class="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700"
             >
+              <FijlkamImage src={item.imageUrl} alt={item.titolo} />
               <div class="flex justify-between items-start mb-4">
                 <div>
                   <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -460,6 +515,7 @@ export default component$(() => {
                   </div>
 
                   <div class="surface-elevated p-6 md:p-8 hover:bg-white/60 dark:hover:bg-white/10">
+                    <FijlkamImage src={program.imageUrl} alt={program.titolo} compact />
                     {/* Section Type Badge */}
                     {program.categoria_secondaria && (
                       <div class="mb-4 flex items-center gap-3">

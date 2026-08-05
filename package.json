@@ -26,7 +26,7 @@
     "serve": "node server/entry.express.js",
     "start": "vite --open --mode ssr",
     "qwik": "qwik",
-    "build:apk": "VITE_PB_PUBLIC_URL=https://judo.1ms.it npm run build.client && VITE_PB_PUBLIC_URL=https://judo.1ms.it npm run build.static && rm -rf dist/gestione && mkdir -p dist/media && cp -R public/media/* dist/media/ && npx cap sync"
+    "build:apk": "VITE_PB_PUBLIC_URL=https://judo.1ms.it npm run build.client && VITE_PB_PUBLIC_URL=https://judo.1ms.it npm run build.static && rm -rf dist/gestione dist/downloads && mkdir -p dist/media && cp -R public/media/* dist/media/ && npx cap sync && cd android && ./gradlew assembleDebug && cd .. && node scripts/stage-apk.mjs"
   },
   "devDependencies": {
     "@builder.io/qwik": "^1.18.0",

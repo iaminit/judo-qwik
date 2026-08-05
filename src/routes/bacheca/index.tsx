@@ -2,19 +2,13 @@ import { component$, useSignal, useStore, $, useComputed$, useContext, useVisibl
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { AppContext } from '~/context/app-context';
-import { pbAdmin } from '~/lib/pocketbase-admin';
+import { pb } from '~/lib/pocketbase';
 import BlogCard, { type Post } from '~/components/blog-card/blog-card';
 import BlogModal from '~/components/blog-modal/blog-modal';
 
 export const useBachecaData = routeLoader$(async () => {
   try {
-    // Authenticate if needed (server-side only)
-    if (!pbAdmin.authStore.isValid) {
-      await pbAdmin.admins.authWithPassword('ad@judo.ok', 'Password123!');
-    }
-
-    console.log('[Bacheca] Fetching with pbAdmin...');
-    const posts = await pbAdmin.collection('bacheca').getFullList({
+    const posts = await pb.collection('bacheca').getFullList({
       sort: '-data_riferimento',
       requestKey: null,
     });

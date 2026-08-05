@@ -4,6 +4,9 @@ import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { pb } from '~/lib/pocketbase';
 import { AppContext } from '~/context/app-context';
 import TermCard, { type Term } from '~/components/term-card';
+import { ImageZoomModal } from '~/components/image-zoom-modal/image-zoom-modal';
+import fs from 'node:fs';
+import path from 'node:path';
 
 export const useDictionaryData = routeLoader$(async () => {
   try {
@@ -15,6 +18,23 @@ export const useDictionaryData = routeLoader$(async () => {
     });
 
     console.log('[Dictionary] Fetched', records.length, 'records');
+
+    // Server-side: scan media directories to resolve images
+    const readDirSafe = (dir: string): string[] => {
+      try { return fs.readdirSync(dir); } catch { return []; }
+    };
+
+    const mediaFiles = new Set<string>();
+    [
+      path.join(process.cwd(), 'public', 'media'),
+      path.join(process.cwd(), 'dist', 'media'),
+    ].forEach(p => readDirSafe(p).forEach(f => mediaFiles.add(f)));
+
+    const kataThumbFiles = new Set<string>();
+    [
+      path.join(process.cwd(), 'public', 'media', 'kata_thumbs'),
+      path.join(process.cwd(), 'dist', 'media', 'kata_thumbs'),
+    ].forEach(p => readDirSafe(p).forEach(f => kataThumbFiles.add(f)));
 
     const terms: Term[] = records.map((record: any) => {
       // Use new Italian field structure
@@ -35,6 +55,40 @@ export const useDictionaryData = routeLoader$(async () => {
       const pbAudio = record.audio ? pb.files.getUrl(record, record.audio) : null;
       const fallbackAudio = `${normalizedName}.mp3`;
 
+      // Server-side image resolution — zero 404s in the browser
+      const slug = termName.toLowerCase().replace(/ /g, '-').replace(/'/g, '');
+      let imageUrl = '';
+
+      const mediaLowerMap = new Map<string, string>();
+      mediaFiles.forEach((file) => mediaLowerMap.set(file.toLowerCase(), file));
+
+      const kataLowerMap = new Map<string, string>();
+      kataThumbFiles.forEach((file) => kataLowerMap.set(file.toLowerCase(), file));
+
+      // 1. Check /media/ root
+      const exts = ['.webp', '.svg', '.jpg', '.jpeg', '.png', '.gif'];
+      for (const ext of exts) {
+        const target1 = (slug + ext).toLowerCase();
+        if (mediaLowerMap.has(target1)) { imageUrl = `/media/${mediaLowerMap.get(target1)}`; break; }
+        const target2 = (slug.replace(/-/g, '_') + ext).toLowerCase();
+        if (mediaLowerMap.has(target2)) { imageUrl = `/media/${mediaLowerMap.get(target2)}`; break; }
+      }
+
+      // 2. Check /media/kata_thumbs/ with kata prefixes
+      if (!imageUrl) {
+        const prefixes = ['katame-', 'goshin-', 'ju-no-kata-'];
+        for (const prefix of prefixes) {
+          for (const ext of exts) {
+            const target = (prefix + slug + ext).toLowerCase();
+            if (kataLowerMap.has(target)) {
+              imageUrl = `/media/kata_thumbs/${kataLowerMap.get(target)}`;
+              break;
+            }
+          }
+          if (imageUrl) break;
+        }
+      }
+
       return {
         id: record.id,
         termine: termName,
@@ -43,6 +97,7 @@ export const useDictionaryData = routeLoader$(async () => {
         kanji: termKanji,
         audio_file: pbAudio || fallbackAudio,
         has_audio: !!pbAudio || true,
+        image_url: imageUrl || undefined,
       };
     });
 
@@ -74,6 +129,11 @@ export default component$(() => {
   const targetTermId = useSignal<string | null>(null);
   const appState = useContext(AppContext);
 
+  const isZoomOpen = useSignal(false);
+  const zoomSrc = useSignal('');
+  const zoomAlt = useSignal('');
+  const clientTerms = useSignal<Term[]>(data.value.terms || []);
+
   useVisibleTask$(({ track }) => {
     track(() => modalTerm.value);
     if (modalTerm.value) {
@@ -83,13 +143,51 @@ export default component$(() => {
     }
   });
 
-  useVisibleTask$(() => {
+  useVisibleTask$(async () => {
     appState.sectionTitle = 'Dizionario';
     appState.sectionIcon = '📚';
+
+    (window as any).openImageZoom = (src: string, alt: string) => {
+      zoomSrc.value = src;
+      zoomAlt.value = alt || 'Dizionario Judo';
+      isZoomOpen.value = true;
+    };
+
+    if (clientTerms.value.length === 0) {
+      try {
+        console.log('[Dictionary Client] Refetching terms on client...');
+        const records = await pb.collection('dizionario').getFullList({ requestKey: null });
+        clientTerms.value = records.map((record: any) => {
+          const termName = record.titolo || '';
+          const termKanji = record.titolo_secondario || '';
+          const termDesc = record.contenuto || record.descrizione_breve || '';
+          const termPronunciation = record.categoria_secondaria || '';
+          const normalizedName = termName.toLowerCase().replace(/ /g, '').replace(/-/g, '');
+          const pbAudio = record.audio ? pb.files.getUrl(record, record.audio) : null;
+
+          return {
+            id: record.id,
+            termine: termName,
+            pronuncia: termPronunciation,
+            descrizione: termDesc,
+            kanji: termKanji,
+            audio_file: pbAudio || `${normalizedName}.mp3`,
+            has_audio: !!pbAudio || true,
+          };
+        });
+      } catch (err) {
+        console.error('[Dictionary Client] Refetch failed:', err);
+      }
+    }
+  });
+
+  // Available letters computed from current active terms list
+  const availableLettersList = useComputed$(() => {
+    const list = clientTerms.value.length > 0 ? clientTerms.value : data.value.terms;
+    return [...new Set(list.map(t => t.termine.charAt(0).toUpperCase()))].sort();
   });
 
   // Handle URL params for search and highlight
-  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => loc.url.searchParams);
 
@@ -98,8 +196,8 @@ export default component$(() => {
       searchTerm.value = searchParam;
       activeLetter.value = null;
 
-      // Look for exact match to highlight
-      const exactMatch = data.value.terms.find(
+      const currentList = clientTerms.value.length > 0 ? clientTerms.value : data.value.terms;
+      const exactMatch = currentList.find(
         t => t.termine.toLowerCase() === searchParam.toLowerCase()
       );
       if (exactMatch) {
@@ -111,7 +209,7 @@ export default component$(() => {
 
   // Filtered results based on search and letter filter
   const filteredResults = useComputed$(() => {
-    let results = data.value.terms;
+    let results = clientTerms.value.length > 0 ? clientTerms.value : data.value.terms;
 
     if (searchTerm.value.trim()) {
       const normalizedSearch = searchTerm.value.toLowerCase();
@@ -201,49 +299,64 @@ export default component$(() => {
   }
 
   return (
-    <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto px-4 pt-3 md:pt-5 pb-8">
 
       {/* Search Section */}
-      <div class="mb-6">
-        <div class="relative">
+      <div class="max-w-4xl mx-auto mb-6 px-2">
+        <div class="relative w-full group">
           <input
             type="text"
-            class="search-input w-full px-6 py-4 text-lg rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-white transition-all"
-            placeholder="Cerca un termine... (Cmd/Ctrl + K)"
+            placeholder="Cerca un termine (es. Ukemi, Dojo)..."
             value={searchTerm.value}
             onInput$={(e) => handleSearchChange((e.target as HTMLInputElement).value)}
             autoComplete="off"
+            class="search-input w-full pl-6 pr-14 py-3.5 md:py-4 rounded-2xl md:rounded-[2rem] border transition-all shadow-sm text-base md:text-lg outline-none font-bold"
+            style={{
+              backgroundColor: 'var(--color-surface)',
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text)',
+            }}
           />
-          {searchTerm.value && (
-            <button
-              onClick$={clearSearch}
-              class="absolute right-4 top-1/2 transform -translate-y-1/2 px-4 py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-lg transition-colors"
-              title="Cancella ricerca"
-            >
-              Pulisci
-            </button>
-          )}
+          <div class="absolute inset-y-0 right-0 pr-5 flex items-center gap-2">
+            {searchTerm.value && (
+              <button
+                onClick$={clearSearch}
+                class="px-2.5 py-1 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--color-surface-alt)',
+                  color: 'var(--color-text-muted)',
+                }}
+                title="Cancella ricerca"
+              >
+                ✕
+              </button>
+            )}
+            <span class="text-xl opacity-40 group-focus-within:opacity-100 transition-opacity pointer-events-none">🔍</span>
+          </div>
         </div>
       </div>
 
-      {/* Alphabet Filter */}
-      <div class="mb-8">
-        <div class="flex flex-wrap gap-2">
-          {alphabet.map(letter => {
-            const isAvailable = data.value.availableLetters.includes(letter);
+      {/* Alphabet Filter - Symmetrical Centered Grid */}
+      <div class="max-w-2xl mx-auto mb-8 px-2">
+        <div class="flex flex-wrap justify-center items-center gap-2 sm:gap-2.5">
+          {availableLettersList.value.map(letter => {
             const isActive = activeLetter.value === letter;
 
             return (
               <button
                 key={letter}
-                onClick$={() => isAvailable && handleLetterClick(letter)}
-                disabled={!isAvailable || !!searchTerm.value}
-                class={`px-4 py-2 rounded-lg font-medium transition-all ${isActive
-                  ? 'bg-red-600 text-white shadow-lg'
-                  : isAvailable && !searchTerm.value
-                    ? 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                  }`}
+                onClick$={() => handleLetterClick(letter)}
+                disabled={!!searchTerm.value}
+                class={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center transition-all pressable cursor-pointer ${
+                  isActive
+                    ? 'bg-[var(--color-action)] text-white shadow-md scale-105'
+                    : 'border hover:border-red-500/40'
+                }`}
+                style={!isActive ? {
+                  backgroundColor: 'var(--color-surface)',
+                  borderColor: 'var(--color-border)',
+                  color: 'var(--color-text)',
+                } : {}}
               >
                 {letter}
               </button>
@@ -251,7 +364,16 @@ export default component$(() => {
           })}
           <button
             onClick$={clearAllFilters}
-            class="px-6 py-2 rounded-lg font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            class={`h-11 sm:h-12 px-6 rounded-2xl font-black text-sm uppercase tracking-wider transition-all pressable cursor-pointer flex items-center justify-center ${
+              !activeLetter.value && !searchTerm.value
+                ? 'bg-[var(--color-action)] text-white shadow-md'
+                : 'border hover:border-red-500/40'
+            }`}
+            style={activeLetter.value || searchTerm.value ? {
+              backgroundColor: 'var(--color-surface)',
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text)',
+            } : {}}
           >
             Tutti
           </button>
@@ -386,6 +508,9 @@ export default component$(() => {
           )}
         </div>
       </div>
+
+      {/* Fullscreen Image Zoom Modal */}
+      <ImageZoomModal isOpen={isZoomOpen} src={zoomSrc} alt={zoomAlt} />
     </div>
   );
 });
