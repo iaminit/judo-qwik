@@ -10,7 +10,18 @@ interface TaskModalProps {
 export const TaskModal = component$<TaskModalProps>(({ isOpen, onClose, onTaskCreated }) => {
     const title = useSignal('');
     const description = useSignal('');
+    const shortDescription = useSignal('');
+    const tags = useSignal('');
+    const referenceDate = useSignal('');
     const priority = useSignal<'low' | 'medium' | 'high' | 'urgent'>('medium');
+    const status = useSignal<'aperto' | 'in_corso' | 'bloccato' | 'completato'>('aperto');
+    const assignedToId = useSignal('');
+    const authorId = useSignal('');
+    const completed = useSignal(false);
+    const published = useSignal(true);
+    const featured = useSignal(false);
+    const reminderSent = useSignal(false);
+    const reminderDate = useSignal('');
     const isSubmitting = useSignal(false);
     const error = useSignal('');
 
@@ -28,12 +39,20 @@ export const TaskModal = component$<TaskModalProps>(({ isOpen, onClose, onTaskCr
         const taskData = {
             titolo: title.value.trim(),
             contenuto: description.value.trim(),
+            descrizione_breve: shortDescription.value.trim(),
+            tags: tags.value.trim(),
+            data_riferimento: referenceDate.value || '',
             priorita: priority.value === 'low' ? 'bassa' :
                 priority.value === 'medium' ? 'media' :
                     priority.value === 'high' ? 'alta' : 'urgente',
-            completato: false,
-            stato: 'aperto',
-            pubblicato: true
+            completato: completed.value,
+            stato: status.value,
+            assegnato_a_id: assignedToId.value.trim(),
+            autore_id: authorId.value.trim(),
+            pubblicato: published.value,
+            in_evidenza: featured.value,
+            promemoria_inviato: reminderSent.value,
+            promemoria_data: reminderDate.value ? new Date(reminderDate.value).toISOString() : '',
         };
 
         console.log('[TaskModal] Creating task in task_admin with data:', taskData);
@@ -71,7 +90,18 @@ export const TaskModal = component$<TaskModalProps>(({ isOpen, onClose, onTaskCr
             // Reset form
             title.value = '';
             description.value = '';
+            shortDescription.value = '';
+            tags.value = '';
+            referenceDate.value = '';
             priority.value = 'medium';
+            status.value = 'aperto';
+            assignedToId.value = '';
+            authorId.value = '';
+            completed.value = false;
+            published.value = true;
+            featured.value = false;
+            reminderSent.value = false;
+            reminderDate.value = '';
 
             onTaskCreated();
             onClose();
@@ -101,7 +131,7 @@ export const TaskModal = component$<TaskModalProps>(({ isOpen, onClose, onTaskCr
             ></div>
 
             {/* Modal */}
-            <div class="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+            <div class="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
                 {/* Header */}
                 <div class="bg-gradient-to-r from-red-600 to-red-500 px-8 py-6">
                     <div class="flex items-center justify-between">
@@ -124,7 +154,7 @@ export const TaskModal = component$<TaskModalProps>(({ isOpen, onClose, onTaskCr
                 </div>
 
                 {/* Form */}
-                <form preventdefault:submit onSubmit$={handleSubmit} class="p-8 space-y-6">
+                <form preventdefault:submit onSubmit$={handleSubmit} class="p-8 space-y-6 max-h-[calc(90vh-112px)] overflow-y-auto">
                     {/* Error Message */}
                     {error.value && (
                         <div class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded-lg animate-in slide-in-from-top-2">
@@ -139,6 +169,7 @@ export const TaskModal = component$<TaskModalProps>(({ isOpen, onClose, onTaskCr
                         </label>
                         <input
                             type="text"
+                            name="titolo"
                             value={title.value}
                             onInput$={(e) => title.value = (e.target as HTMLInputElement).value}
                             placeholder="es. Aggiornare foto tecniche"
@@ -153,6 +184,7 @@ export const TaskModal = component$<TaskModalProps>(({ isOpen, onClose, onTaskCr
                             Descrizione (opzionale)
                         </label>
                         <textarea
+                            name="contenuto"
                             value={description.value}
                             onInput$={(e) => description.value = (e.target as HTMLTextAreaElement).value}
                             placeholder="Aggiungi dettagli sul task..."
@@ -162,8 +194,84 @@ export const TaskModal = component$<TaskModalProps>(({ isOpen, onClose, onTaskCr
                         ></textarea>
                     </div>
 
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                                Descrizione breve
+                            </label>
+                            <input
+                                name="descrizione_breve"
+                                value={shortDescription.value}
+                                onInput$={(e) => shortDescription.value = (e.target as HTMLInputElement).value}
+                                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl"
+                            />
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 uppercase tracking-wide">Tag</label>
+                            <input
+                                name="tags"
+                                value={tags.value}
+                                onInput$={(e) => tags.value = (e.target as HTMLInputElement).value}
+                                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl"
+                            />
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 uppercase tracking-wide">Data riferimento</label>
+                            <input
+                                type="date"
+                                name="data_riferimento"
+                                value={referenceDate.value}
+                                onInput$={(e) => referenceDate.value = (e.target as HTMLInputElement).value}
+                                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl"
+                            />
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 uppercase tracking-wide">Stato</label>
+                            <select
+                                name="stato"
+                                value={status.value}
+                                onChange$={(e) => status.value = (e.target as HTMLSelectElement).value as typeof status.value}
+                                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl"
+                            >
+                                <option value="aperto">Aperto</option>
+                                <option value="in_corso">In corso</option>
+                                <option value="bloccato">Bloccato</option>
+                                <option value="completato">Completato</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 uppercase tracking-wide">ID assegnatario</label>
+                            <input
+                                name="assegnato_a_id"
+                                value={assignedToId.value}
+                                onInput$={(e) => assignedToId.value = (e.target as HTMLInputElement).value}
+                                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl"
+                            />
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 uppercase tracking-wide">ID autore</label>
+                            <input
+                                name="autore_id"
+                                value={authorId.value}
+                                onInput$={(e) => authorId.value = (e.target as HTMLInputElement).value}
+                                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl"
+                            />
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 uppercase tracking-wide">Data promemoria</label>
+                            <input
+                                type="datetime-local"
+                                name="promemoria_data"
+                                value={reminderDate.value}
+                                onInput$={(e) => reminderDate.value = (e.target as HTMLInputElement).value}
+                                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl"
+                            />
+                        </div>
+                    </div>
+
                     {/* Priority */}
                     <div class="space-y-3">
+                        <input type="hidden" name="priorita" value={priority.value} />
                         <label class="block text-sm font-black text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                             Priorità
                         </label>
@@ -183,6 +291,25 @@ export const TaskModal = component$<TaskModalProps>(({ isOpen, onClose, onTaskCr
                                 </button>
                             ))}
                         </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-5 text-sm font-bold">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="completato" checked={completed.value} onChange$={(e) => completed.value = (e.target as HTMLInputElement).checked} />
+                            Completato
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="pubblicato" checked={published.value} onChange$={(e) => published.value = (e.target as HTMLInputElement).checked} />
+                            Pubblicato
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="in_evidenza" checked={featured.value} onChange$={(e) => featured.value = (e.target as HTMLInputElement).checked} />
+                            In evidenza
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="promemoria_inviato" checked={reminderSent.value} onChange$={(e) => reminderSent.value = (e.target as HTMLInputElement).checked} />
+                            Promemoria inviato
+                        </label>
                     </div>
 
                     {/* Actions */}

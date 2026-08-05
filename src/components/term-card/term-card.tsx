@@ -8,6 +8,7 @@ export interface Term {
   kanji?: string;
   audio_file?: string;
   has_audio: boolean;
+  image_url?: string;
 }
 
 interface TermCardProps {
@@ -45,7 +46,12 @@ export default component$<TermCardProps>(({ term, onOpenModal, isTarget }) => {
 
   return (
     <div
-      class={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] relative ${isTarget ? 'animate-term-highlight' : ''}`}
+      class={`rounded-2xl border p-5 cursor-pointer shadow-sm hover:shadow-md transition-all duration-200 pressable relative ${isTarget ? 'animate-term-highlight' : ''}`}
+      style={{
+        backgroundColor: 'var(--color-surface)',
+        borderColor: 'var(--color-border)',
+        color: 'var(--color-text)',
+      }}
       onClick$={handleCardClick}
     >
       {/* Modal trigger button */}
@@ -112,6 +118,32 @@ export default component$<TermCardProps>(({ term, onOpenModal, isTarget }) => {
           class="text-gray-700 dark:text-gray-300 text-sm line-clamp-3"
           dangerouslySetInnerHTML={term.descrizione}
         />
+      )}
+
+      {/* Thumbnail Image for Dictionary Term — only shown if server resolved an image */}
+      {term.image_url && (
+        <div class="mt-3 flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-750 rounded-xl border border-gray-100 dark:border-gray-700 thumb-box">
+          <img
+            src={term.image_url}
+            alt={term.termine}
+            class="w-14 h-14 object-contain rounded-lg bg-white p-1 border border-gray-200 dark:border-gray-600 shadow-xs cursor-pointer hover:scale-105 transition-transform shrink-0"
+            onError$={(e) => {
+              const imgEl = e.target as HTMLImageElement;
+              const container = imgEl.closest('.thumb-box') as HTMLElement;
+              if (container) container.style.display = 'none';
+            }}
+            onClick$={(e) => {
+              e.stopPropagation();
+              if ((window as any).openImageZoom) {
+                (window as any).openImageZoom(term.image_url!, term.termine);
+              }
+            }}
+            title="Clicca per ingrandire"
+          />
+          <div class="text-xs text-gray-500 dark:text-gray-400 font-medium leading-tight">
+            Tavola Illustrata di <strong class="text-gray-800 dark:text-gray-200">{term.termine}</strong>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -264,17 +264,23 @@ export default component$<SearchModalProps>(({ isOpen, onClose }) => {
             <input
               ref={inputRef}
               type="text"
-              placeholder="Cerca termini, tecniche, storie..."
+              placeholder="Cerca tecnica, termine o argomento (es. O-Goshi, Randori)..."
               value={searchQuery.value}
               onInput$={(e) => searchQuery.value = (e.target as HTMLInputElement).value}
-              class="w-full pl-8 pr-16 py-5 rounded-[1.5rem] bg-gray-50/50 dark:bg-white/5 border-2 border-transparent focus:border-red-500/50 focus:bg-white dark:focus:bg-slate-800 outline-none transition-all text-xl font-medium text-gray-900 dark:text-white placeholder-gray-400 shadow-inner"
+              class="w-full pl-6 pr-14 py-4 rounded-2xl md:rounded-[2rem] border transition-all shadow-sm text-base md:text-lg outline-none font-bold"
+              style={{
+                backgroundColor: 'var(--color-surface)',
+                borderColor: 'var(--color-border)',
+                color: 'var(--color-text)',
+              }}
               autoFocus
             />
-            <div class="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3">
-              {loading.value && (
+            <div class="absolute inset-y-0 right-0 pr-5 flex items-center gap-3">
+              {loading.value ? (
                 <div class="animate-spin rounded-full h-5 w-5 border-2 border-red-600 border-t-transparent"></div>
+              ) : (
+                <span class="text-xl opacity-40 group-focus-within:opacity-100 transition-opacity">🔍</span>
               )}
-              <span class="text-2xl opacity-30 group-focus-within:opacity-100 transition-opacity">✨</span>
             </div>
           </div>
 

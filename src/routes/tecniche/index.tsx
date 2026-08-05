@@ -18,122 +18,176 @@ export const useTechniquesData = routeLoader$(async () => {
 
     console.log('[Techniques] Fetched', records.length, 'techniques');
 
-    // Load technique_images to check which techniques have images
-    const [techniqueImages, mediaFiles] = await Promise.all([
-      pb.collection('technique_images').getFullList({
-        requestKey: null,
-      }).catch(() => []),
-      new Promise<string[]>((resolve) => {
-        const isProd = process.env.NODE_ENV === 'production';
-        const mediaPath = isProd
-          ? path.join(process.cwd(), 'dist', 'media')
-          : path.join(process.cwd(), 'public', 'media');
+    // Read media files from all possible server locations safely
+    const mediaFiles = await new Promise<string[]>((resolve) => {
+      const pathsToTry = [
+        path.join(process.cwd(), 'public', 'media'),
+        path.join(process.cwd(), 'dist', 'media'),
+        path.join(process.cwd(), 'pb_data', 'media'),
+        path.join(process.cwd(), 'media'),
+      ];
 
-        fs.readdir(mediaPath, (err, files) => {
-          if (err) {
-            console.error('[Techniques] Error reading media directory:', err);
-            resolve([]);
-          } else {
-            resolve(files);
+      const allFiles = new Set<string>();
+      let pending = pathsToTry.length;
+
+      pathsToTry.forEach((p) => {
+        fs.readdir(p, (err, files) => {
+          if (!err && files) {
+            files.forEach((f) => allFiles.add(f));
+          }
+          pending--;
+          if (pending === 0) {
+            resolve(Array.from(allFiles));
           }
         });
-      })
-    ]);
+      });
+    });
+
+    // Read kata_thumbs directory for fallback technique images
+    const kataThumbFiles = await new Promise<string[]>((resolve) => {
+      const thumbPaths = [
+        path.join(process.cwd(), 'public', 'media', 'kata_thumbs'),
+        path.join(process.cwd(), 'dist', 'media', 'kata_thumbs'),
+      ];
+      const thumbFiles = new Set<string>();
+      let pending = thumbPaths.length;
+      thumbPaths.forEach((p) => {
+        fs.readdir(p, (err, files) => {
+          if (!err && files) {
+            files.forEach((f) => thumbFiles.add(f));
+          }
+          pending--;
+          if (pending === 0) {
+            resolve(Array.from(thumbFiles));
+          }
+        });
+      });
+    });
+    const kataThumbSet = new Set(kataThumbFiles);
 
     const mediaFileSet = new Set(mediaFiles);
 
-    // Create a Map of technique ID -> actual image record from DB
-    const techniqueImageMap = new Map<string, any>(
-      techniqueImages.map((img: any) => [img.technique, img])
-    );
-
     const techniques: Technique[] = records.map((t: any) => {
-      // Use new Italian field structure
       const techName = t.titolo || '';
       const techGroup = t.tags?.split(',')[0] || '';
       const techCategory = t.categoria_secondaria || '';
       const techDescription = t.contenuto || '';
       const techVideo = t.video_link || '';
-      const techOrder = t.ordine || 0;
       const techDanLevel = t.livello || 1;
 
-      // 1. Generate slug-based fallback (e.g., "O-Soto-Gari" -> "o-soto-gari.webp")
-      let slugBase = techName.toLowerCase()
-        .trim()
-        .replace(/ō/g, 'o')
-        .replace(/ū/g, 'u')
-        .replace(/ā/g, 'a')
-        .replace(/ī/g, 'i')
-        .replace(/ē/g, 'e')
-        .replace(/[\s/]+/g, '-');
+      // 1. Direct PocketBase file field
+      let imageUrl = '';
+      if (t.immagine_principale) {
+        imageUrl = getPBFileUrl(t.collectionId, t.id, t.immagine_principale);
+      }
 
-      // Hyphenation patterns for Judo terms in filenames
-      slugBase = slugBase.replace(/tsuri-?komi/g, 'tsuri-komi');
-      slugBase = slugBase.replace(/seoi-?nage/g, 'seoi-nage');
-      slugBase = slugBase.replace(/maki-?komi/g, 'maki-komi');
-      slugBase = slugBase.replace(/ashi-?guruma/g, 'ashi-guruma');
-      slugBase = slugBase.replace(/de-?ashi/g, 'de-ashi');
-      slugBase = slugBase.replace(/o-?goshi/g, 'o-goshi');
-      slugBase = slugBase.replace(/o-?uchi/g, 'o-uchi');
-      slugBase = slugBase.replace(/ko-?uchi/g, 'ko-uchi');
-      slugBase = slugBase.replace(/o-?soto/g, 'o-soto');
-      slugBase = slugBase.replace(/ko-?soto/g, 'ko-soto');
+      // 2. Slug & Title variations check
+      const normSlug = (t.slug || '').toLowerCase().trim()
+        .replace(/ō/g, 'o').replace(/ū/g, 'u').replace(/ā/g, 'a').replace(/ī/g, 'i').replace(/ē/g, 'e');
+      const normTitle = techName.toLowerCase().trim()
+        .replace(/ō/g, 'o').replace(/ū/g, 'u').replace(/ā/g, 'a').replace(/ī/g, 'i').replace(/ē/g, 'e');
 
-      const slugBaseClean = slugBase
-        .replace(/[^-a-z0-9]/g, '')
-        .replace(/--+/g, '-')
-        .replace(/^-+|-+$/g, '');
+      const cleanSlug = normSlug.replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
+      const cleanTitle = normTitle.replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
 
-      // Try to find the image in media folder with priority extensions
-      const extensions = ['.webp', '.svg', '.jpg', '.jpeg', '.png', '.gif'];
-      const variations = [
-        slugBaseClean,
-        slugBaseClean.replace(/shio/g, 'shiho'),
-        slugBaseClean.replace(/shiho/g, 'shio'),
-        slugBaseClean.replace(/hishigi/g, 'hisiji'),
-        slugBaseClean.replace(/hisiji/g, 'hishigi'),
-        slugBaseClean.replace(/-/g, '_'),
-        slugBaseClean.replace(/-/g, ''),
-      ];
+      const bases = [cleanSlug, cleanTitle].filter(Boolean);
+      const variations: string[] = [];
 
+      for (const b of bases) {
+        variations.push(
+          b,
+          b.replace(/tsurikomi/g, 'tsuri-komi'),
+          b.replace(/tsuri-komi/g, 'tsurikomi'),
+          b.replace(/makikomi/g, 'maki-komi'),
+          b.replace(/maki-komi/g, 'makikomi'),
+          b.replace(/shiho/g, 'shio'),
+          b.replace(/shio/g, 'shiho'),
+          b.replace(/hishigi-/g, ''),
+          b.replace(/hisiji/g, 'hishigi'),
+          b.replace(/hishigi/g, 'hisiji'),
+          b.replace(/kata-ha/g, 'katah-ha'),
+          b.replace(/fumi-komi/g, 'fumi'),
+          b.replace(/yoko-tomoe/g, 'tomoe'),
+          b.replace(/kiri-komi/g, '').replace(/^-+|-+$/g, ''),
+          b.replace(/ganmen-tsuki/g, '').replace(/^-+|-+$/g, ''),
+          b.replace(/ago-tsuki/g, '').replace(/^-+|-+$/g, ''),
+          b.replace(/mae-hiza-ate-keage/g, 'hiza-gatame'),
+          b.replace(/ude-hishigi-ude-gatame/g, 'ude-gatame'),
+          b.replace(/ude-hishigi-hiza-gatame/g, 'hiza-gatame'),
+          b.replace(/ude-hishigi-waki-gatame/g, 'waki-gatame'),
+          b.replace(/kakato-fumi-komi-geri/g, 'kakato-fumi'),
+          b.replace(/^shintai$/g, 'shintai-ayumi-ashi'),
+          b.replace(/^tsukidashi$/, 'tsuki-dashi'),
+        );
+      }
+
+      const extensions = ['.webp', '.svg', '.jpg', '.jpeg', '.png', '.gif', ''];
       let foundImage = '';
+
+      // Build lowerCaseMap for case-insensitive file matching (e.g. Ushiro-geri.webp)
+      const mediaLowerMap = new Map<string, string>();
+      mediaFileSet.forEach((file) => {
+        mediaLowerMap.set(file.toLowerCase(), file);
+      });
+
       search_loop: for (const variant of variations) {
+        if (!variant) continue;
         for (const ext of extensions) {
-          if (mediaFileSet.has(variant + ext)) {
-            foundImage = variant + ext;
+          const fn = variant + ext;
+          if (mediaLowerMap.has(fn.toLowerCase())) {
+            foundImage = mediaLowerMap.get(fn.toLowerCase())!;
+            break search_loop;
+          }
+          const fnUnderscore = variant.replace(/-/g, '_') + ext;
+          if (mediaLowerMap.has(fnUnderscore.toLowerCase())) {
+            foundImage = mediaLowerMap.get(fnUnderscore.toLowerCase())!;
+            break search_loop;
+          }
+          const fnNoHyphen = variant.replace(/-/g, '') + ext;
+          if (mediaLowerMap.has(fnNoHyphen.toLowerCase())) {
+            foundImage = mediaLowerMap.get(fnNoHyphen.toLowerCase())!;
             break search_loop;
           }
         }
       }
 
-      // 2. Audio normalization
+      // 3. Audio URL
       const normalizedName = techName.toLowerCase()
         .replace(/[\s-]/g, '')
-        .replace(/ō/g, 'o')
-        .replace(/ū/g, 'u')
-        .replace(/ā/g, 'a')
-        .replace(/ī/g, 'i')
-        .replace(/ē/g, 'e');
+        .replace(/ō/g, 'o').replace(/ū/g, 'u').replace(/ā/g, 'a').replace(/ī/g, 'i').replace(/ē/g, 'e');
 
       const pbAudio = t.audio ? pb.files.getUrl(t, t.audio) : null;
       const fallbackAudio = `${normalizedName}.mp3`;
 
-      // 3. Resolve Image: DB first, then slug fallback, then general placeholder
-      const dbImageRecord = techniqueImageMap.get(t.id);
-      let imageUrl = '';
-      let imageName = foundImage;
-
-      if (dbImageRecord) {
-        const rawPath = dbImageRecord.path || dbImageRecord.image_file || dbImageRecord.image || '';
-        imageName = rawPath ? rawPath.replace(/^media\//, '').split('/').pop() : '';
-        if (dbImageRecord.collectionId && dbImageRecord.id && imageName) {
-          imageUrl = getPBFileUrl(dbImageRecord.collectionId, dbImageRecord.id, imageName);
+      // 4. Kata thumbs fallback — try matching with kata-prefixed filenames
+      if (!foundImage && !imageUrl) {
+        const kataPrefixes = ['katame-', 'goshin-', 'ju-no-kata-'];
+        kata_search: for (const variant of variations) {
+          if (!variant) continue;
+          for (const prefix of kataPrefixes) {
+            for (const ext of extensions) {
+              const fn = prefix + variant + ext;
+              if (kataThumbSet.has(fn)) {
+                foundImage = 'kata_thumbs/' + fn;
+                break kata_search;
+              }
+            }
+          }
         }
       }
 
-      // Final fallback if still no image
-      if (!imageName && !imageUrl) {
-        imageName = 'kano_non_sa.webp';
+      // 5. Category Fallback if still no image found
+      if (!foundImage && !imageUrl) {
+        const catLower = (techCategory + ' ' + techGroup).toLowerCase();
+        if (catLower.includes('goshin') || catLower.includes('atemi')) {
+          foundImage = 'goshin-jutsu.webp';
+        } else if (catLower.includes('katame') || catLower.includes('ne-waza')) {
+          foundImage = 'katame.webp';
+        } else if (catLower.includes('nage') || catLower.includes('tachi-waza')) {
+          foundImage = 'nage.webp';
+        } else {
+          foundImage = 'kano_non_sa.webp';
+        }
       }
 
       return {
@@ -146,7 +200,7 @@ export const useTechniquesData = routeLoader$(async () => {
         audio_file: pbAudio || fallbackAudio,
         has_audio: !!pbAudio || true,
         dan_level: techDanLevel,
-        image: imageName,
+        image: foundImage,
         image_url: imageUrl
       };
     });
@@ -284,11 +338,12 @@ export default component$(() => {
   };
 
   return (
-    <div class="space-y-10 pb-20 pt-10 relative">
-      {/* Search Bar & Settings Button - Aligned on the same line */}
-      <header class="max-w-4xl mx-auto px-4 mt-6">
-        <div class="flex items-center gap-4">
-          <div class="relative flex-1 group">
+    <div class="space-y-6 pb-20 pt-2 relative">
+      {/* Search Bar & Settings Controls - Responsive 2 rows on mobile, 1 row on desktop */}
+      <header class="max-w-4xl mx-auto px-4 mt-2 md:mt-4">
+        <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4">
+          {/* Row 1 (Mobile full width): Search input */}
+          <div class="relative w-full flex-1 group">
             <input
               type="text"
               placeholder="Cerca una tecnica..."
@@ -297,48 +352,71 @@ export default component$(() => {
                 searchTerm.value = (e.target as HTMLInputElement).value;
                 if (searchTerm.value) viewMode.value = 'grid';
               }}
-              class="w-full pl-6 pr-14 py-4 rounded-[2rem] bg-white dark:bg-slate-900 border border-gray-100 dark:border-white/5 focus:outline-none focus:ring-4 focus:ring-red-500/5 transition-all shadow-2xl shadow-gray-200/50 dark:shadow-none text-lg text-gray-900 dark:text-white placeholder-gray-400 font-bold"
+              class="w-full pl-6 pr-14 py-3.5 md:py-4 rounded-2xl md:rounded-[2rem] border transition-all shadow-sm text-base md:text-lg outline-none font-bold"
+              style={{
+                backgroundColor: 'var(--color-surface)',
+                borderColor: 'var(--color-border)',
+                color: 'var(--color-text)',
+              }}
             />
-            <div class="absolute inset-y-0 right-0 pr-6 flex items-center pointer-events-none">
-              <span class="text-xl opacity-30 group-focus-within:opacity-100 group-focus-within:text-red-500 transition-all">🔍</span>
+            <div class="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
+              <span class="text-xl opacity-40 group-focus-within:opacity-100 transition-opacity">🔍</span>
             </div>
           </div>
 
-          <div class="flex bg-white dark:bg-slate-900 border border-gray-100 dark:border-white/5 rounded-[2rem] p-1 shadow-2xl shadow-gray-200/50 dark:shadow-none">
-            <button
-              onClick$={() => viewMode.value = 'board'}
-              class={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${viewMode.value === 'board' ? 'bg-red-600 text-white shadow-lg' : 'text-gray-400'}`}
+          {/* Row 2 (Mobile): Controls (Board/Grid toggle + Filtri button) */}
+          <div class="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto">
+            {/* View Mode Toggle */}
+            <div
+              class="flex rounded-2xl md:rounded-[2rem] p-1 border shadow-sm"
+              style={{
+                backgroundColor: 'var(--color-surface)',
+                borderColor: 'var(--color-border)',
+              }}
             >
-              Board
-            </button>
-            <button
-              onClick$={() => viewMode.value = 'grid'}
-              class={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${viewMode.value === 'grid' ? 'bg-red-600 text-white shadow-lg' : 'text-gray-400'}`}
-            >
-              Grid
-            </button>
-          </div>
+              <button
+                onClick$={() => viewMode.value = 'board'}
+                class={`px-4 py-2.5 rounded-xl md:rounded-full text-xs font-black uppercase tracking-widest transition-all cursor-pointer ${
+                  viewMode.value === 'board' ? 'bg-[var(--color-action)] text-white shadow-md' : 'text-[var(--color-text-muted)]'
+                }`}
+              >
+                Board
+              </button>
+              <button
+                onClick$={() => viewMode.value = 'grid'}
+                class={`px-4 py-2.5 rounded-xl md:rounded-full text-xs font-black uppercase tracking-widest transition-all cursor-pointer ${
+                  viewMode.value === 'grid' ? 'bg-[var(--color-action)] text-white shadow-md' : 'text-[var(--color-text-muted)]'
+                }`}
+              >
+                Grid
+              </button>
+            </div>
 
-          <button
-            onClick$={() => toggleSection('settings')}
-            class={`relative flex flex-col items-center justify-center p-4 rounded-[2rem] transition-all duration-500 border h-[72px] min-w-[72px] group overflow-hidden ${openSections.settings
-              ? 'bg-red-600 border-red-500 text-white shadow-xl shadow-red-500/30 scale-95'
-              : 'bg-white dark:bg-slate-900 text-slate-400 border-gray-100 dark:border-white/5 shadow-2xl shadow-gray-200/50 dark:shadow-none hover:border-red-500/30'
+            {/* Filter Toggle Button */}
+            <button
+              onClick$={() => toggleSection('settings')}
+              class={`relative flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl md:rounded-[2rem] transition-all duration-300 border h-11 pressable cursor-pointer ${
+                openSections.settings
+                  ? 'bg-[var(--color-action)] text-white border-transparent shadow-md'
+                  : 'text-[var(--color-text)] border-[var(--color-border)]'
               }`}
-          >
-            {/* Technique Count Badge - Integrated */}
-            <div class={`absolute top-2 right-2 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter transition-all duration-500 ${openSections.settings ? 'bg-white text-red-600' : 'bg-red-500/10 text-red-500 group-hover:bg-red-500 group-hover:text-white'
-              }`}>
-              {filteredTechniques.value.length}
-            </div>
-
-            <span class={`text-2xl transition-transform duration-700 ${openSections.settings ? 'rotate-90' : 'group-hover:rotate-45'}`}>
-              ⚙️
-            </span>
-            <span class={`text-[7px] font-black uppercase tracking-[0.2em] mt-1 transition-opacity duration-500 ${openSections.settings ? 'opacity-100' : 'opacity-40 group-hover:opacity-100'}`}>
-              Filtri
-            </span>
-          </button>
+              style={!openSections.settings ? { backgroundColor: 'var(--color-surface)' } : {}}
+            >
+              <span class={`text-lg transition-transform duration-300 ${openSections.settings ? 'rotate-90' : ''}`}>
+                ⚙️
+              </span>
+              <span class="text-xs font-extrabold uppercase tracking-wider">
+                Filtri
+              </span>
+              <span
+                class={`px-2 py-0.5 rounded-full text-xs font-black transition-all ${
+                  openSections.settings ? 'bg-white text-[var(--color-action)]' : 'bg-red-500/10 text-red-500'
+                }`}
+              >
+                {filteredTechniques.value.length}
+              </span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -522,14 +600,34 @@ export default component$(() => {
               <div class="w-full md:w-1/2 bg-white flex flex-col items-center justify-center relative min-h-[40vh] md:h-full border-b md:border-b-0 md:border-r border-gray-100 dark:border-white/5 overflow-hidden">
                 <div class="relative w-full h-full flex flex-col items-center justify-center">
                   <img
-                    src={`/media/${modalTechnique.value.image}`}
+                    src={modalTechnique.value.image_url || (modalTechnique.value.image?.startsWith('http') || modalTechnique.value.image?.startsWith('media/') || modalTechnique.value.image?.startsWith('/') ? (modalTechnique.value.image.startsWith('/') ? modalTechnique.value.image : '/' + modalTechnique.value.image) : `/media/${modalTechnique.value.image}`)}
                     alt={modalTechnique.value.nome}
                     class="relative z-10 max-w-full h-auto max-h-80 md:max-h-[70vh] object-contain transition-transform duration-700 hover:scale-105"
                     onError$={(e) => {
                       const target = e.target as HTMLImageElement;
-                      if (target.src.indexOf('kano_non_sa.webp') === -1) {
+                      const attempts = parseInt(target.dataset.modalAttempts || '0');
+                      const name = modalTechnique.value?.nome.toLowerCase() || '';
+                      const slug = name.replace(/ /g, '-').replace(/'/g, '');
+
+                      if (attempts === 0) {
+                        target.dataset.modalAttempts = '1';
+                        target.src = `/media/${slug}.webp`;
+                      } else if (attempts === 1) {
+                        target.dataset.modalAttempts = '2';
+                        target.src = `/media/${slug.replace('tsukidashi', 'tsuki-dashi')}.webp`;
+                      } else if (attempts === 2) {
+                        target.dataset.modalAttempts = '3';
+                        target.src = `/media/kata_thumbs/ju-no-kata-${slug.replace('tsukidashi', 'tsuki-dashi')}.webp`;
+                      } else if (attempts === 3) {
+                        target.dataset.modalAttempts = '4';
+                        target.src = `/media/kata_thumbs/goshin-${slug}.webp`;
+                      } else if (attempts === 4) {
+                        target.dataset.modalAttempts = '5';
+                        if (target.src.indexOf('kano_non_sa.webp') === -1) {
+                          target.src = '/media/kano_non_sa.webp';
+                        }
+                      } else {
                         target.onerror = null;
-                        target.src = '/media/kano_non_sa.webp';
                       }
                     }}
                   />

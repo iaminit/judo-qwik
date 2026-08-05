@@ -86,6 +86,16 @@ app.use(
 
 // Static asset handlers
 app.use(`/build`, express.static(buildDir, { immutable: true, maxAge: "1y" }));
+
+// Keep the historical APK URL working while serving the large binary directly
+// from Cloud Storage. Cloud Run can reject non-streaming responses over 32 MB.
+app.get("/downloads/judo-app.apk", (_req, res) => {
+  res.redirect(
+    302,
+    "https://storage.googleapis.com/judo-qwik-downloads-238185604112/judo-app.apk"
+  );
+});
+
 app.use(express.static(distDir, { redirect: false }));
 
 // Add specific routes for media

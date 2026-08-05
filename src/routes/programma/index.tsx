@@ -21,14 +21,34 @@ interface ProgramData {
 export const useProgramData = routeLoader$<ProgramData>(async () => {
   try {
     console.log('[Program] Fetching exam programs from PocketBase...');
-    const programs = await pb.collection('exam_program').getFullList({
-      sort: 'order',
-      requestKey: null,
-    });
-    console.log('[Program] Fetched', programs.length, 'exam programs');
+    let programs: any[] = [];
+    try {
+      programs = await pb.collection('livelli_dan').getFullList({
+        sort: 'ordine',
+        requestKey: null,
+      });
+    } catch {
+      try {
+        programs = await pb.collection('exam_program').getFullList({
+          sort: 'order',
+          requestKey: null,
+        });
+      } catch (e) {
+        console.warn('[Program] Fetch failed:', e);
+      }
+    }
+
+    const mapped = programs.map((p: any) => ({
+      id: p.id,
+      dan_level: p.grado || p.dan_level || 1,
+      section_type: p.tipo || p.section_type || 'Kyu/Dan',
+      title: p.nome_completo || p.cintura_colore || p.title || '',
+      content: p.requisiti || p.content || p.description || '',
+      order: p.ordine || p.order || 0,
+    }));
 
     return {
-      programs: programs as unknown as ExamProgram[],
+      programs: mapped as unknown as ExamProgram[],
     };
   } catch (err) {
     console.error('[Program] Error loading exam programs:', err);

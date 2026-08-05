@@ -4,6 +4,8 @@ import { pbAdmin } from '~/lib/pocketbase-admin';
 import { parsePbError } from '~/lib/error-parser';
 import RichTextEditor from './rich-text-editor';
 import { MediaBrowserModal } from './media-browser-modal';
+import CompleteContentFields from './complete-content-fields';
+import { normalizeContentFormData } from '~/lib/content-form-data';
 
 interface GalleryFormProps {
     item?: any;
@@ -74,10 +76,14 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
             formData.append('slug', generateSlug(titolo));
         }
 
-        // Map type to tags
+        // Map type to tags while preserving optional additional tags.
         const mediaType = formData.get('type');
         if (mediaType) {
-            formData.append('tags', mediaType as string);
+            const extraTags = String(formData.get('tags') || item?.tags || '')
+                .split(',')
+                .map((tag) => tag.trim())
+                .filter((tag) => tag && !['photo', 'video'].includes(tag.toLowerCase()));
+            formData.set('tags', [String(mediaType), ...extraTags].join(','));
         }
 
         // Handle existing media selection
@@ -91,6 +97,7 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
                 console.error('[GalleryForm] Error attaching media file:', e);
             }
         }
+        normalizeContentFormData(formData, { removeFields: ['type'] });
 
         try {
             if (isNew) {
@@ -261,6 +268,18 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
                     </div>
                 </div>
 
+                <CompleteContentFields
+                    record={item}
+                    exclude={[
+                        'titolo',
+                        'immagine_principale',
+                        'data_riferimento',
+                        'video_link',
+                        'link_esterno',
+                        'contenuto',
+                    ]}
+                />
+
                 <div class="pt-10 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-4">
                     <button
                         type="button"
@@ -281,8 +300,8 @@ export default component$<GalleryFormProps>(({ item, isNew }) => {
 
             <MediaBrowserModal
                 isOpen={isMediaModalOpen.value}
-                onClose={$(() => { isMediaModalOpen.value = false; })}
-                onSelect={handleMediaSelect}
+                onClose$={$(() => { isMediaModalOpen.value = false; })}
+                onSelect$={handleMediaSelect}
             />
         </div>
     );

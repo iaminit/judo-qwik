@@ -1,7 +1,7 @@
 import { component$, useSignal, useVisibleTask$, $, useComputed$, useContext } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
-import { pb } from '~/lib/pocketbase';
+import { getPBFileUrl, pb } from '~/lib/pocketbase';
 import { AppContext } from '~/context/app-context';
 
 interface HistoryItem {
@@ -17,7 +17,35 @@ interface TimelineItem {
   year: string;
   title: string;
   description: string;
+  image?: string;
 }
+
+const hasHistoryTag = (record: Record<string, any>, expectedTag: string) => {
+  const tags = Array.isArray(record.tags)
+    ? record.tags
+    : String(record.tags || '').split(',');
+
+  return tags.some((tag) => String(tag).trim().toLowerCase() === expectedTag);
+};
+
+const toPlainText = (content: string) =>
+  content
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const getRecordImageUrl = (record: Record<string, any>) => {
+  const image = String(record.immagine_principale || '');
+  if (!image) return '';
+  if (image.startsWith('http')) return image;
+  if (image.startsWith('/media/')) return image;
+  if (image.startsWith('media/')) return `/${image}`;
+  return getPBFileUrl(record.collectionId, record.id, image);
+};
 
 export const useHistoryData = routeLoader$(async () => {
   try {
@@ -32,22 +60,27 @@ export const useHistoryData = routeLoader$(async () => {
 
     // Split into articles (have contenuto) and timeline events
     const historyItems = storiaRecords
-      .filter((r: any) => r.contenuto && r.contenuto.length > 100)
+      .filter((r: any) =>
+        !hasHistoryTag(r, 'timeline') &&
+        r.contenuto &&
+        r.contenuto.length > 100
+      )
       .map((r: any) => ({
         id: r.id,
         title: r.titolo || '',
         subtitle: r.titolo_secondario || '',
         content: r.contenuto || '',
-        image: r.immagine_principale || '',
+        image: getRecordImageUrl(r),
       }));
 
     const timelineItems = storiaRecords
-      .filter((r: any) => r.anno || r.descrizione_breve)
+      .filter((r: any) => hasHistoryTag(r, 'timeline'))
       .map((r: any) => ({
         id: r.id,
         year: String(r.anno || ''),
         title: r.titolo || '',
-        description: r.descrizione_breve || r.contenuto?.substring(0, 200) || '',
+        description: r.descrizione_breve || toPlainText(r.contenuto || ''),
+        image: getRecordImageUrl(r),
       }));
 
     return {
@@ -99,6 +132,16 @@ const TimelineSection = component$<TimelineSectionProps>(({ items, targetId }) =
                   {item.year}
                 </span>
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{item.title}</h3>
+                {item.image && (
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    class="w-full max-h-72 object-cover rounded-xl mb-4 border border-gray-100 dark:border-gray-700"
+                    onError$={(event) => {
+                      (event.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                )}
                 <p class="text-gray-600 dark:text-gray-400 leading-relaxed">{item.description}</p>
               </div>
             </div>
@@ -197,23 +240,37 @@ export default component$(() => {
     <div class="max-w-4xl mx-auto px-4 py-8 space-y-8">
 
       {/* Search Bar */}
-      <div class="relative max-w-2xl mx-auto px-4">
-        <input
-          type="text"
-          placeholder="Cerca nella storia, date o valori..."
-          value={searchTerm.value}
-          onInput$={(e) => handleSearchChange((e.target as HTMLInputElement).value)}
-          class="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-red-500 outline-none transition-all text-lg shadow-sm"
-        />
-        <span class="absolute left-8 top-1/2 -translate-y-1/2 text-gray-400 text-xl">🔍</span>
-        {searchTerm.value && (
-          <button
-            onClick$={clearSearch}
-            class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-          >
-            ✕
-          </button>
-        )}
+      <div class="max-w-4xl mx-auto mb-8 px-2">
+        <div class="relative w-full group">
+          <input
+            type="text"
+            placeholder="Cerca nella storia (es. Jigoro Kano, 1882, Kodokan)..."
+            value={searchTerm.value}
+            onInput$={(e) => handleSearchChange((e.target as HTMLInputElement).value)}
+            class="w-full pl-6 pr-14 py-3.5 md:py-4 rounded-2xl md:rounded-[2rem] border transition-all shadow-sm text-base md:text-lg outline-none font-bold"
+            style={{
+              backgroundColor: 'var(--color-surface)',
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text)',
+            }}
+          />
+          <div class="absolute inset-y-0 right-0 pr-5 flex items-center gap-2">
+            {searchTerm.value && (
+              <button
+                onClick$={clearSearch}
+                class="px-2.5 py-1 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--color-surface-alt)',
+                  color: 'var(--color-text-muted)',
+                }}
+                title="Cancella ricerca"
+              >
+                ✕
+              </button>
+            )}
+            <span class="text-xl opacity-40 group-focus-within:opacity-100 transition-opacity pointer-events-none">🔍</span>
+          </div>
+        </div>
       </div>
 
 
@@ -246,7 +303,7 @@ export default component$(() => {
               {item.image && (
                 <div class="relative h-80 flex items-center justify-center border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/20">
                   <img
-                    src={`/media/${item.image}`}
+                    src={item.image}
                     alt={item.title}
                     class="max-w-full max-h-full object-contain p-6 mix-blend-multiply dark:mix-blend-screen"
                     onError$={(e) => {

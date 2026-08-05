@@ -1,4 +1,4 @@
-import { component$, useVisibleTask$, useSignal, $, useStylesScoped$ } from '@builder.io/qwik';
+import { component$, useVisibleTask$, useSignal, $, useStyles$, noSerialize } from '@builder.io/qwik';
 import Quill from 'quill';
 
 interface RichTextEditorProps {
@@ -11,88 +11,48 @@ interface RichTextEditorProps {
 
 export default component$<RichTextEditorProps>(({ value, id, name, placeholder, mediaFolder = '' }) => {
     const isUploading = useSignal(false);
-    useStylesScoped$(`
-        @import 'https://cdn.quilljs.com/1.3.6/quill.snow.css';
-        
-        .editor-container {
-            background: #fff;
-            border-radius: 1rem;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .ql-toolbar.ql-snow {
-            border-top-left-radius: 1rem;
-            border-top-right-radius: 1rem;
-            border-color: #e5e7eb !important;
-            background: #f9fafb;
-            padding: 0.75rem !important;
-        }
-        
-        .ql-container.ql-snow {
-            border-bottom-left-radius: 1rem;
-            border-bottom-right-radius: 1rem;
-            border-color: #e5e7eb !important;
-            min-height: 20rem;
-            font-size: 1rem;
-        }
-
-        .dark .ql-toolbar.ql-snow {
-            background: #1f2937;
-            border-color: #374151 !important;
-        }
-        
-        .dark .ql-container.ql-snow {
-            background: #111827;
-            border-color: #374151 !important;
-            color: #f3f4f6;
-        }
-
-        .dark .ql-stroke { stroke: #9ca3af !important; }
-        .dark .ql-fill { fill: #9ca3af !important; }
-        .dark .ql-picker { color: #9ca3af !important; }
-    `);
-
+    const isCodeView = useSignal(false);
     const editorRef = useSignal<Element>();
     const textAreaRef = useSignal<HTMLTextAreaElement>();
     const isInitialized = useSignal(false);
     const htmlContent = useSignal(value || '');
+    const quillInstance = useSignal<Quill>();
 
-    useStylesScoped$(`
+    // Quill creates its toolbar and editor nodes at runtime, so these selectors
+    // must remain global instead of receiving Qwik's scoped CSS attribute.
+    useStyles$(`
         @import 'https://cdn.quilljs.com/1.3.6/quill.snow.css';
         
         .editor-container {
             background: #fff;
-            border-radius: 2rem;
+            border-radius: 1.5rem;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            border: 1px solid #f3f4f6;
+            border: 1px solid #e5e7eb;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
         
         .ql-toolbar.ql-snow {
-            border-top-left-radius: 2rem;
-            border-top-right-radius: 2rem;
+            border-top-left-radius: 1.5rem;
+            border-top-right-radius: 1.5rem;
             border-color: transparent !important;
-            background: #ffffff;
-            padding: 1rem !important;
-            border-bottom: 1px solid #f3f4f6 !important;
+            background: #f9fafb;
+            padding: 0.75rem 1rem !important;
+            border-bottom: 1px solid #e5e7eb !important;
         }
         
         .ql-container.ql-snow {
-            border-bottom-left-radius: 2rem;
-            border-bottom-right-radius: 2rem;
+            border-bottom-left-radius: 1.5rem;
+            border-bottom-right-radius: 1.5rem;
             border-color: transparent !important;
-            min-height: 25rem;
-            font-size: 1.125rem;
-            line-height: 1.75;
+            min-height: 22rem;
+            font-size: 1.05rem;
+            line-height: 1.7;
         }
 
-        /* Direct integration of frontend 'prose' styles into the editor */
         .ql-editor {
-            padding: 2rem !important;
+            padding: 1.5rem !important;
             font-family: inherit;
         }
 
@@ -106,14 +66,15 @@ export default component$<RichTextEditorProps>(({ value, id, name, placeholder, 
 
         .ql-editor p {
             margin-bottom: 1.25em !important;
-            color: #4b5563;
+            color: #374151;
             font-weight: 500;
         }
 
         .ql-editor img {
-            border-radius: 1.5rem !important;
+            border-radius: 1rem !important;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            margin: 2rem 0 !important;
+            margin: 1.5rem 0 !important;
+            max-width: 100%;
         }
 
         .dark .editor-container {
@@ -122,8 +83,8 @@ export default component$<RichTextEditorProps>(({ value, id, name, placeholder, 
         }
 
         .dark .ql-toolbar.ql-snow {
-            background: #111827;
-            border-bottom-color: #1f2937 !important;
+            background: #1f2937;
+            border-bottom-color: #374151 !important;
         }
         
         .dark .ql-container.ql-snow {
@@ -139,9 +100,9 @@ export default component$<RichTextEditorProps>(({ value, id, name, placeholder, 
             color: #9ca3af;
         }
 
-        .dark .ql-stroke { stroke: #6b7280 !important; }
-        .dark .ql-fill { fill: #6b7280 !important; }
-        .dark .ql-picker { color: #6b7280 !important; }
+        .dark .ql-stroke { stroke: #9ca3af !important; }
+        .dark .ql-fill { fill: #9ca3af !important; }
+        .dark .ql-picker { color: #9ca3af !important; }
     `);
 
     useVisibleTask$(({ cleanup }) => {
@@ -223,16 +184,16 @@ export default component$<RichTextEditorProps>(({ value, id, name, placeholder, 
             }
         });
 
-        if (value) {
-            quill.root.innerHTML = value;
-            if (textAreaRef.value) textAreaRef.value.value = value;
+        quillInstance.value = noSerialize(quill);
+
+        if (htmlContent.value) {
+            quill.root.innerHTML = htmlContent.value;
         }
 
         const handleUpdate = () => {
-            const html = quill.root.innerHTML;
-            htmlContent.value = html === '<p><br></p>' ? '' : html;
-            if (textAreaRef.value) {
-                textAreaRef.value.value = htmlContent.value;
+            if (!isCodeView.value) {
+                const html = quill.root.innerHTML;
+                htmlContent.value = html === '<p><br></p>' ? '' : html;
             }
         };
 
@@ -240,27 +201,88 @@ export default component$<RichTextEditorProps>(({ value, id, name, placeholder, 
         isInitialized.value = true;
 
         cleanup(() => {
-            // Cleanup logic if needed
+            quill.off('text-change', handleUpdate);
         });
     });
 
+    const toggleCodeView = $(() => {
+        if (isCodeView.value) {
+            // Switching from Code -> Visual
+            if (quillInstance.value) {
+                quillInstance.value.root.innerHTML = htmlContent.value;
+            }
+            isCodeView.value = false;
+        } else {
+            // Switching from Visual -> Code
+            if (quillInstance.value) {
+                const html = quillInstance.value.root.innerHTML;
+                htmlContent.value = html === '<p><br></p>' ? '' : html;
+            }
+            isCodeView.value = true;
+        }
+    });
+
     return (
-        <div class="space-y-4">
+        <div class="space-y-3">
+            {/* Header controls: Mode Switcher & Status */}
             <div class="flex items-center justify-between px-1">
-                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contenuto dell'articolo</label>
+                <div class="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick$={toggleCodeView}
+                        class={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm border ${
+                            isCodeView.value
+                                ? 'bg-amber-500 text-white border-amber-600 shadow-amber-500/20'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-200'
+                        }`}
+                    >
+                        {isCodeView.value ? (
+                            <>
+                                <span>💻</span> Modalità: Codice HTML (Nessuna Sanificazione)
+                            </>
+                        ) : (
+                            <>
+                                <span>👁️</span> Modalità: Visuale WYSIWYG
+                            </>
+                        )}
+                    </button>
+                    <span class="text-[10px] text-gray-400 font-medium hidden sm:inline">
+                        (Clicca per passare a {isCodeView.value ? 'Visuale' : 'Codice Sorgente HTML'})
+                    </span>
+                </div>
+
                 {isUploading.value && (
                     <span class="text-[10px] font-black text-red-600 animate-pulse uppercase tracking-widest">Caricamento immagine...</span>
                 )}
             </div>
 
-            <div class="editor-container">
+            {/* Visual Editor (Quill) Container */}
+            <div class={`editor-container ${isCodeView.value ? 'hidden' : 'block'}`}>
                 <div ref={editorRef} />
             </div>
 
+            {/* HTML Code View Editor */}
+            <div class={isCodeView.value ? 'block' : 'hidden'}>
+                <textarea
+                    value={htmlContent.value}
+                    onInput$={(e) => {
+                        htmlContent.value = (e.target as HTMLTextAreaElement).value;
+                    }}
+                    placeholder="Incolla o scrivi codice HTML grezzo qui..."
+                    class="w-full h-80 p-4 font-mono text-xs leading-relaxed bg-gray-900 text-amber-300 rounded-2xl border border-gray-800 outline-none focus:ring-2 focus:ring-amber-500 shadow-inner"
+                    spellcheck={false}
+                />
+                <p class="text-[10px] text-amber-600 dark:text-amber-400 mt-1 font-semibold">
+                    💡 In questa modalità tutto il codice HTML (tag custom, audio, video, iframe, stili inline) viene preservato al 100% senza alcuna alterazione o pulizia.
+                </p>
+            </div>
+
+            {/* Hidden Input for Form Submission */}
             <textarea
                 ref={textAreaRef}
                 name={name}
                 id={id}
+                value={htmlContent.value}
                 class="hidden"
             />
         </div>

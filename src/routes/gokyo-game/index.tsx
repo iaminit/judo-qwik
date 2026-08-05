@@ -3,6 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { pb } from '~/lib/pocketbase';
 import { AppContext } from '~/context/app-context';
+import { playQuizFeedbackSound, triggerQuizConfetti } from '~/lib/quiz-feedback';
 
 interface Technique {
   id: string;
@@ -89,6 +90,10 @@ export default component$(() => {
 
     if (correct) {
       gameStore.score++;
+      triggerQuizConfetti();
+      playQuizFeedbackSound('correct');
+    } else {
+      playQuizFeedbackSound('wrong');
     }
 
     // After 1.5s, move to next round or finish
@@ -129,56 +134,58 @@ export default component$(() => {
   }
 
   return (
-    <div class="max-w-3xl mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto px-3 pt-2 pb-4 sm:px-4 sm:pt-4 sm:pb-8 md:pt-6">
       {/* Header */}
-      <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Gokyo Game</h1>
-        <p class="text-gray-600 dark:text-gray-400">
+      <div class="hidden text-center mb-5 sm:block">
+        <h1 class="text-xl sm:text-2xl font-black tracking-tight mb-1" style={{ color: 'var(--color-text)' }}>
+          Gokyo Game
+        </h1>
+        <p class="text-xs sm:text-sm m-0" style={{ color: 'var(--color-text-muted)' }}>
           Indovina il gruppo Gokyo di ogni tecnica!
         </p>
       </div>
 
       {/* Playing State */}
       {gameStore.gameState === 'playing' && gameStore.currentTech && (
-        <div class="space-y-8">
+        <div class="space-y-3 sm:space-y-8">
           {/* Round Counter */}
           <div class="text-center">
-            <div class="inline-block bg-gray-100 dark:bg-gray-800 px-6 py-2 rounded-full">
+            <div class="inline-block bg-gray-100 dark:bg-gray-800 px-3 py-1.5 sm:px-6 sm:py-2 rounded-full text-xs sm:text-base">
               <span class="font-bold text-gray-900 dark:text-white">
                 Round {gameStore.currentRound + 1} / {data.value.techniques.length}
               </span>
-              <span class="ml-4 text-gray-600 dark:text-gray-400">
+              <span class="ml-2 sm:ml-4 text-gray-600 dark:text-gray-400">
                 Punteggio: {gameStore.score}
               </span>
             </div>
           </div>
 
           {/* Technique Card */}
-          <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8">
-            <div class="text-center mb-8">
-              <h2 class="text-3xl font-black text-gray-900 dark:text-white mb-2">
+          <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-4 sm:p-8">
+            <div class="text-center mb-3 sm:mb-8">
+              <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mb-1 sm:mb-2">
                 {gameStore.currentTech.name}
               </h2>
               {gameStore.currentTech.kanji && (
-                <p class="text-xl text-gray-500 dark:text-gray-400">
+                <p class="text-base sm:text-xl text-gray-500 dark:text-gray-400">
                   {gameStore.currentTech.kanji}
                 </p>
               )}
             </div>
 
-            <div class="text-center mb-6">
-              <p class="text-lg font-semibold text-gray-700 dark:text-gray-300">
+            <div class="text-center mb-3 sm:mb-6">
+              <p class="text-sm sm:text-lg font-semibold text-gray-700 dark:text-gray-300">
                 A quale gruppo appartiene questa tecnica?
               </p>
             </div>
 
             {/* Group Buttons */}
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="grid grid-cols-2 gap-2 sm:gap-3">
               {GOKYO_GROUPS.map((group) => (
                 <button
                   key={group}
                   onClick$={() => handleGuess(group)}
-                  class="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all transform hover:scale-105"
+                  class="min-h-11 px-3 py-2.5 sm:px-6 sm:py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm sm:text-base font-bold rounded-xl shadow-md hover:shadow-lg transition-all transform hover:scale-105 last:col-span-2"
                 >
                   {group}
                 </button>
@@ -190,14 +197,14 @@ export default component$(() => {
 
       {/* Feedback State */}
       {gameStore.gameState === 'feedback' && gameStore.currentTech && (
-        <div class="space-y-8">
+        <div class="space-y-3 sm:space-y-8">
           {/* Round Counter */}
           <div class="text-center">
-            <div class="inline-block bg-gray-100 dark:bg-gray-800 px-6 py-2 rounded-full">
+            <div class="inline-block bg-gray-100 dark:bg-gray-800 px-3 py-1.5 sm:px-6 sm:py-2 rounded-full text-xs sm:text-base">
               <span class="font-bold text-gray-900 dark:text-white">
                 Round {gameStore.currentRound + 1} / {data.value.techniques.length}
               </span>
-              <span class="ml-4 text-gray-600 dark:text-gray-400">
+              <span class="ml-2 sm:ml-4 text-gray-600 dark:text-gray-400">
                 Punteggio: {gameStore.score}
               </span>
             </div>
@@ -205,30 +212,30 @@ export default component$(() => {
 
           {/* Feedback Card */}
           <div
-            class={`bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-4 p-8 animate-bounce ${gameStore.isCorrect
+            class={`bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-4 p-4 sm:p-8 animate-bounce ${gameStore.isCorrect
                 ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
                 : 'border-red-500 bg-red-50 dark:bg-red-900/20'
               }`}
           >
-            <div class="text-center mb-6">
-              <div class="text-6xl mb-4">{gameStore.isCorrect ? '✅' : '❌'}</div>
-              <h2 class="text-3xl font-black mb-2">
+            <div class="text-center mb-3 sm:mb-6">
+              <div class="text-4xl sm:text-6xl mb-2 sm:mb-4">{gameStore.isCorrect ? '✅' : '❌'}</div>
+              <h2 class="text-2xl sm:text-3xl font-black mb-1 sm:mb-2">
                 <span class={gameStore.isCorrect ? 'text-green-600' : 'text-red-600'}>
                   {gameStore.isCorrect ? 'Corretto!' : 'Sbagliato!'}
                 </span>
               </h2>
-              <p class="text-xl text-gray-900 dark:text-white font-bold">
+              <p class="text-lg sm:text-xl text-gray-900 dark:text-white font-bold">
                 {gameStore.currentTech.name}
               </p>
               {gameStore.currentTech.kanji && (
-                <p class="text-lg text-gray-500 dark:text-gray-400">
+                <p class="text-base sm:text-lg text-gray-500 dark:text-gray-400">
                   {gameStore.currentTech.kanji}
                 </p>
               )}
             </div>
 
             <div class="text-center">
-              <p class="text-lg text-gray-700 dark:text-gray-300">
+              <p class="text-sm sm:text-lg text-gray-700 dark:text-gray-300">
                 {gameStore.isCorrect ? (
                   <>Appartiene a <span class="font-bold text-green-600">{gameStore.currentTech.group}</span></>
                 ) : (

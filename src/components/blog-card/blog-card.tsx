@@ -43,7 +43,7 @@ export default component$<BlogCardProps>(({ post, onClick, viewMode = 'grid' }) 
 
   // Genera URL per l'immagine di copertina - uses getMediaUrl for APK compatibility
   const getImageUrl = (post: Post): string => {
-    if (!post.cover_image) return getMediaUrl('/media/blog/default.webp');
+    if (!post.cover_image) return getMediaUrl('/media/bacheca.webp');
     if (post.cover_image.startsWith('media/')) return getMediaUrl('/' + post.cover_image);
     if (post.cover_image.startsWith('/media')) return getMediaUrl(post.cover_image);
 

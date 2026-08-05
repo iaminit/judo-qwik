@@ -3,6 +3,8 @@ import { useNavigate } from '@builder.io/qwik-city';
 import { pbAdmin } from '~/lib/pocketbase-admin';
 import RichTextEditor from './rich-text-editor';
 import { MediaBrowserModal } from './media-browser-modal';
+import CompleteContentFields from './complete-content-fields';
+import { normalizeContentFormData } from '~/lib/content-form-data';
 
 interface HistoryFormProps {
     item?: any;
@@ -46,9 +48,22 @@ export default component$<HistoryFormProps>(({ item, isNew, type }) => {
             formData.append('slug', generateSlug(titolo));
         }
 
-        // Add tag based on type
-        if (type === 'info') {
-            formData.append('tags', 'articolo');
+        // Keep the content type tag while allowing additional editable tags.
+        const reservedTags = new Set(['timeline', 'storia', 'judo']);
+        const extraTags = String(formData.get('tags') || item?.tags || '')
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter((tag) => tag && !reservedTags.has(tag.toLowerCase()));
+        formData.set(
+            'tags',
+            [type === 'timeline' ? 'timeline' : 'storia', 'judo', ...extraTags].join(',')
+        );
+
+        if (type === 'timeline') {
+            const year = formData.get('anno');
+            if (!formData.get('ordine') && year) {
+                formData.set('ordine', String(year));
+            }
         }
 
         // Handle existing media selection
@@ -61,7 +76,13 @@ export default component$<HistoryFormProps>(({ item, isNew, type }) => {
             } catch (e) {
                 console.error('[HistoryForm] Error attaching media file:', e);
             }
+        } else {
+            const imageFile = formData.get('immagine_principale');
+            if (imageFile instanceof File && imageFile.size === 0) {
+                formData.delete('immagine_principale');
+            }
         }
+        normalizeContentFormData(formData);
 
         try {
             if (isNew) {
@@ -128,46 +149,71 @@ export default component$<HistoryFormProps>(({ item, isNew, type }) => {
                     )}
 
                     {type === 'timeline' && (
-                        <div class="space-y-2">
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Anno</label>
-                            <input
-                                type="number"
-                                name="anno"
-                                value={item?.anno || ''}
-                                required
-                                class="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border-none font-bold text-gray-900 dark:text-white"
-                            />
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Anno</label>
+                                <input
+                                    type="number"
+                                    name="anno"
+                                    value={item?.anno || ''}
+                                    required
+                                    class="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border-none font-bold text-gray-900 dark:text-white"
+                                />
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Ordine</label>
+                                <input
+                                    type="number"
+                                    name="ordine"
+                                    value={item?.ordine || item?.anno || ''}
+                                    placeholder="Se vuoto usa l'anno"
+                                    class="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border-none font-bold text-gray-900 dark:text-white"
+                                />
+                            </div>
                         </div>
                     )}
 
                     {type === 'info' && (
-                        <div class="space-y-6">
-                            <div class="space-y-2">
-                                <div class="flex items-center justify-between px-1">
-                                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest">Immagine (Opzionale)</label>
-                                    <button
-                                        type="button"
-                                        onClick$={() => isMediaModalOpen.value = true}
-                                        class="text-[10px] font-black text-orange-600 uppercase tracking-widest hover:underline"
-                                    >
-                                        Sfoglia Libreria
-                                    </button>
-                                </div>
-                                <input
-                                    type="file"
-                                    name="immagine_principale"
-                                    accept="image/*"
-                                    onChange$={handleFileChange}
-                                    class="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border-none font-medium text-gray-500"
-                                />
-                            </div>
-                            {imagePreview.value && (
-                                <div class="w-full h-64 rounded-3xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-                                    <img src={imagePreview.value} class="w-full h-full object-contain p-4" alt="Preview" />
-                                </div>
-                            )}
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Descrizione breve</label>
+                            <textarea
+                                name="descrizione_breve"
+                                value={item?.descrizione_breve || ''}
+                                rows={3}
+                                placeholder="Sintesi facoltativa dell'articolo"
+                                class="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border-none font-medium text-gray-900 dark:text-white resize-y"
+                            />
                         </div>
                     )}
+
+                    <div class="space-y-6">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between gap-4 px-1">
+                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest">
+                                    Immagine della scheda (Opzionale)
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick$={() => isMediaModalOpen.value = true}
+                                    class="text-[10px] font-black text-orange-600 uppercase tracking-widest hover:underline"
+                                >
+                                    Sfoglia Libreria
+                                </button>
+                            </div>
+                            <input
+                                type="file"
+                                name="immagine_principale"
+                                accept="image/*"
+                                onChange$={handleFileChange}
+                                class="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border-none font-medium text-gray-500"
+                            />
+                        </div>
+                        {imagePreview.value && (
+                            <div class="w-full h-64 rounded-3xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                                <img src={imagePreview.value} class="w-full h-full object-contain p-4" alt="Anteprima immagine" />
+                            </div>
+                        )}
+                    </div>
 
                     {type === 'info' ? (
                         <div class="space-y-2">
@@ -181,14 +227,27 @@ export default component$<HistoryFormProps>(({ item, isNew, type }) => {
                     ) : (
                         <div class="space-y-2">
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest px-1">Descrizione</label>
-                            <RichTextEditor
-                                name="contenuto"
-                                id="contenuto_timeline"
-                                value={item?.contenuto || ''}
+                            <textarea
+                                name="descrizione_breve"
+                                value={item?.descrizione_breve || ''}
+                                rows={6}
+                                required
+                                placeholder="Descrivi l'evento storico senza limiti di lunghezza"
+                                class="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border-none font-medium leading-relaxed text-gray-900 dark:text-white resize-y"
                             />
                         </div>
                     )}
                 </div>
+
+                <CompleteContentFields
+                    record={item}
+                    exclude={[
+                        'titolo',
+                        'immagine_principale',
+                        'descrizione_breve',
+                        ...(type === 'info' ? ['titolo_secondario', 'contenuto'] : ['anno', 'ordine']),
+                    ]}
+                />
 
                 <div class="pt-6 flex gap-4">
                     <button
@@ -210,8 +269,8 @@ export default component$<HistoryFormProps>(({ item, isNew, type }) => {
 
             <MediaBrowserModal
                 isOpen={isMediaModalOpen.value}
-                onClose={$(() => { isMediaModalOpen.value = false; })}
-                onSelect={handleMediaSelect}
+                onClose$={$(() => { isMediaModalOpen.value = false; })}
+                onSelect$={handleMediaSelect}
             />
         </>
     );
