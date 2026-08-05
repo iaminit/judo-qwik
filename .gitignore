@@ -46,7 +46,9 @@ google-services.json
 /android/app/src/main/assets/public/
 *.apk
 *.aab
-/public/downloads/
+/public/downloads/*
+!/public/downloads/*.pdf
+/public/downloads/*.apk
 /public/media/Aggiornamenti_Judo_2024.mp4
 
 # Local audits, browser output and generated analysis

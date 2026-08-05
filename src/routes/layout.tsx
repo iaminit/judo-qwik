@@ -112,6 +112,7 @@ export default component$(() => {
         { title: 'Gokyo Quiz', href: '/gokyo-game' },
         { title: 'Gokyo-Tris', href: '/gokyo-tris' },
         { title: 'Flash Card', href: '/flash' },
+        { title: '三段の道 (Sandan no Dō)', href: '/sandan-no-do' },
       ]
     },
     { title: 'Storia', href: '/storia' },

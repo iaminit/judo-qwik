@@ -74,18 +74,26 @@ const ALL_CARDS: CardItem[] = [
     defaultOrder: 8,
   },
   {
+    title: '三段の道',
+    desc: 'Percorso gamificato verso il 3° Dan',
+    icon: '/media/sandan-no-do.webp',
+    href: '/sandan-no-do',
+    badge: 'Gioco',
+    defaultOrder: 9,
+  },
+  {
     title: 'Bacheca & Archivio',
     desc: 'News recenti e archivio storico del Dojo',
     icon: '/media/home/bacheca.webp',
     href: '/bacheca',
-    defaultOrder: 9,
+    defaultOrder: 10,
   },
   {
     title: 'FIJLKAM',
     desc: 'Federazione Italiana: programmi e regolamenti',
     icon: '/media/home/fijlkam.webp',
     href: '/fijlkam',
-    defaultOrder: 10,
+    defaultOrder: 11,
   },
 ];
 

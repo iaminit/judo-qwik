@@ -110,6 +110,34 @@ export default component$(() => {
         </div>
       </div>
 
+      {activeDan.value === 3 && (
+        <div
+          class="mb-8 rounded-2xl border p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+          style={{
+            backgroundColor: 'var(--color-surface)',
+            borderColor: 'var(--color-border)',
+          }}
+        >
+          <div>
+            <span class="inline-flex px-2.5 py-1 rounded-lg text-xs font-black tracking-wider text-white bg-[var(--color-action)]">PDF UFFICIALE</span>
+            <h2 class="text-lg font-black mt-2 mb-1" style={{ color: 'var(--color-text)' }}>
+              Programma Tecnico Esame 3° Dan FIJLKAM 2026
+            </h2>
+            <p class="text-sm m-0" style={{ color: 'var(--color-text-muted)' }}>
+              Consulta il documento completo con requisiti, Kata e programma tecnico.
+            </p>
+          </div>
+          <a
+            href="/downloads/Programma_Tecnico_Esame_3_Dan_Judo_FIJLKAM_20261.pdf"
+            target="_blank"
+            rel="noopener"
+            class="min-h-12 px-5 rounded-xl inline-flex items-center justify-center text-white font-black no-underline shrink-0 pressable bg-[var(--color-action)]"
+          >
+            Apri il PDF
+          </a>
+        </div>
+      )}
+
       {/* Programs List */}
       <div class="space-y-6">
         {filteredPrograms.value.length > 0 ? (
