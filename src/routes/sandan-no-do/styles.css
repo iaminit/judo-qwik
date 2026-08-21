@@ -10,6 +10,59 @@
   padding: 20px 0 40px;
 }
 
+.sandan-level-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  justify-content: center;
+}
+
+.sandan-level-btn {
+  flex: 1;
+  max-width: 220px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 2px solid var(--sandan-border);
+  border-radius: 16px;
+  color: var(--sandan-text);
+  background: var(--sandan-card);
+  font: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.sandan-level-btn strong {
+  font-size: 0.95rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.sandan-level-btn small {
+  font-size: 0.68rem;
+  color: var(--sandan-muted);
+  font-weight: 750;
+  margin-top: 2px;
+}
+
+.sandan-level-btn:hover {
+  border-color: var(--sandan-red);
+}
+
+.sandan-level-btn.is-active {
+  border-color: var(--sandan-red);
+  color: #fff;
+  background: var(--sandan-red);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--sandan-red) 30%, transparent);
+}
+
+.sandan-level-btn.is-active small {
+  color: rgba(255, 255, 255, 0.85);
+}
+
 .sandan-hero {
   display: grid;
   grid-template-columns: 112px minmax(0, 1fr);
@@ -464,6 +517,167 @@
   font-weight: 950;
   line-height: 1.15 !important;
   text-align: center;
+}
+
+.sandan-activity-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  width: 100%;
+}
+
+.sandan-quiz-cta-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid color-mix(in srgb, var(--sandan-red) 55%, var(--sandan-border));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--sandan-red) 12%, var(--sandan-card-alt));
+  color: var(--sandan-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--sandan-red) 12%, transparent);
+  transition: all 180ms ease;
+}
+
+.sandan-quiz-cta-button:hover {
+  border-color: var(--sandan-red);
+  background: color-mix(in srgb, var(--sandan-red) 22%, var(--sandan-card));
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--sandan-red) 25%, transparent);
+  transform: translateY(-1px);
+}
+
+.sandan-quiz-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.sandan-quiz-label {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.sandan-quiz-label strong {
+  color: var(--sandan-text);
+  font-size: 0.84rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.sandan-quiz-label small {
+  color: var(--sandan-muted);
+  font-size: 0.70rem;
+  line-height: 1.2;
+}
+
+.sandan-quiz-pill {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sandan-red) 20%, var(--sandan-card));
+  border: 1px solid color-mix(in srgb, var(--sandan-red) 45%, transparent);
+  color: var(--sandan-red);
+  font-size: 0.72rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.sandan-quiz-cta-button.is-completed {
+  border-color: color-mix(in srgb, #16a34a 60%, var(--sandan-border));
+  background: color-mix(in srgb, #16a34a 12%, var(--sandan-card-alt));
+}
+
+.sandan-quiz-cta-button.is-completed strong {
+  color: #15803d;
+}
+
+.sandan-quiz-cta-button.is-completed .sandan-quiz-pill {
+  background: color-mix(in srgb, #16a34a 20%, var(--sandan-card));
+  border-color: color-mix(in srgb, #16a34a 45%, transparent);
+  color: #15803d;
+}
+
+.sandan-slider-box {
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--sandan-border) 60%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sandan-card-alt) 60%, var(--sandan-card));
+}
+
+.sandan-cumulative-slider-box {
+  margin: 16px 0 8px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--sandan-red) 35%, var(--sandan-border));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--sandan-red) 5%, var(--sandan-card-alt));
+}
+
+.sandan-cumulative-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sandan-cumulative-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--sandan-text);
+}
+
+.sandan-override-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #d97706;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.sandan-cumulative-score {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--sandan-muted);
+}
+
+.sandan-cumulative-score strong {
+  color: var(--sandan-text);
+  font-size: 1.1rem;
+}
+
+.sandan-override-reset-btn {
+  padding: 3px 9px;
+  border: 1px solid var(--sandan-border);
+  border-radius: 8px;
+  background: var(--sandan-card);
+  color: var(--sandan-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sandan-override-reset-btn:hover {
+  border-color: var(--sandan-red);
+  color: var(--sandan-red);
+}
+
+.sandan-score-slider {
+  accent-color: var(--sandan-red);
+  height: 6px;
+  border-radius: 999px;
 }
 
 .sandan-result-button:hover {
@@ -1365,3 +1579,533 @@ input:focus-visible {
     animation: none !important;
   }
 }
+
+/* ==========================================================================
+   MODERN ACTIVITY CARD & OVERVIEW DESIGN (Mobile First + Desktop Adaptive)
+   ========================================================================== */
+
+.sandan-overview-widget {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--sandan-card, #ffffff);
+  border: 1.5px solid var(--sandan-border, #e2e8f0);
+  border-radius: 20px;
+  padding: 16px 20px;
+  margin: 16px 0 24px;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05);
+}
+
+.sandan-trophy-avatar {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 50%;
+  background: #fef2f2;
+  border: 1.5px solid #fee2e2;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.45rem;
+  box-shadow: inset 0 2px 4px rgba(220, 38, 38, 0.08);
+}
+
+.sandan-overview-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.sandan-overview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.sandan-overview-title {
+  font-size: 1.05rem;
+  font-weight: 850;
+  color: var(--sandan-text, #1e293b);
+  letter-spacing: -0.01em;
+}
+
+.sandan-overview-count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.15;
+}
+
+.sandan-overview-count strong {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--sandan-text, #1e293b);
+}
+
+.sandan-overview-count small {
+  font-size: 0.72rem;
+  color: var(--sandan-muted, #64748b);
+  font-weight: 600;
+}
+
+.sandan-overview-bar {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.sandan-overview-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #dc2626 0%, #b91c1c 100%);
+  border-radius: 9999px;
+  transition: width 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Activity Grid in module panels */
+.sandan-activities-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+@media (min-width: 768px) {
+  .sandan-activities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 18px;
+    align-items: stretch;
+  }
+}
+
+@media (min-width: 1200px) {
+  .sandan-activities-grid {
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 22px;
+  }
+}
+
+/* Modern Card */
+.sandan-card-modern {
+  background: var(--sandan-card, #ffffff);
+  border: 1.5px solid var(--sandan-border, #e2e8f0);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  position: relative;
+}
+
+.sandan-card-modern:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 26px -4px rgba(15, 23, 42, 0.08);
+}
+
+.sandan-card-modern.is-correct {
+  border-color: #86efac;
+  background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+}
+
+.sandan-card-modern.is-error {
+  border-color: #fca5a5;
+  background: linear-gradient(180deg, #ffffff 0%, #fef2f2 100%);
+}
+
+.sandan-card-modern.is-partial {
+  border-color: #fde047;
+  background: linear-gradient(180deg, #ffffff 0%, #fefce8 100%);
+}
+
+/* Header */
+.sandan-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.sandan-card-thumb-box {
+  width: 58px;
+  height: 58px;
+  min-width: 58px;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 4px;
+}
+
+.sandan-card-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.sandan-card-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.sandan-card-title {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 850;
+  color: var(--sandan-text, #1e293b);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.sandan-card-desc {
+  margin: 3px 0 0;
+  font-size: 0.82rem;
+  color: var(--sandan-muted, #64748b);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sandan-card-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 6px;
+  padding: 2px 9px;
+  border-radius: 9999px;
+  font-size: 0.70rem;
+  font-weight: 750;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.sandan-card-pill.is-done {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.sandan-card-score-badge {
+  min-width: 52px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.sandan-card-score-badge.is-passed {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+.sandan-card-score-ratio {
+  font-size: 1.15rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.sandan-card-score-pts {
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-top: 2px;
+  opacity: 0.9;
+}
+
+/* Big Quiz Button */
+.sandan-card-quiz-btn {
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: none;
+  font-size: 0.96rem;
+  font-weight: 850;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(185, 28, 28, 0.28);
+  transition: all 180ms ease;
+  font-family: inherit;
+}
+
+.sandan-card-quiz-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow: 0 6px 18px rgba(185, 28, 28, 0.35);
+}
+
+.sandan-card-quiz-btn:active {
+  transform: translateY(0);
+  filter: brightness(0.95);
+}
+
+.sandan-card-quiz-btn.is-retake {
+  background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+  box-shadow: 0 4px 14px rgba(3, 105, 161, 0.28);
+}
+
+.sandan-card-quiz-btn.is-retake:hover {
+  box-shadow: 0 6px 18px rgba(3, 105, 161, 0.35);
+}
+
+.sandan-card-quiz-play {
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+/* Actions Row */
+.sandan-card-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.sandan-btn-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 160ms ease;
+  font-family: inherit;
+}
+
+.sandan-btn-icon {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: 900;
+  transition: all 160ms ease;
+}
+
+.sandan-btn-texts {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sandan-btn-texts strong {
+  font-size: 0.88rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.sandan-btn-texts small {
+  font-size: 0.70rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Corretto Style */
+.sandan-btn-corretto {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  color: #166534;
+}
+
+.sandan-btn-corretto .sandan-btn-icon {
+  border: 1.5px solid #16a34a;
+  color: #16a34a;
+  background: #ffffff;
+}
+
+.sandan-btn-corretto .sandan-btn-texts strong {
+  color: #166534;
+}
+
+.sandan-btn-corretto .sandan-btn-texts small {
+  color: #15803d;
+}
+
+.sandan-btn-corretto:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+.sandan-btn-corretto.is-active {
+  background: #16a34a;
+  border-color: #15803d;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.25);
+}
+
+.sandan-btn-corretto.is-active .sandan-btn-icon {
+  border-color: #ffffff;
+  color: #16a34a;
+  background: #ffffff;
+}
+
+.sandan-btn-corretto.is-active .sandan-btn-texts strong,
+.sandan-btn-corretto.is-active .sandan-btn-texts small {
+  color: #ffffff;
+}
+
+/* Da Rivedere Style */
+.sandan-btn-rivedere {
+  background: #fff7ed;
+  border: 1.5px solid #fed7aa;
+  color: #9a3412;
+}
+
+.sandan-btn-rivedere .sandan-btn-icon {
+  border: 1.5px solid #ea580c;
+  color: #ea580c;
+  background: #ffffff;
+}
+
+.sandan-btn-rivedere .sandan-btn-texts strong {
+  color: #9a3412;
+}
+
+.sandan-btn-rivedere .sandan-btn-texts small {
+  color: #c2410c;
+}
+
+.sandan-btn-rivedere:hover {
+  background: #ffedd5;
+  border-color: #fdba74;
+}
+
+.sandan-btn-rivedere.is-active {
+  background: #ea580c;
+  border-color: #c2410c;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.25);
+}
+
+.sandan-btn-rivedere.is-active .sandan-btn-icon {
+  border-color: #ffffff;
+  color: #ea580c;
+  background: #ffffff;
+}
+
+.sandan-btn-rivedere.is-active .sandan-btn-texts strong,
+.sandan-btn-rivedere.is-active .sandan-btn-texts small {
+  color: #ffffff;
+}
+
+/* Stepper Box */
+.sandan-card-stepper-box {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1.5px solid #f1f5f9;
+  border-radius: 14px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sandan-stepper-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  font-weight: 750;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sandan-stepper-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sandan-stepper-btn {
+  flex: 1;
+  max-width: 90px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1.5px solid #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 1.3rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+  font-family: inherit;
+}
+
+.sandan-stepper-btn:hover:not(:disabled) {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  transform: scale(1.02);
+}
+
+.sandan-stepper-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.sandan-stepper-value {
+  flex: 1;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+}
+
+/* Concept Chips */
+.sandan-card-concepts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.sandan-concept-chip {
+  padding: 3px 9px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.sandan-concept-chip:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+  border-color: #94a3b8;
+}
+
