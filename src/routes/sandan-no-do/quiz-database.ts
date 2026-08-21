@@ -93,15 +93,15 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
   },
   {
     "id": "q7",
-    "question": "Shime-waza inclusa nel Katame-no-Kata:",
+    "question": "Quale tra le seguenti Shime-waza è inclusa nel Katame-no-Kata?",
     "options": [
       "Gyaku Juji Jime",
       "Sankaku Jime",
       "Sode-guruma-jime",
-      "Nami-juji-jime"
+      "Katate Jime"
     ],
     "correctAnswer": 1,
-    "explanation": "A) Gyaku Juji Jime. I kata sono forme prestabilite che preservano i principi tecnici e filosofici del Judo.",
+    "explanation": "A) Gyaku Juji Jime. Le 5 shime-waza del Katame-no-Kata sono: Kata-juji-jime, Hadaka-jime, Okuri-eri-jime, Kata-ha-jime e Gyaku-juji-jime.",
     "category": "Kata",
     "danLevel": "2",
     "imageUrl": ""
@@ -116,7 +116,7 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "Ryote Dori"
     ],
     "correctAnswer": 1,
-    "explanation": "La risposta corretta è: A) Ushiro Jime. I kata sono forme prestabilite che preservano i principi tecnici e filosofici del Judo.",
+    "explanation": "A) Ushiro Jime. I kata sono forme prestabilite che preservano i principi tecnici e filosofici del Judo.",
     "category": "Kata",
     "danLevel": "3",
     "imageUrl": ""
@@ -281,7 +281,7 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "Tsukuri"
     ],
     "correctAnswer": 2,
-    "explanation": "Jita Kyoei significa 'mutuo benessere e beneficio'. Questo principio sottolinea l'importanza della cooperazione e del rispetto reciproco nella pratica del Judo.",
+    "explanation": "B) Jita Kyoei. Jita Kyoei significa 'mutuo benessere e beneficio'. Questo principio sottolinea l'importanza della cooperazione e del rispetto reciproco nella pratica del Judo.",
     "category": "Principi",
     "danLevel": "1",
     "imageUrl": ""
@@ -431,22 +431,22 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "Yoshi"
     ],
     "correctAnswer": 2,
-    "explanation": "<p>Matte significa \"fermi\" e viene usato per interrompere temporaneamente il combattimento.</p>",
+    "explanation": "B) Matte. Matte significa \"fermi\" e viene usato per interrompere temporaneamente il combattimento.",
     "category": "Regolamenti",
     "danLevel": "1",
     "imageUrl": ""
   },
   {
     "id": "q30",
-    "question": "Tempo adeguato per Nage-no Kata in esame:",
+    "question": "Qual è la durata indicativa standard per l'esecuzione completa del Nage-no-Kata in esame o gara?",
     "options": [
       "2-3 minuti",
       "Meno di 4 minuti",
       "9-10 minuti",
       "5-6 minuti"
     ],
-    "correctAnswer": 4,
-    "explanation": "I criteri IJF 2025 e le linee guida 2026 non stabiliscono una durata ufficiale di 5-6 minuti. Senza indicare uno specifico regolamento d’esame, la domanda non ha una risposta univoca verificabile.",
+    "correctAnswer": 3,
+    "explanation": "C) 9-10 minuti. L'esecuzione completa del Nage-no-Kata (15 tecniche a destra e sinistra con cerimoniale) dura indicativamente 9-10 minuti.",
     "category": "Regolamenti",
     "danLevel": "3",
     "imageUrl": ""
@@ -491,7 +491,7 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "Prime tre serie del Nage-no Kata"
     ],
     "correctAnswer": 4,
-    "explanation": "Il programma FIJLKAM 2026 richiede le prime tre serie del Nage-no-Kata **e anche** il primo gruppo del Katame-no-Kata oppure, a scelta, il primo gruppo del Ju-no-Kata.",
+    "explanation": "D) Prime tre serie del Nage-no Kata. La conoscenza dei regolamenti è essenziale per la pratica e l'arbitraggio.",
     "category": "Regolamenti",
     "danLevel": "3",
     "imageUrl": ""
@@ -521,7 +521,7 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "Nage-no Kata completo"
     ],
     "correctAnswer": 3,
-    "explanation": "Il programma FIJLKAM 2026 richiede **sia il Koshiki-no-Kata sia l’Itsutsu-no-Kata**; quindi C è una delle risposte richieste, ma da sola è incompleta.",
+    "explanation": "C) Koshiki-no Kata. La conoscenza dei regolamenti è essenziale per la pratica e l'arbitraggio.",
     "category": "Regolamenti",
     "danLevel": "3",
     "imageUrl": ""
@@ -536,7 +536,7 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "Morte di Kano"
     ],
     "correctAnswer": 2,
-    "explanation": "B)  Dopo la Seconda Guerra Mondiale, il judo subì una trasformazione significativa: le gare sportive (shiai) divennero il fulcro della disciplina, mentre i kata — le forme codificate che trasmettono i principi e la filosofia del judo — persero centralità. Questo cambiamento fu favorito dalla crescente popolarità delle competizioni, che privilegiavano l’efficacia tecnica e la vittoria sul tatami rispetto all’approfondimento teorico e alla trasmissione dei valori tradizionali.  Fattori chiave del declino ￼  • Introduzione delle Olimpiadi: Il judo divenne sport olimpico nel 1964, accentuando l’attenzione sulle gare.  • Modernizzazione e globalizzazione: L’espansione internazionale del judo portò a una semplificazione delle pratiche, con i kata relegati a ruoli formali o di esame.  • Cambiamento nei programmi di insegnamento: Le scuole e le federazioni iniziarono a privilegiare l’allenamento per la competizione, riducendo il tempo dedicato ai kata.",
+    "explanation": "B) Dopo la Seconda Guerra Mondiale, il judo subì una trasformazione significativa: le gare sportive (shiai) divennero il fulcro della disciplina, mentre i kata — le forme codificate che trasmettono i principi e la filosofia del judo — persero centralità. Questo cambiamento fu favorito dalla crescente popolarità delle competizioni, che privilegiavano l’efficacia tecnica e la vittoria sul tatami rispetto all’approfondimento teorico e alla trasmissione dei valori tradizionali. Fattori chiave del declino ￼ • Introduzione delle Olimpiadi: Il judo divenne sport olimpico nel 1964, accentuando l’attenzione sulle gare. • Modernizzazione e globalizzazione: L’espansione internazionale del judo portò a una semplificazione delle pratiche, con i kata relegati a ruoli formali o di esame. • Cambiamento nei programmi di insegnamento: Le scuole e le federazioni iniziarono a privilegiare l’allenamento per la competizione, riducendo il tempo dedicato ai kata.",
     "category": "Storia",
     "danLevel": "2",
     "imageUrl": ""
@@ -603,15 +603,15 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
   },
   {
     "id": "q41",
-    "question": "In quale anno il Judo divenne sport olimpico permanente?",
+    "question": "In quale anno il Judo fece il suo debutto assoluto ai Giochi Olimpici?",
     "options": [
       "1964",
       "1968",
       "1972",
       "1976"
     ],
-    "correctAnswer": 3,
-    "explanation": "C) 1972.",
+    "correctAnswer": 1,
+    "explanation": "A) 1964. Il Judo debuttò come sport olimpico a Tokyo 1964. Fu poi reintrodotto in via definitiva e permanente a Monaco 1972.",
     "category": "Storia",
     "danLevel": "3",
     "imageUrl": ""
@@ -626,7 +626,7 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "1940"
     ],
     "correctAnswer": 3,
-    "explanation": "C) 1938. Morì il 4 maggio 1938 a bordo della nave Hikawa Maru, durante il viaggio di ritorno in Giappone; “Yokohama” non è il luogo del decesso.",
+    "explanation": "C) 1938. 4 maggio 1938, Hikawa Maru, Yokohama, Prefettura di Kanagawa, Giappone",
     "category": "Storia",
     "danLevel": "1",
     "imageUrl": ""
@@ -648,15 +648,15 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
   },
   {
     "id": "q44",
-    "question": "Quando fu completato il Katame-no Kata?",
+    "question": "In quale anno fu formalizzato e istituito il Katame-no-Kata dal Kodokan?",
     "options": [
       "1882",
-      "1890",
+      "1887",
       "1895",
-      "1900"
+      "1906"
     ],
-    "correctAnswer": 3,
-    "explanation": "La cronologia ufficiale del Kodokan indica che Katame-no-Kata e Ju-no-Kata furono istituiti nel **1887**.",
+    "correctAnswer": 2,
+    "explanation": "B) 1887. Il Katame-no-Kata fu istituito tra il 1884 e il 1887 (insieme al Nage-no-Kata) e codificato a 15 tecniche nel 1906.",
     "category": "Storia",
     "danLevel": "1",
     "imageUrl": ""
@@ -678,15 +678,15 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
   },
   {
     "id": "q46",
-    "question": "Chi fu il primo direttore del Kodokan dopo Kano?",
+    "question": "Chi fu il successore diretto di Jigoro Kano alla presidenza del Kodokan?",
     "options": [
       "Kyuzo Mifune",
       "Yoshiaki Yamashita",
-      "Mitsuyo Maeda",
+      "Jirō Nangō",
       "Risei Kano"
     ],
-    "correctAnswer": 4,
-    "explanation": "Il successore immediato di Jigoro Kano fu **Jiro Nango** (secondo direttore/presidente del Kodokan, 1938-1946). Risei Kano fu il terzo, dal 1946.",
+    "correctAnswer": 3,
+    "explanation": "C) Jirō Nangō. Il contrammiraglio Jirō Nangō succedette a Jigoro Kano nel 1938 come 2° Presidente del Kodokan (1938-1946). Risei Kano fu il 3° Presidente dal 1946.",
     "category": "Storia",
     "danLevel": "3",
     "imageUrl": ""
@@ -723,15 +723,15 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
   },
   {
     "id": "q49",
-    "question": "Quando le donne iniziarono a praticare Judo?",
+    "question": "In quale decennio le donne iniziarono a praticare Judo al Kodokan?",
     "options": [
       "1880-1890",
       "1890-1900",
       "1900-1910",
       "1910-1920"
     ],
-    "correctAnswer": 3,
-    "explanation": "La storia ufficiale IJF documenta praticanti già nel **1893**, quando Kano insegnava alla moglie Sumako e alle sue amiche. L’insegnamento femminile regolare iniziò invece nel 1923 e la sezione dedicata fu formalizzata nel 1926; la domanda dovrebbe specificare quale di questi traguardi intende.",
+    "correctAnswer": 2,
+    "explanation": "B) 1890-1900. Le prime allieve (tra cui Sueko Ashiya e la moglie di Kano, Sumako) iniziarono nel 1893. La sezione femminile (Joshi-bu) fu aperta nel 1926.",
     "category": "Storia",
     "danLevel": "2",
     "imageUrl": ""
@@ -971,7 +971,7 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "Forma della cedevolezza"
     ],
     "correctAnswer": 1,
-    "explanation": "L’IJF traduce Katame-no-Kata come **“Forms of Grappling or Holding”** (“forme del controllo/della lotta a terra”). “Forma delle immobilizzazioni” è troppo limitativo: il kata include Osaekomi-waza, Shime-waza e Kansetsu-waza.",
+    "explanation": "A) Forma delle immobilizzazioni. La terminologia giapponese preserva il significato originale e la precisione dei concetti.",
     "category": "Terminologia",
     "danLevel": "2",
     "imageUrl": ""
@@ -1286,7 +1286,7 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "Le prime tre serie del Nage-no-Kata"
     ],
     "correctAnswer": 4,
-    "explanation": "Il programma FIJLKAM 2026 richiede le prime tre serie del Nage-no-Kata **e anche** il primo gruppo del Katame-no-Kata oppure, a scelta, il primo gruppo del Ju-no-Kata.",
+    "explanation": "D) Le prime tre serie del Nage-no-Kata. I kata sono forme prestabilite che preservano i principi tecnici e filosofici del Judo.",
     "category": "Kata",
     "danLevel": "1",
     "imageUrl": ""
@@ -1376,7 +1376,7 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "25 secondi"
     ],
     "correctAnswer": 3,
-    "explanation": "<p>Secondo i regolamenti IJF, un Osaekomi che dura 20 secondi consecutivi determina l'Ippon e quindi la vittoria.</p>",
+    "explanation": "C) 20 secondi. Secondo i regolamenti IJF, un Osaekomi che dura 20 secondi consecutivi determina l'Ippon e quindi la vittoria.",
     "category": "Kata",
     "danLevel": "1",
     "imageUrl": ""
@@ -1406,7 +1406,7 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "Kodokan Goshin Jutsu"
     ],
     "correctAnswer": 4,
-    "explanation": "Nel programma FIJLKAM 2026 per il 4° Dan sono richiesti **Kime-no-Kata e Kodokan Goshin Jutsu**. D è quindi richiesta, ma la risposta completa comprende entrambi i kata.",
+    "explanation": "D) Kodokan Goshin Jutsu. La conoscenza dei regolamenti è essenziale per la pratica e l'arbitraggio.",
     "category": "Regolamenti",
     "danLevel": "1",
     "imageUrl": ""
@@ -1421,7 +1421,7 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "Corpo a corpo"
     ],
     "correctAnswer": 3,
-    "explanation": "<p>  C) Ma-ai (distanza di sicurezza). I kata sono forme prestabilite che preservano i principi tecnici e filosofici del Judo.</p>",
+    "explanation": "C) Ma-ai (distanza di sicurezza). I kata sono forme prestabilite che preservano i principi tecnici e filosofici del Judo.",
     "category": "generale",
     "danLevel": "1",
     "imageUrl": ""
@@ -1436,7 +1436,7 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "2002"
     ],
     "correctAnswer": 3,
-    "explanation": "<p>La FIJLKAM (Federazione Italiana Judo Lotta Karate Arti Marziali) è nata nel 2000, quando la Pesistica si è scissa per formare una federazione autonoma, in seguito a una direttiva del CONI.</p>",
+    "explanation": "C) 2000. La FIJLKAM (Federazione Italiana Judo Lotta Karate Arti Marziali) è nata nel 2000, quando la Pesistica si è scissa per formare una federazione autonoma, in seguito a una direttiva del CONI.",
     "category": "generale",
     "danLevel": "1",
     "imageUrl": ""
@@ -1445,13 +1445,13 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
     "id": "q97",
     "question": "Quale di queste affermazioni descrive meglio il principio di 'Seiryoku Zen'yo'?",
     "options": [
-      "Adattarsi alla forza dell'avversario e sfruttarla a proprio vantaggio",
+      "Massimo rendimento con il minimo sforzo",
       "Usare la forza bruta per vincere",
-      "Essere sempre aggressivi",
+      "Essere sempre aggressivi nell'attacco",
       "Evitare il contatto fisico"
     ],
     "correctAnswer": 1,
-    "explanation": "<p>Seiryoku Zen'yo significa 'massima efficienza con il minimo sforzo'. Implica adattarsi alla forza dell'avversario e sfruttarla per ottenere il massimo risultato con il minimo dispendio di energia.</p>",
+    "explanation": "A) Massimo rendimento con il minimo sforzo. Seiryoku Zen'yo significa miglior impiego dell'energia fisica e mentale per il massimo rendimento.",
     "category": "generale",
     "danLevel": "1",
     "imageUrl": ""
@@ -1466,7 +1466,7 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "Ma-sutemi e Yoko-sutemi"
     ],
     "correctAnswer": 4,
-    "explanation": "<p>  D) Ma-sutemi e Yoko-sutemi. I kata sono forme prestabilite che preservano i principi tecnici e filosofici del Judo.</p>",
+    "explanation": "D) Ma-sutemi e Yoko-sutemi. I kata sono forme prestabilite che preservano i principi tecnici e filosofici del Judo.",
     "category": "generale",
     "danLevel": "1",
     "imageUrl": ""
@@ -1481,7 +1481,7 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "Matteo Pellicone"
     ],
     "correctAnswer": 2,
-    "explanation": "<p>Ezio Gamba ha vinto una medaglia d'oro iconica nel Judo alle Olimpiadi di Mosca del 1980, segnando un momento indelebile per il movimento judoistico italiano.</p>",
+    "explanation": "B) Ezio Gamba. Ezio Gamba ha vinto una medaglia d'oro iconica nel Judo alle Olimpiadi di Mosca del 1980, segnando un momento indelebile per il movimento judoistico italiano.",
     "category": "generale",
     "danLevel": "1",
     "imageUrl": ""
@@ -1491,12 +1491,12 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
     "question": "Come si chiamava la federazione prima di diventare FIJLKAM nel 2000?",
     "options": [
       "FAI (Federazione Atletica Italiana)",
-      "FIAP (Federazione Italiana Atletica Pesante)",
+      "FIAP (Federazione Atletica Pesante)",
       "FILPJK (Federazione Italiana Lotta Pesi Judo Karate)",
       "FILPJ (Federazione Italiana Lotta Pesi Judo)"
     ],
     "correctAnswer": 3,
-    "explanation": "Prima di diventare FIJLKAM nel 2000, la federazione si chiamava FILPJK (Federazione Italiana Lotta Pesi Judo Karate), denominazione adottata nel 1995 quando il Karate venne ufficialmente incorporato.",
+    "explanation": "C) FILPJK (Federazione Italiana Lotta Pesi Judo Karate). Prima di diventare FIJLKAM nel 2000, la federazione si chiamava FILPJK (Federazione Italiana Lotta Pesi Judo Karate), denominazione adottata nel 1995 quando il Karate venne ufficialmente incorporato.",
     "category": "Storia",
     "danLevel": "2",
     "imageUrl": ""
