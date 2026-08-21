@@ -881,7 +881,7 @@ export const ALL_SANDAN_QUIZ_QUESTIONS: SandanQuizQuestion[] = [
       "Tai Otoshi"
     ],
     "correctAnswer": 1,
-    "explanation": "A) De Ashi Barai. La comprensione tecnica è essenziale per l'applicazione corretta dei principi del Judo.",
+    "explanation": "A) De Ashi Barai. De Ashi Barai è la tecnica n. 1 del Dai-Ikkyo (1° gruppo del Go-Kyo). Harai Goshi e Tai Otoshi appartengono al Dai-Nikyo (2° gruppo), mentre Ko Soto Gake appartiene al Dai-Sankyo (3° gruppo).",
     "category": "Tecniche",
     "danLevel": "3",
     "imageUrl": ""
